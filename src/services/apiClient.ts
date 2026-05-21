@@ -40,6 +40,17 @@ const getApiErrorMessage = (error: AxiosError): string => {
     if (typeof responseData.errors === 'string') {
       return responseData.errors;
     }
+    if (typeof responseData.errors === 'object' && responseData.errors !== null) {
+      // Handle ASP.NET Core validation errors where 'errors' is an object of arrays
+      const errorsObj = responseData.errors as Record<string, string[]>;
+      const firstKey = Object.keys(errorsObj)[0];
+      if (firstKey && Array.isArray(errorsObj[firstKey]) && errorsObj[firstKey].length > 0) {
+        return errorsObj[firstKey][0];
+      }
+    }
+    if (typeof responseData.title === 'string') {
+      return responseData.title;
+    }
   }
 
   return error.response?.statusText || error.message || 'An unknown error occurred';

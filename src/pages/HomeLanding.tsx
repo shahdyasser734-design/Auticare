@@ -11,6 +11,8 @@ import therapy2 from '../assets/images/therapy-2.jpg';
 import therapy3 from '../assets/images/therapy-3.jpg';
 import therapy4 from '../assets/images/therapy-4.jpg';
 import therapy5 from '../assets/images/therapy-5.jpg';
+import therapyOnline from '../assets/images/therapy-online.jpg';
+import therapySupport from '../assets/images/therapy-support.jpg';
 
 const specialists = [
   {
@@ -75,19 +77,19 @@ const therapyServices = [
   {
     title: 'Behavioral Therapy',
     description: 'Evidence-based approaches to build positive behaviors and develop new skills.',
-    image: therapy2,
+    image: therapy4,
     color: 'from-blue-500 to-blue-600',
   },
   {
     title: 'Speech & Communication',
     description: 'Personalized support to enhance verbal and non-verbal communication abilities.',
-    image: therapy3,
+    image: therapyOnline,
     color: 'from-emerald-500 to-emerald-600',
   },
   {
     title: 'Occupational Therapy',
     description: 'Helping children build independence through adaptive daily living skills.',
-    image: therapy4,
+    image: therapySupport,
     color: 'from-purple-500 to-purple-600',
   },
   {
@@ -155,18 +157,22 @@ export const HomeLanding = () => {
       {/* Fixed animated navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-50/80 dark:bg-navy-900/75 backdrop-blur-xl border-b border-slate-300/40 dark:border-white/10 shadow-sm transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <AutismLogo size="md" animated glow />
-            <span className="text-lg font-bold tracking-wide text-slate-900 dark:text-white">AutiCare</span>
+            <span className="text-lg sm:text-xl font-bold tracking-wide text-slate-900 dark:text-white">AutiCare</span>
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-4">
+          <div className="flex flex-1 items-center justify-end gap-2 sm:gap-4">
             <ThemeToggle />
-            <Link to={ROUTES.SIGNUP}>
-              <Button size="sm" variant="ghost">Sign Up</Button>
-            </Link>
-            <Link to={ROUTES.LOGIN}>
-              <Button variant="outline" size="sm">Login</Button>
-            </Link>
+            <div className="hidden sm:block">
+              <Link to={ROUTES.SIGNUP}>
+                <Button size="sm" variant="ghost">Sign Up</Button>
+              </Link>
+            </div>
+            <div className="hidden sm:block">
+              <Link to={ROUTES.LOGIN}>
+                <Button variant="outline" size="sm">Login</Button>
+              </Link>
+            </div>
             <GetStartedNavButton />
           </div>
         </div>
@@ -228,20 +234,20 @@ export const HomeLanding = () => {
               </div>
 
               {/* Clean Responsive Grid Hero Visual */}
-              <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6 mt-12 lg:mt-0 relative z-20">
-                <div className="h-64 sm:h-72 lg:h-96 rounded-[2rem] overflow-hidden shadow-xl border border-slate-200/50 dark:border-white/10 group relative transform hover:-translate-y-2 transition-all duration-500 bg-white/5 backdrop-blur-sm p-1.5">
+              <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mt-12 lg:mt-0 relative z-20">
+                <div className="aspect-[4/3] sm:aspect-auto sm:h-72 lg:h-96 rounded-[2rem] overflow-hidden shadow-xl border border-slate-200/50 dark:border-white/10 group relative transform hover:-translate-y-2 transition-all duration-500 bg-white/5 backdrop-blur-sm p-1.5">
                   <div className="w-full h-full rounded-[1.5rem] overflow-hidden">
-                    <img src={therapy1} alt="Mother helping child with crafts" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                    <img src={therapy1} alt="Mother helping child with crafts" className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105" style={{ imageRendering: 'auto', backfaceVisibility: 'hidden', transform: 'translateZ(0)' }} />
                   </div>
                 </div>
-                <div className="h-64 sm:h-72 lg:h-96 rounded-[2rem] overflow-hidden shadow-xl border border-slate-200/50 dark:border-white/10 group relative transform hover:-translate-y-2 transition-all duration-500 sm:mt-12 bg-white/5 backdrop-blur-sm p-1.5">
+                <div className="aspect-[4/3] sm:aspect-auto sm:h-72 lg:h-96 rounded-[2rem] overflow-hidden shadow-xl border border-slate-200/50 dark:border-white/10 group relative transform hover:-translate-y-2 transition-all duration-500 sm:mt-12 bg-white/5 backdrop-blur-sm p-1.5">
                   <div className="w-full h-full rounded-[1.5rem] overflow-hidden">
-                    <img src={therapy2} alt="Child using tablet" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                    <img src={therapy2} alt="Child using tablet" className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105" style={{ imageRendering: 'auto', backfaceVisibility: 'hidden', transform: 'translateZ(0)' }} />
                   </div>
                 </div>
-                <div className="h-64 sm:h-72 lg:h-96 rounded-[2rem] overflow-hidden shadow-xl border border-slate-200/50 dark:border-white/10 group relative transform hover:-translate-y-2 transition-all duration-500 sm:mt-24 bg-white/5 backdrop-blur-sm p-1.5">
+                <div className="aspect-[4/3] sm:aspect-auto sm:h-72 lg:h-96 rounded-[2rem] overflow-hidden shadow-xl border border-slate-200/50 dark:border-white/10 group relative transform hover:-translate-y-2 transition-all duration-500 sm:col-span-2 lg:col-span-1 sm:mt-8 lg:mt-24 bg-white/5 backdrop-blur-sm p-1.5">
                   <div className="w-full h-full rounded-[1.5rem] overflow-hidden">
-                    <img src={therapy3} alt="Mother teaching child at desk" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                    <img src={therapy3} alt="Mother teaching child at desk" className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105" style={{ imageRendering: 'auto', backfaceVisibility: 'hidden', transform: 'translateZ(0)' }} />
                   </div>
                 </div>
               </div>

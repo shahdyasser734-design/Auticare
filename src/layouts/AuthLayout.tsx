@@ -11,7 +11,7 @@ interface AuthLayoutProps {
 
 export const AuthLayout = ({ children }: AuthLayoutProps) => {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 overflow-hidden flex flex-col lg:grid lg:grid-cols-2">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col lg:grid lg:grid-cols-2">
       {/* Subtle radial gradients (desktop only to save performance on mobile) */}
       <div className="hidden lg:block absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.15),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.15),_transparent_30%)] pointer-events-none z-0" />
 
