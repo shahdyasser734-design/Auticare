@@ -157,7 +157,7 @@ export const HomeLanding = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <AutismLogo size="md" animated glow />
-            <span className="text-lg font-bold tracking-wide text-slate-900 dark:text-white hidden sm:inline">AutiCare</span>
+            <span className="text-lg font-bold tracking-wide text-slate-900 dark:text-white">AutiCare</span>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-4">
             <ThemeToggle />

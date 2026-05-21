@@ -31,7 +31,7 @@ export const TopNav = ({ onMenuClick }: TopNavProps) => {
             <Menu size={24} />
           </button>
           
-          <div className="hidden md:flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <span className={`text-xl font-semibold tracking-tight ${
               isDark ? 'text-white' : 'text-slate-900'
             }`}>AutiCare</span>
