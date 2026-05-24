@@ -61,6 +61,7 @@ export const PatientDetail = () => {
   if (!patient) return <MainLayout><div className="text-center py-12">Patient not found</div></MainLayout>;
 
   const patientName = patient.name || `${patient.firstName ?? ''} ${patient.lastName ?? ''}`.trim() || 'Patient';
+  const patientDOB = patient.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString() : 'N/A';
 
   return (
     <MainLayout>
@@ -70,7 +71,7 @@ export const PatientDetail = () => {
           <div>
             <h1 className="text-4xl font-bold text-neutral-900">{patientName}</h1>
             <p className="text-neutral-600">Age: {patient.age ?? 'N/A'} • Gender: {patient.gender}</p>
-            <p className="text-neutral-600">DOB: {new Date(patient.dateOfBirth).toLocaleDateString()}</p>
+            <p className="text-neutral-600">DOB: {patientDOB}</p>
           </div>
         </div>
 

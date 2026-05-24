@@ -1,5 +1,3 @@
-import apiClient from '../apiClient';
-
 // Screening API Types
 export interface ScreeningQuestion {
   id: string;
@@ -65,7 +63,7 @@ export interface ScreeningAnalytics {
 }
 
 export const screeningService = {
-  startScreening: async (childId: string): Promise<ScreeningStartResponse> => {
+  startScreening: async (_childId: string): Promise<ScreeningStartResponse> => {
     await new Promise(r => setTimeout(r, 500));
     return { sessionId: 'mock-session-' + Date.now() };
   },
@@ -96,10 +94,10 @@ export const screeningService = {
     ];
   },
 
-  submitScreening: async (childId: string, answers: Array<{ questionId: string | number; answerValue: number }>): Promise<ScreeningResult> => {
+  submitScreening: async (_childId: string, _answers: Array<{ questionId: string | number; answerValue: number }>): Promise<ScreeningResult> => {
     await new Promise(r => setTimeout(r, 500));
     return {
-      childId,
+      childId: _childId,
       childName: 'Mock Child',
       predictionClass: 'Low Risk',
       confidenceScore: 0.95,
@@ -136,7 +134,7 @@ export const screeningService = {
     }];
   },
 
-  getAnalytics: async (childId: string): Promise<ScreeningAnalytics> => {
+  getAnalytics: async (_childId: string): Promise<ScreeningAnalytics> => {
     await new Promise(r => setTimeout(r, 500));
     return {
       totalScreenings: 1,

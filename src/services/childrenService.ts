@@ -3,6 +3,8 @@ import apiClient from './apiClient';
 export interface Child {
   id: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   age: number;
   gender: string;
   dateOfBirth?: string;
