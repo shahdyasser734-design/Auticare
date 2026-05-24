@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Heart, Shield, Star, Puzzle, Stethoscope } from 'lucide-react';
 import { GlobalLogo } from '../components/common/GlobalLogo';
 import { ROUTES } from '../utils/constants';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme } from '../context/useTheme';
 import { ThemeToggle } from '../components/common/ThemeToggle';
 import authHeroImg from '../assets/images/auth-hero.jpg';
 

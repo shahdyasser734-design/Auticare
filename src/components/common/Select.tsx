@@ -1,6 +1,6 @@
 import type { SelectHTMLAttributes } from 'react';
 import clsx from 'clsx';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/useTheme';
 
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;

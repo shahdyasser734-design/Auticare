@@ -1,6 +1,6 @@
 import type { InputHTMLAttributes, ReactNode } from 'react';
 import clsx from 'clsx';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/useTheme';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;

@@ -5,7 +5,7 @@ import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Avatar } from '../../components/common/Avatar';
 import { Alert } from '../../components/common/Alert';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { profileService } from '../../services/api/profile';
 
 export const Profile = () => {

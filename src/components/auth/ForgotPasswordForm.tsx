@@ -4,8 +4,8 @@ import { Mail, ArrowLeft } from 'lucide-react';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import { Alert } from '../common/Alert';
-import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/useAuth';
+import { useTheme } from '../../context/useTheme';
 import { validateEmail } from '../../utils/validation';
 import { ROUTES } from '../../utils/constants';
 

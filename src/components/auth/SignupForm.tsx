@@ -6,8 +6,8 @@ import { Input } from '../common/Input';
 import { Select } from '../common/Select';
 import { Alert } from '../common/Alert';
 import { FileUpload } from '../common/FileUpload';
-import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/useAuth';
+import { useTheme } from '../../context/useTheme';
 import { validateEmail, validatePassword, validateName } from '../../utils/validation';
 import { ROUTES, ROLES } from '../../utils/constants';
 import type { UserRole } from '../../types';
@@ -146,10 +146,11 @@ export const SignupForm = () => {
       // Navigate according to role
       if (formData.role === ROLES.PARENT) navigate(ROUTES.PARENT_HOME);
       else navigate(ROUTES.DOCTOR_HOME);
-    } catch (err: any) {
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : 'Signup failed. Please try again.';
       setAlert({
         type: 'error',
-        message: err?.message || 'Signup failed. Please try again.',
+        message: errMsg,
       });
     }
   };

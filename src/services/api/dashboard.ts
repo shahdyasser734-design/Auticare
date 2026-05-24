@@ -4,15 +4,17 @@ export interface DashboardParentData {
   childrenCount: number;
   upcomingScreenings: number;
   upcomingSessions: number;
-  recentScreeningResults: any[];
-  sessions: any[];
+  recentScreeningResults: Array<Record<string, unknown>>;
+  sessions: Array<Record<string, unknown>>;
 }
 
 export interface DashboardSpecialistData {
-  patientCount: number;
-  upcomingSessions: number;
-  recentNotes: any[];
-  sessions: any[];
+  patientCount?: number;
+  upcomingSessions?: number;
+  totalSessions?: number;
+  activePatients?: number;
+  recentNotes?: Array<Record<string, unknown>>;
+  sessions?: Array<Record<string, unknown>>;
 }
 
 export const dashboardService = {

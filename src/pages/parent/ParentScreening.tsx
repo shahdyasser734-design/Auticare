@@ -7,7 +7,7 @@ import { ROUTES } from '../../utils/constants';
 import { screeningService } from '../../services/api/screening';
 import type { ScreeningQuestion as IScreeningQuestion } from '../../types';
 import { LoadingSpinner } from '../../components/common/Loading';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 
 /* ──────────────────────────────────────────────────────────
    10 HARDCODED QUESTIONS (spec-exact)
@@ -36,7 +36,7 @@ const LOCAL_QUESTIONS: IScreeningQuestion[] = [
   },
   {
     id: 'q3',
-    question: 'Does your child point to indicate that s/he wants something?',
+    question: 'Does your child point to indicate that s/he wants something? (e.g. a toy that is out of reach)',
     description: '',
     pageNumber: 3,
     options: [
@@ -46,7 +46,7 @@ const LOCAL_QUESTIONS: IScreeningQuestion[] = [
   },
   {
     id: 'q4',
-    question: 'Does your child point to share interest with you?',
+    question: 'Does your child point to share interest with you? (e.g. pointing at an interesting sight)',
     description: '',
     pageNumber: 4,
     options: [
@@ -56,8 +56,8 @@ const LOCAL_QUESTIONS: IScreeningQuestion[] = [
   },
   {
     id: 'q5',
-    question: 'Does your child pretend?',
-    description: 'For example, pretend to talk on the phone or care for a doll.',
+    question: 'Does your child pretend? (e.g. care for dolls, talk on a toy phone)',
+    description: '',
     pageNumber: 5,
     options: [
       { id: 'q5_yes', label: 'Yes', value: 1 },
@@ -67,7 +67,7 @@ const LOCAL_QUESTIONS: IScreeningQuestion[] = [
   {
     id: 'q6',
     question: 'Does your child follow where you are looking?',
-    description: 'For example, if you look at a toy across the room, does your child look too?',
+    description: '',
     pageNumber: 6,
     options: [
       { id: 'q6_yes', label: 'Yes', value: 1 },
@@ -76,7 +76,7 @@ const LOCAL_QUESTIONS: IScreeningQuestion[] = [
   },
   {
     id: 'q7',
-    question: 'If someone is visibly upset, does your child try to comfort them?',
+    question: 'If you or someone else in the family is visibly upset, does your child show signs of wanting to comfort them?',
     description: '',
     pageNumber: 7,
     options: [
@@ -86,18 +86,18 @@ const LOCAL_QUESTIONS: IScreeningQuestion[] = [
   },
   {
     id: 'q8',
-    question: "Would you describe your child's first words as:",
+    question: 'Would you describe your child’s first words as:',
     description: '',
     pageNumber: 8,
     options: [
-      { id: 'q8_yes', label: 'YES (simple words)',    value: 1 },
-      { id: 'q8_no',  label: 'NO (complex phrases)',  value: 0 },
+      { id: 'q8_yes', label: 'YES (simple words like mama, bye)', value: 1 },
+      { id: 'q8_no',  label: 'NO (more complex words or phrases)', value: 0 },
     ],
   },
   {
     id: 'q9',
-    question: 'Does your child use simple gestures?',
-    description: 'For example, waving goodbye or nodding.',
+    question: 'Does your child use simple gestures? (e.g. wave goodbye)',
+    description: '',
     pageNumber: 9,
     options: [
       { id: 'q9_yes', label: 'Yes', value: 1 },
@@ -125,29 +125,40 @@ export const ParentScreening = () => {
   const [questions, setQuestions] = useState<IScreeningQuestion[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [childId, setChildId] = useState<string | null>(null);
+  const [childName, setChildName] = useState<string>('');
 
   useEffect(() => {
     const initializeScreening = async () => {
       try {
         const params = new URLSearchParams(window.location.search);
-        const childId = params.get('childId');
+        const queryChildId = params.get('childId');
+        const storedChildId = localStorage.getItem('latestChildId');
+        const activeChildId = queryChildId || storedChildId;
 
-        if (childId) {
-          // Try backend first
-          try {
-            await screeningService.startScreening(childId);
-            const q = await screeningService.getQuestions();
-            if (q && q.length > 0) {
-              setQuestions(q);
-              setLoading(false);
-              return;
-            }
-          } catch {
-            // Fall through to local questions
-          }
+        if (!activeChildId) {
+          navigate(ROUTES.PARENT_ADD_CHILD, { replace: true });
+          return;
         }
 
-        // Use local hardcoded questions as fallback (or when no childId)
+        setChildId(activeChildId);
+        const storedChildName = localStorage.getItem('latestChildName');
+        if (storedChildName) {
+          setChildName(storedChildName);
+        }
+
+        // Try backend first, but only use it when it provides all 10 questions.
+        try {
+          await screeningService.startScreening(activeChildId);
+          const q = await screeningService.getQuestions();
+          if (q && q.length === LOCAL_QUESTIONS.length) {
+            setQuestions(q);
+            return;
+          }
+        } catch {
+          // Fall through to local questions
+        }
+
         setQuestions(LOCAL_QUESTIONS);
       } catch (err) {
         setQuestions(LOCAL_QUESTIONS);
@@ -158,7 +169,7 @@ export const ParentScreening = () => {
     };
 
     initializeScreening();
-  }, []);
+  }, [navigate]);
 
   if (loading) {
     return (
@@ -198,24 +209,14 @@ export const ParentScreening = () => {
       // Submit
       setSubmitting(true);
       try {
-        const params = new URLSearchParams(window.location.search);
-        const childId = params.get('childId');
-
         // Build binary JSON answers: Yes/Easy/YES=1, No/Difficult/NO=0
-        const payloadAnswers = Object.entries(answers).map(([qId, optionId]) => {
+        const payloadAnswers: Record<string, number> = Object.entries(answers).reduce((acc, [qId, optionId]) => {
           const q = questions.find((q) => String(q.id) === String(qId));
           const opt = q?.options.find((o) => String(o.id) === String(optionId));
-          let answerValue = 0;
-          if (opt) {
-            if (typeof opt.value === 'number') {
-              answerValue = opt.value;
-            } else {
-              const lbl = (opt.label || '').toLowerCase();
-              answerValue = (lbl === 'yes' || lbl === 'easy' || lbl === 'yes (simple words)') ? 1 : 0;
-            }
-          }
-          return { questionId: qId, answerValue };
-        });
+          const answerValue = opt?.value ?? 0;
+          acc[qId] = answerValue;
+          return acc;
+        }, {} as Record<string, number>);
 
         if (childId) {
           // Submit to backend if childId is available
@@ -231,12 +232,7 @@ export const ParentScreening = () => {
           }
           navigate(ROUTES.PARENT_SCREENING_RESULTS + `?childId=${childId}`);
         } else {
-          // No childId — save locally and go to add-child first
-          localStorage.setItem('screening_answers_pending', JSON.stringify(payloadAnswers));
-          if (user?.id) {
-            localStorage.setItem(`screeningComplete_${user.id}`, 'true');
-          }
-          navigate(ROUTES.PARENT_HOME);
+          navigate(ROUTES.PARENT_ADD_CHILD);
         }
       } catch (err) {
         setError('Failed to submit answers. Please try again.');
@@ -255,6 +251,11 @@ export const ParentScreening = () => {
     <ScreeningLayout>
       <div className="w-full max-w-2xl flex flex-col items-center">
         <ScreeningProgress currentPage={currentPage} totalPages={totalPages} />
+        {childName ? (
+          <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+            Screening for {childName}
+          </p>
+        ) : null}
 
         <ScreeningQuestion
           question={question.question}

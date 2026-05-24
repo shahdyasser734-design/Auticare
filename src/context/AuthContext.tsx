@@ -1,7 +1,13 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { AuthContextType, User } from '../types';
 import { authService } from '../services/authService';
+
+const getErrorMessage = (error: unknown, fallback = 'An error occurred') => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return fallback;
+};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -48,10 +54,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const data = await authService.login(email, password);
       localStorage.setItem('token', data.token);
       normalizeAndSetUser(data.user);
-    } catch (err: any) {
-      const errMsg = err?.message || 'Login failed';
+    } catch (error) {
+      const errMsg = getErrorMessage(error, 'Login failed');
       setError(errMsg);
-      throw err;
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -68,10 +74,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (data.user) {
         normalizeAndSetUser(data.user);
       }
-    } catch (err: any) {
-      const errMsg = err?.message || 'Signup failed';
+    } catch (error) {
+      const errMsg = getErrorMessage(error, 'Signup failed');
       setError(errMsg);
-      throw err;
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -87,10 +93,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
     try {
       await authService.forgotPassword(email);
-    } catch (err: any) {
-      const errMsg = err?.message || 'Failed to send reset link';
+    } catch (error) {
+      const errMsg = getErrorMessage(error, 'Failed to send reset link');
       setError(errMsg);
-      throw err;
+      throw error;
     }
   };
 
@@ -98,10 +104,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
     try {
       await authService.verifyEmail(code);
-    } catch (err: any) {
-      const errMsg = err?.message || 'Verification failed';
+    } catch (error) {
+      const errMsg = getErrorMessage(error, 'Verification failed');
       setError(errMsg);
-      throw err;
+      throw error;
     }
   };
 
@@ -127,14 +133,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 };
 
 export default AuthContext;

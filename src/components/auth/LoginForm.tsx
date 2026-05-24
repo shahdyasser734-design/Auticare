@@ -4,10 +4,10 @@ import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import { Alert } from '../common/Alert';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { validateEmail } from '../../utils/validation';
 import { ROUTES, ROLES } from '../../utils/constants';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/useTheme';
 
 export const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -50,10 +50,11 @@ export const LoginForm = () => {
         const parsedUser = storedUser ? JSON.parse(storedUser) : null;
         navigate(getRoleHome(parsedUser?.role), { replace: true });
       }, 300);
-    } catch (err: any) {
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : 'Login failed. Please check your credentials.';
       setAlert({
         type: 'error',
-        message: err?.message || 'Login failed. Please check your credentials.',
+        message: errMsg,
       });
     }
   };

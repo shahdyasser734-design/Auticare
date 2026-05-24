@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { X, LogOut } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/useAuth';
+import { useTheme } from '../context/useTheme';
 import { Avatar } from '../components/common/Avatar';
 import { AutismLogo } from '../components/common/AutismLogo';
 import { ROUTES, ROLES } from '../utils/constants';

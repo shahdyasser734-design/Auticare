@@ -33,17 +33,17 @@ const mockUsers: Record<string, User & { password: string }> = {
 };
 
 export const mockAuthService = {
-  login: async (email: string, password: string): Promise<LoginResponse> => {
+  login: async (email: string, loginPassword: string): Promise<LoginResponse> => {
     // Simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     const user = mockUsers[email];
-    if (!user || user.password !== password) {
+    if (!user || user.password !== loginPassword) {
       throw new Error('Invalid email or password');
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...userWithoutPassword } = user;
+    const { password: storedPassword, ...userWithoutPassword } = user;
+    void storedPassword;
     const token = btoa(`${email}:${Date.now()}`);
 
     return {
@@ -57,13 +57,13 @@ export const mockAuthService = {
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     const email = payload.email as string;
-    const password = payload.password as string;
+    const signupPassword = payload.password as string;
     const fullName = payload.fullName as string;
     const role = (payload.role as string)?.toLowerCase() === 'specialist'
       ? 'doctor'
       : (payload.role as string)?.toLowerCase() || 'parent';
 
-    if (!email || !password || !fullName) {
+    if (!email || !signupPassword || !fullName) {
       throw new Error('Email, password, and name are required');
     }
 
@@ -76,15 +76,15 @@ export const mockAuthService = {
       email,
       name: fullName,
       role: role as UserRole,
-      phone: payload.phone as string | undefined,
+      phone: payload.phone as string,
       createdAt: new Date().toISOString(),
-      password,
+      password: signupPassword,
     };
 
     mockUsers[email] = newUser;
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...userWithoutPassword } = newUser;
+    const { password, ...userWithoutPassword } = newUser;
+    void password;
     const token = btoa(`${email}:${Date.now()}`);
 
     return {
@@ -94,12 +94,13 @@ export const mockAuthService = {
   },
 
   forgotPassword: async (_email: string): Promise<void> => {
-    // Mock implementation
+    void _email;
     await new Promise((resolve) => setTimeout(resolve, 300));
   },
 
   resetPassword: async (_token: string, _password: string): Promise<void> => {
-    // Mock implementation
+    void _token;
+    void _password;
     await new Promise((resolve) => setTimeout(resolve, 300));
   },
 
@@ -109,7 +110,7 @@ export const mockAuthService = {
   },
 
   verifyEmail: async (_code: string): Promise<void> => {
-    // Mock implementation
+    void _code;
     await new Promise((resolve) => setTimeout(resolve, 300));
   },
 

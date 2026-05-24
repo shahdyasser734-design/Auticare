@@ -5,9 +5,12 @@ export interface Child {
   name: string;
   firstName?: string;
   lastName?: string;
-  age: number;
+  age?: number;
   gender: string;
   dateOfBirth?: string;
+  familyAutismHistory?: boolean;
+  jaundiceHistory?: boolean;
+  medicalHistory?: string;
   notes?: string;
 }
 

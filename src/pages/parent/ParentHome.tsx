@@ -13,6 +13,15 @@ export const ParentHome = () => {
   const navigate = useNavigate();
   const [sessions, setSessions] = useState<Booking[]>([]);
 
+  const handleStartScreening = () => {
+    const storedChildId = localStorage.getItem('latestChildId');
+    if (storedChildId) {
+      navigate(`${ROUTES.PARENT_SCREENING}?childId=${storedChildId}`);
+    } else {
+      navigate(ROUTES.PARENT_ADD_CHILD);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -63,7 +72,7 @@ export const ParentHome = () => {
 
           <Card
             hoverable
-            onClick={() => navigate(ROUTES.PARENT_SCREENING)}
+            onClick={handleStartScreening}
             className="cursor-pointer"
           >
             <div className="text-4xl mb-3">📋</div>

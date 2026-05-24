@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Upload, X, Check, AlertCircle } from 'lucide-react';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/useTheme';
 
 interface FileUploadProps {
   label: string;

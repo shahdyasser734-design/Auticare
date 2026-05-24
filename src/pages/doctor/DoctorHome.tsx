@@ -2,13 +2,13 @@ import { MainLayout } from '../../layouts/MainLayout';
 import { Card } from '../../components/common/Card';
 import { DashboardStats, UpcomingSessionsWidget } from '../../components/dashboard/DashboardComponents';
 import { useState, useEffect } from 'react';
-import { dashboardService } from '../../services/api/dashboard';
+import { dashboardService, type DashboardSpecialistData } from '../../services/api/dashboard';
 import { bookingService } from '../../services/api/bookings';
 import type { Booking } from '../../services/api/bookings';
 
 export const DoctorHome = () => {
   const [sessions, setSessions] = useState<Booking[]>([]);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<DashboardSpecialistData | null>(null);
 
   useEffect(() => {
     const fetchSessions = async () => {
@@ -35,10 +35,10 @@ export const DoctorHome = () => {
         </div>
 
         <DashboardStats
-          totalSessions={stats?.totalSessions || 0}
-          upcomingSessions={stats?.upcomingSessions || 0}
+          totalSessions={stats?.totalSessions ?? (stats?.sessions?.length ?? 0)}
+          upcomingSessions={stats?.upcomingSessions ?? 0}
           completedTests={0}
-          activePatients={stats?.activePatients || 0}
+          activePatients={stats?.activePatients ?? 0}
         />
 
         <div className="grid md:grid-cols-2 gap-6">

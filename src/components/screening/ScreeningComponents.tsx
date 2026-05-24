@@ -166,7 +166,7 @@ export const ScreeningQuestion = ({
               className={clsx(
                 'w-full p-5 rounded-2xl border-2 transition-all duration-300 text-left flex items-center gap-4 group',
                 isSelected
-                  ? 'border-orange-500 bg-orange-50 dark:bg-orange-500/12 shadow-lg shadow-orange-500/10'
+                  ? 'border-orange-500 bg-orange-200 dark:bg-orange-500/20 shadow-lg shadow-orange-500/20'
                   : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/3 hover:border-orange-500/40 hover:bg-orange-50 dark:hover:bg-white/6'
               )}
             >
@@ -186,7 +186,7 @@ export const ScreeningQuestion = ({
               <span
                 className={clsx(
                   'flex-1 text-base font-medium transition-colors duration-300',
-                  isSelected ? 'text-orange-600 dark:text-orange-300' : 'text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white'
+                  isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white'
                 )}
               >
                 {option.label}

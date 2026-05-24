@@ -29,7 +29,7 @@ const SpecialistCard = ({ data, type }: { data: Specialist; type: string }) => (
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 bg-soft-bg p-4 rounded-2xl mt-auto">
+      <div className="grid grid-cols-2 gap-4 bg-soft-bg dark:bg-navy-900 p-4 rounded-2xl mt-auto">
         <div>
           <p className="text-xs text-navy-400 mb-1">Experience</p>
           <p className="font-bold text-navy-900">{data.yearsOfExperience} Years</p>

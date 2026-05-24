@@ -1,4 +1,20 @@
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/useTheme';
+
+interface CubeProps {
+  cx: number;
+  cy: number;
+  fillTop: string;
+  fillLeft: string;
+  fillRight: string;
+}
+
+const Cube = ({ cx, cy, fillTop, fillLeft, fillRight }: CubeProps) => (
+  <g transform={`translate(${cx}, ${cy})`}>
+    <path d="M 0 -22 L 19.05 -11 L 0 0 L -19.05 -11 Z" fill={fillTop} stroke="#ffffff" strokeWidth="2" strokeLinejoin="round" className="transition-all duration-300 hover:opacity-90" />
+    <path d="M -19.05 -11 L 0 0 L 0 22 L -19.05 11 Z" fill={fillLeft} stroke="#ffffff" strokeWidth="2" strokeLinejoin="round" className="transition-all duration-300 hover:opacity-90" />
+    <path d="M 19.05 -11 L 0 0 L 0 22 L 19.05 11 Z" fill={fillRight} stroke="#ffffff" strokeWidth="2" strokeLinejoin="round" className="transition-all duration-300 hover:opacity-90" />
+  </g>
+);
 
 interface AutismLogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
@@ -16,14 +32,6 @@ export const AutismLogo = ({ size = 'md', animated = true, glow = true, classNam
     lg: 'w-16 h-16',
     xl: 'w-24 h-24',
   };
-
-  const Cube = ({ cx, cy, fillTop, fillLeft, fillRight }: any) => (
-    <g transform={`translate(${cx}, ${cy})`}>
-      <path d="M 0 -22 L 19.05 -11 L 0 0 L -19.05 -11 Z" fill={fillTop} stroke="#ffffff" strokeWidth="2" strokeLinejoin="round" className="transition-all duration-300 hover:opacity-90" />
-      <path d="M -19.05 -11 L 0 0 L 0 22 L -19.05 11 Z" fill={fillLeft} stroke="#ffffff" strokeWidth="2" strokeLinejoin="round" className="transition-all duration-300 hover:opacity-90" />
-      <path d="M 19.05 -11 L 0 0 L 0 22 L 19.05 11 Z" fill={fillRight} stroke="#ffffff" strokeWidth="2" strokeLinejoin="round" className="transition-all duration-300 hover:opacity-90" />
-    </g>
-  );
 
   const SVGContent = (
     <svg

@@ -6,7 +6,7 @@ import { AutismLogo } from '../components/common/AutismLogo';
 import { SpecialistCard } from '../components/common/SpecialistCard';
 import { ThemeToggle } from '../components/common/ThemeToggle';
 import { ROUTES, ROLES } from '../utils/constants';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import therapy1 from '../assets/images/therapy-1.jpg';
 import therapy2 from '../assets/images/therapy-2.jpg';
 import therapy3 from '../assets/images/therapy-3.jpg';

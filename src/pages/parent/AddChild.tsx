@@ -4,7 +4,7 @@ import { MainLayout } from '../../layouts/MainLayout';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { Select } from '../../components/common/Select';
-import { childrenService } from '../../services/api/children';
+import { childrenService, type Child } from '../../services/api/children';
 import { ROUTES } from '../../utils/constants';
 
 export const AddChild = () => {
@@ -21,18 +21,26 @@ export const AddChild = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleChange = (key: string, value: any) => {
+  const canSubmit = Boolean(form.firstName.trim() && form.lastName.trim() && form.dateOfBirth);
+
+  const handleChange = (key: keyof typeof form, value: string | boolean) => {
     setForm({ ...form, [key]: value });
     setError('');
   };
 
   const handleSubmit = async () => {
+    if (!canSubmit) {
+      setError('Please complete all required child details before starting the screening.');
+      return;
+    }
+
     setLoading(true);
     setError('');
     try {
-      const payload = {
-        firstName: form.firstName,
-        lastName: form.lastName,
+      const payload: Omit<Child, 'id'> = {
+        name: `${form.firstName.trim()} ${form.lastName.trim()}`,
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
         dateOfBirth: form.dateOfBirth,
         gender: form.gender,
         familyAutismHistory: form.familyAutismHistory,
@@ -40,11 +48,13 @@ export const AddChild = () => {
         medicalHistory: form.medicalHistory,
       };
 
-      const child = await childrenService.createChild(payload as any);
-      // After creating, navigate to screening for this child
+      const child = await childrenService.createChild(payload);
+      localStorage.setItem('latestChildId', child.id);
+      localStorage.setItem('latestChildName', child.name);
       navigate(`${ROUTES.PARENT_SCREENING}?childId=${child.id}`);
-    } catch (err: any) {
-      setError(err?.message || 'Failed to add child');
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : 'Failed to add child';
+      setError(errMsg);
     } finally {
       setLoading(false);
     }
@@ -76,9 +86,13 @@ export const AddChild = () => {
 
         {error && <div className="text-sm text-red-500">{error}</div>}
 
-        <div className="flex gap-4">
-          <Button onClick={handleSubmit} isLoading={loading}>Add Child & Start Screening</Button>
-          <Button variant="outline" onClick={() => navigate(ROUTES.PARENT_HOME)}>Cancel</Button>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button onClick={handleSubmit} isLoading={loading} disabled={!canSubmit}>
+            Add Child & Start Screening
+          </Button>
+          <Button variant="outline" onClick={() => navigate(ROUTES.PARENT_HOME)}>
+            Cancel
+          </Button>
         </div>
       </div>
     </MainLayout>

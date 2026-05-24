@@ -4,7 +4,7 @@ import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Select } from '../../components/common/Select';
 import { Alert } from '../../components/common/Alert';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/useTheme';
 
 export const Settings = () => {
   const { theme, setTheme } = useTheme();

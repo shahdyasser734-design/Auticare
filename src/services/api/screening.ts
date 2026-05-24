@@ -63,9 +63,9 @@ export interface ScreeningAnalytics {
 }
 
 export const screeningService = {
-  startScreening: async (_childId: string): Promise<ScreeningStartResponse> => {
+  startScreening: async (childId: string): Promise<ScreeningStartResponse> => {
     await new Promise(r => setTimeout(r, 500));
-    return { sessionId: 'mock-session-' + Date.now() };
+    return { sessionId: `mock-session-${childId}-${Date.now()}` };
   },
 
   getQuestions: async (): Promise<ScreeningQuestion[]> => {
@@ -94,14 +94,15 @@ export const screeningService = {
     ];
   },
 
-  submitScreening: async (_childId: string, _answers: Array<{ questionId: string | number; answerValue: number }>): Promise<ScreeningResult> => {
+  submitScreening: async (childId: string, answers: Record<string, number>): Promise<ScreeningResult> => {
     await new Promise(r => setTimeout(r, 500));
+    const totalAnswerValue = Object.values(answers).reduce((sum, value) => sum + value, 0);
     return {
-      childId: _childId,
+      childId,
       childName: 'Mock Child',
       predictionClass: 'Low Risk',
       confidenceScore: 0.95,
-      aqScore: 1,
+      aqScore: totalAnswerValue,
       riskLevel: 'Low Risk',
       probability: '95%',
       socialAttention: 0,
@@ -134,10 +135,10 @@ export const screeningService = {
     }];
   },
 
-  getAnalytics: async (_childId: string): Promise<ScreeningAnalytics> => {
+  getAnalytics: async (childId: string): Promise<ScreeningAnalytics> => {
     await new Promise(r => setTimeout(r, 500));
     return {
-      totalScreenings: 1,
+      totalScreenings: childId ? 1 : 0,
       averageScore: 1,
       riskLevelDistribution: { low: 1, medium: 0, high: 0 },
       recentScreenings: []

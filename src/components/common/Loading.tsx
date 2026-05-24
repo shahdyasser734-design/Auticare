@@ -18,8 +18,8 @@ export const LoadingSkeleton = ({ count = 1 }: { count?: number }) => (
 import { GlobalLogo } from './GlobalLogo';
 
 export const LoadingPage = () => (
-  <div className="flex flex-col items-center justify-center min-h-screen bg-soft-bg">
+  <div className="flex flex-col items-center justify-center min-h-screen bg-soft-bg dark:bg-navy-900">
     <GlobalLogo animated interactive />
-    <p className="mt-8 text-navy-600 font-medium tracking-wider">Loading AutiCare...</p>
+    <p className="mt-8 text-navy-600 dark:text-slate-100 font-medium tracking-wider">Loading AutiCare...</p>
   </div>
 );

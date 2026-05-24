@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
@@ -39,20 +39,20 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('theme', theme);
 
     if (theme === 'system') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)') as any;
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)') as MediaQueryList;
       const listener = (event: MediaQueryListEvent) => {
         applyTheme(event.matches ? 'dark' : 'light');
       };
       if ('addEventListener' in mediaQuery) {
         mediaQuery.addEventListener('change', listener);
-      } else {
-        mediaQuery.addListener(listener);
+      } else if ((mediaQuery as unknown as { addListener?: (fn: (e: MediaQueryListEvent) => void) => void }).addListener) {
+        (mediaQuery as unknown as { addListener: (fn: (e: MediaQueryListEvent) => void) => void }).addListener(listener);
       }
       return () => {
         if ('removeEventListener' in mediaQuery) {
           mediaQuery.removeEventListener('change', listener);
-        } else {
-          mediaQuery.removeListener(listener);
+        } else if ((mediaQuery as unknown as { removeListener?: (fn: (e: MediaQueryListEvent) => void) => void }).removeListener) {
+          (mediaQuery as unknown as { removeListener: (fn: (e: MediaQueryListEvent) => void) => void }).removeListener(listener);
         }
       };
     }
@@ -70,10 +70,4 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 };
 
-export const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error('useTheme must be used within ThemeProvider');
-  }
-  return context;
-};
+export default ThemeContext;
