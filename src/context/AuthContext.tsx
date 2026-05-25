@@ -12,9 +12,19 @@ const getErrorMessage = (error: unknown, fallback = 'An error occurred') => {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const stored = localStorage.getItem('user');
+      return stored && stored !== 'undefined' ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('isAuthenticated') === 'true';
+  });
 
   const normalizeAndSetUser = (currentUser: User | null) => {
     if (!currentUser) return;
@@ -30,20 +40,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const init = async () => {
       const token = localStorage.getItem('token');
-
+      const isAuthStr = localStorage.getItem('isAuthenticated');
+      
       if (!token) {
-        setLoading(false);
+        setIsAuthenticated(false);
+        setUser(null);
         return;
       }
-
-      try {
-        const currentUser = await authService.getCurrentUser();
-        normalizeAndSetUser(currentUser);
-      } catch {
-        localStorage.clear();
-        setUser(null);
-      } finally {
-        setLoading(false);
+      
+      // We already synchronously read the state.
+      // If we don't have a user but we are authenticated, we might need to fetch.
+      // But since user is also stored, we don't strictly need to fetch.
+      if (!user && isAuthStr === 'true') {
+        try {
+          const currentUser = await authService.getCurrentUser();
+          normalizeAndSetUser(currentUser);
+        } catch {
+          // If fetch fails, we don't clear everything immediately to avoid harsh redirects
+          // But we could clear if token is invalid.
+        }
       }
     };
 
@@ -63,9 +78,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       localStorage.setItem('token', data?.token);
       if (data?.role) localStorage.setItem('role', data.role);
-      localStorage.setItem('user', JSON.stringify(data?.user));
       
-      normalizeAndSetUser(data?.user);
+      const userToStore = data?.user || { email, role: data?.role };
+      localStorage.setItem('user', JSON.stringify(userToStore));
+      localStorage.setItem('isAuthenticated', 'true');
+      
+      setIsAuthenticated(true);
+      normalizeAndSetUser(userToStore);
       return data;
     } catch (error) {
       const errMsg = getErrorMessage(error, 'Login failed');
@@ -86,6 +105,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       if (data.user) {
         normalizeAndSetUser(data.user);
+        localStorage.setItem('isAuthenticated', 'true');
+        setIsAuthenticated(true);
       }
     } catch (error) {
       const errMsg = getErrorMessage(error, 'Signup failed');
@@ -100,6 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     void authService.logout();
     localStorage.clear();
     setUser(null);
+    setIsAuthenticated(false);
   };
 
   const forgotPassword = async (email: string) => {
@@ -132,7 +154,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     user,
     loading,
     error,
-    isAuthenticated: !!user,
+    isAuthenticated,
     login,
     signup,
     logout,

@@ -19,6 +19,12 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
   const { isAuthenticated, loading, user } = useAuth();
   const location = useLocation();
 
+  // Temporary debug logs requested by user
+  console.log("TOKEN:", localStorage.getItem('token'));
+  console.log("USER:", user);
+  console.log("AUTH:", isAuthenticated);
+  console.log("REDIRECT:", window.location.pathname);
+
   if (loading) {
     return <LoadingPage />;
   }
