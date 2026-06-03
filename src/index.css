@@ -1,0 +1,272 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;/* ============================================================
+   CSS VARIABLES – LIGHT & DARK
+   ============================================================ */
+:root {
+  color-scheme: light;
+  font-family: 'Inter', system-ui, sans-serif;
+
+  /* Light mode palette */
+  --bg: #fdf8f3;
+  --bg-secondary: #f5ede2;
+  --surface: rgba(255, 250, 245, 0.96);
+  --surface-strong: #fff;
+  --surface-muted: rgba(255, 250, 245, 0.7);
+  --border: rgba(180, 140, 100, 0.2);
+  --text: #1a1410;
+  --muted: #7a6a5a;
+  --accent: #e07c2e;
+  --accent-strong: #c4621a;
+  --shadow: 0 24px 80px -36px rgba(224, 124, 46, 0.25);
+}
+
+.dark {
+  color-scheme: dark;
+  --bg: #020617;
+  --bg-secondary: #0f172a;
+  --surface: rgba(15, 23, 42, 0.94);
+  --surface-strong: rgba(15, 23, 42, 1);
+  --surface-muted: rgba(15, 23, 42, 0.72);
+  --border: rgba(148, 163, 184, 0.18);
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent-strong: #0ea5e9;
+  --shadow: 0 24px 80px -36px rgba(14, 165, 233, 0.95);
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+@layer base {
+  * {
+    @apply transition-colors duration-300 ease-out;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .dark body {
+    background: radial-gradient(
+        circle at top left,
+        rgba(56, 189, 248, 0.12),
+        transparent 24%
+      ),
+      radial-gradient(
+        circle at top right,
+        rgba(168, 85, 247, 0.12),
+        transparent 20%
+      ),
+      var(--bg);
+  }
+
+  button, input, select, textarea {
+    font: inherit;
+  }
+
+  img, picture, video, iframe, svg {
+    max-width: 100%;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+@layer utilities {
+  .glass-card {
+    @apply rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl;
+  }
+
+  .glass-button {
+    @apply inline-flex items-center justify-center rounded-full bg-white/10 border border-white/10 px-4 py-2 text-sm font-semibold text-white transition-all duration-300 hover:bg-white/15;
+  }
+
+  /* Animations */
+  .animate-spin-slow    { animation: spin 8s linear infinite; }
+  .animate-fade-in      { animation: fadeIn 0.6s ease-out; }
+  .animate-slide-up     { animation: slideUp 0.8s ease-out; }
+  .animate-float        { animation: float 4s ease-in-out infinite; }
+  .animate-float-slow   { animation: floatSlow 7s ease-in-out infinite; }
+  .animate-float-delayed {
+    animation: floatSlow 7s ease-in-out infinite;
+    animation-delay: 3.5s;
+  }
+  .animate-pulse-glow   { animation: pulseGlow 2.5s ease-in-out infinite; }
+  .animate-pulse-slow   { animation: pulseSlow 5s ease-in-out infinite; }
+
+  /* Capsule progress tube fill */
+  .animate-tube-fill {
+    animation: tubeFill 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  /* Particle drift */
+  .animate-particle-1 { animation: particleDrift1 6s ease-in-out infinite; }
+  .animate-particle-2 { animation: particleDrift2 8s ease-in-out infinite; animation-delay: 2s; }
+  .animate-particle-3 { animation: particleDrift3 5s ease-in-out infinite; animation-delay: 1s; }
+
+  /* Puzzle float */
+  .animate-puzzle-1 { animation: puzzleFloat1 9s ease-in-out infinite; }
+  .animate-puzzle-2 { animation: puzzleFloat2 11s ease-in-out infinite; animation-delay: 4s; }
+
+  /* Stethoscope glow */
+  .animate-stethoscope { animation: stethoscopeGlow 3s ease-in-out infinite; }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Responsive image helpers */
+  .img-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+  }
+
+  .img-cover-top {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+  }
+}
+
+/* ============================================================
+   KEYFRAMES
+   ============================================================ */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-12px); }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50%       { transform: translateY(-18px) rotate(1.5deg); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.5; filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.3)); }
+  50%       { opacity: 1;   filter: drop-shadow(0 0 16px rgba(59, 130, 246, 0.6)); }
+}
+
+@keyframes pulseSlow {
+  0%, 100% { opacity: 0.35; transform: scale(0.97); }
+  50%       { opacity: 0.65; transform: scale(1.03); }
+}
+
+/* Capsule tube fill */
+@keyframes tubeFill {
+  from { width: 0%; }
+  to   { width: var(--tube-width, 0%); }
+}
+
+/* Flowing shimmer inside tube */
+@keyframes tubeShimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* Particles */
+@keyframes particleDrift1 {
+  0%, 100% { transform: translateY(0) translateX(0) scale(1); opacity: 0.6; }
+  33%       { transform: translateY(-20px) translateX(10px) scale(1.1); opacity: 1; }
+  66%       { transform: translateY(-10px) translateX(-8px) scale(0.9); opacity: 0.7; }
+}
+
+@keyframes particleDrift2 {
+  0%, 100% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0.5; }
+  50%       { transform: translateY(-25px) translateX(-15px) rotate(180deg); opacity: 0.9; }
+}
+
+@keyframes particleDrift3 {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.4; }
+  50%       { transform: translateY(-15px) scale(1.2); opacity: 0.8; }
+}
+
+/* Puzzle float */
+@keyframes puzzleFloat1 {
+  0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.15; }
+  25%       { transform: translateY(-22px) rotate(8deg); opacity: 0.3; }
+  75%       { transform: translateY(-10px) rotate(-5deg); opacity: 0.2; }
+}
+
+@keyframes puzzleFloat2 {
+  0%, 100% { transform: translateY(0) rotate(0deg) scale(1); opacity: 0.1; }
+  50%       { transform: translateY(-30px) rotate(-12deg) scale(1.1); opacity: 0.25; }
+}
+
+/* Stethoscope glow */
+@keyframes stethoscopeGlow {
+  0%, 100% {
+    opacity: 0.2;
+    filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.3));
+  }
+  50% {
+    opacity: 0.5;
+    filter: drop-shadow(0 0 20px rgba(56, 189, 248, 0.7));
+  }
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar        { width: 8px; height: 8px; }
+::-webkit-scrollbar-track  { background: rgba(15, 23, 42, 0.4); }
+::-webkit-scrollbar-thumb  { background: rgba(56, 189, 248, 0.35); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(56, 189, 248, 0.55); }
+
+button {
+  @apply outline-none;
+}
+
+/* ============================================================
+   RESPONSIVE HELPERS
+   ============================================================ */
+@media (max-width: 640px) {
+  .hide-mobile { display: none !important; }
+}
+
+@media (min-width: 641px) {
+  .hide-desktop { display: none !important; }
+}
