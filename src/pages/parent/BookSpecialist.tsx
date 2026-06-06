@@ -8,6 +8,8 @@ import { specialistsService, type Specialist } from '../../services/api/speciali
 import { LoadingSpinner } from '../../components/common/Loading';
 import { BookingModal } from '../../components/specialists/BookingModal';
 import { ROUTES } from '../../utils/constants';
+import { getFormattedImageUrl } from '../../utils/stringUtils';
+
 
 interface SpecialistDisplay extends Specialist {
   treatedCases: number;
@@ -40,7 +42,7 @@ const SpecialistCard = ({ data, type, onBook }: { data: SpecialistDisplay; type:
       <div className="flex items-center gap-6">
         <div className="w-20 h-20 bg-soft-gray dark:bg-slate-700 rounded-full flex items-center justify-center text-3xl shrink-0 text-navy-500 dark:text-slate-350 overflow-hidden">
           {data.profileImage ? (
-            <img src={data.profileImage} alt={data.name} className="w-full h-full object-cover" />
+            <img src={getFormattedImageUrl(data.profileImage)} alt={data.name} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full bg-navy-100 dark:bg-slate-900 flex items-center justify-center">
               {type === 'doctor' ? '👨‍⚕️' : '🧑‍🏫'}

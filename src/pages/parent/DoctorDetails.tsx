@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '../../layouts/MainLayout';
 import { specialistsService, type Specialist } from '../../services/api/specialists';
 import { BookingModal } from '../../components/specialists/BookingModal';
+import { getFormattedImageUrl } from '../../utils/stringUtils';
+
 
 const isInvalid = (val: unknown) => 
   val === null || 
@@ -120,7 +122,7 @@ export const DoctorDetails = () => {
               <div className="aspect-square overflow-hidden bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/30 dark:to-cyan-900/30">
                 {doctor.profileImage ? (
                   <img
-                    src={doctor.profileImage}
+                    src={getFormattedImageUrl(doctor.profileImage)}
                     alt={doctor.name}
                     className="h-full w-full object-cover"
                   />

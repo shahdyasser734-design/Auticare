@@ -38,3 +38,17 @@ export const highlightText = (text: string, query: string): string => {
 export const generateRandomId = (): string => {
   return Math.random().toString(36).substring(2, 11);
 };
+
+export const getFormattedImageUrl = (image?: string): string => {
+  if (!image) return '';
+  if (
+    image.startsWith('http://') ||
+    image.startsWith('https://') ||
+    image.startsWith('data:') ||
+    image.startsWith('blob:')
+  ) {
+    return image;
+  }
+  return `https://auticare-production-828c.up.railway.app${image.startsWith('/') ? image : `/${image}`}`;
+};
+

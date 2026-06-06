@@ -2,8 +2,10 @@ import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Calendar, TrendingUp, Clock, User, FileText } from 'lucide-react';
 import type { PatientCard } from '../../services/api/dashboard';
+import { getFormattedImageUrl } from '../../utils/stringUtils';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
+
 
 interface PatientCarouselProps {
   patients: PatientCard[];
@@ -150,9 +152,7 @@ export const PatientCarousel: React.FC<PatientCarouselProps> = ({ patients, isDo
                   </div>
                   {patient.profileImage && (
                     <img
-                      src={patient.profileImage.startsWith('http') || patient.profileImage.startsWith('data:')
-                        ? patient.profileImage
-                        : `https://auticare-production-828c.up.railway.app${patient.profileImage.startsWith('/') ? patient.profileImage : `/${patient.profileImage}`}`}
+                      src={getFormattedImageUrl(patient.profileImage)}
                       alt={patient.name}
                       className="w-12 h-12 rounded-full object-cover"
                     />

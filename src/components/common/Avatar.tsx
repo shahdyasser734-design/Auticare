@@ -1,4 +1,4 @@
-import { getInitials } from '../../utils/stringUtils';
+import { getInitials, getFormattedImageUrl } from '../../utils/stringUtils';
 
 interface AvatarProps {
   name?: string;
@@ -15,9 +15,7 @@ export const Avatar = ({ name = 'User', image, size = 'md' }: AvatarProps) => {
   };
 
   if (image) {
-    const formatted = image.startsWith('http://') || image.startsWith('https://') || image.startsWith('data:')
-      ? image
-      : `https://auticare-production-828c.up.railway.app${image.startsWith('/') ? image : `/${image}`}`;
+    const formatted = getFormattedImageUrl(image);
     return (
       <img
         src={formatted}
@@ -26,6 +24,7 @@ export const Avatar = ({ name = 'User', image, size = 'md' }: AvatarProps) => {
       />
     );
   }
+
 
   return (
     <div

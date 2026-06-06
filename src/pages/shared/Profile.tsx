@@ -200,14 +200,14 @@ export const Profile = () => {
           </div>
 
           <div className="space-y-4">
-            <Input
-              label="Full Name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              disabled={!isEditing}
-              fullWidth
-            />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="Full Name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                disabled={!isEditing}
+                fullWidth
+              />
               <Input
                 label="Email Address"
                 type="email"
@@ -215,12 +215,37 @@ export const Profile = () => {
                 disabled={true}
                 fullWidth
               />
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 label="Phone Number"
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 disabled={!isEditing}
+                fullWidth
+              />
+              <Input
+                label="National ID"
+                value={user?.nationalId || ''}
+                disabled={true}
+                fullWidth
+                hint="Provided during registration"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="Account Type"
+                value={user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : ''}
+                disabled={true}
+                fullWidth
+              />
+              <Input
+                label="Joined Date"
+                value={user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                disabled={true}
                 fullWidth
               />
             </div>

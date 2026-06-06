@@ -4,6 +4,8 @@ import { MainLayout } from '../../layouts/MainLayout';
 import { specialistsService } from '../../services/api/specialistsService';
 import { BookingModal } from '../../components/specialists/BookingModal';
 import type { Specialist } from '../../types';
+import { getFormattedImageUrl } from '../../utils/stringUtils';
+
 
 const isInvalid = (val: unknown) => 
   val === null || 
@@ -171,7 +173,7 @@ export const Therapists = () => {
                   <div className="aspect-video overflow-hidden bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30">
                     {therapist.profileImage ? (
                       <img
-                        src={therapist.profileImage}
+                        src={getFormattedImageUrl(therapist.profileImage)}
                         alt={therapist.name}
                         className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                       />

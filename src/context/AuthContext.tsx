@@ -51,6 +51,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         const response = await apiClient.get<Record<string, unknown>>('/profile');
         const rawUser = response.data;
+        const email = String(rawUser.email ?? '');
+        const phone = String(
+          rawUser.phone ??
+          rawUser.phoneNumber ??
+          (email ? localStorage.getItem(`auticare.user.phone.${email}`) : '') ??
+          ''
+        );
+        const nationalId = String(
+          rawUser.nationalId ??
+          rawUser.national_id ??
+          (rawUser as any).nationalID ??
+          (email ? localStorage.getItem(`auticare.user.nationalId.${email}`) : '') ??
+          ''
+        );
         const profileImage = String(
           rawUser.profileImage ??
           rawUser.profile_image ??
@@ -67,16 +81,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         const updatedUser: User = {
           id: String(rawUser.id ?? rawUser.userId ?? ''),
-          email: String(rawUser.email ?? ''),
+          email,
           name: String(rawUser.name ?? ''),
           role: String(rawUser.role ?? 'parent').toLowerCase() as UserRole,
-          phone: String(rawUser.phone ?? ''),
+          phone,
+          nationalId,
           profileImage,
           createdAt: String(rawUser.createdAt ?? new Date().toISOString()),
         };
         normalizeAndSetUser(updatedUser);
       } catch (err) {
         console.warn('[AuthContext] Failed to sync profile from backend:', err);
+        const stored = localStorage.getItem('user');
+        if (stored && stored !== 'undefined') {
+          try {
+            const parsed = JSON.parse(stored) as User;
+            if (parsed && parsed.email) {
+              const enriched = { ...parsed };
+              if (!enriched.phone) {
+                enriched.phone = localStorage.getItem(`auticare.user.phone.${parsed.email}`) || '';
+              }
+              if (!enriched.nationalId) {
+                enriched.nationalId = localStorage.getItem(`auticare.user.nationalId.${parsed.email}`) || '';
+              }
+              setUser(enriched);
+              localStorage.setItem('user', JSON.stringify(enriched));
+            }
+          } catch {}
+        }
       }
     };
 
@@ -85,6 +117,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const normalizeAuthResponse = (data: AuthResponse) => {
     const rawUser = (data.user ?? data) as any;
+    const email = String(rawUser.email ?? '');
+    const phone = String(
+      rawUser.phone ??
+      rawUser.phoneNumber ??
+      (email ? localStorage.getItem(`auticare.user.phone.${email}`) : '') ??
+      ''
+    );
+    const nationalId = String(
+      rawUser.nationalId ??
+      rawUser.national_id ??
+      (rawUser as any).nationalID ??
+      (email ? localStorage.getItem(`auticare.user.nationalId.${email}`) : '') ??
+      ''
+    );
     const profileImage = String(
       rawUser.profileImage ??
       rawUser.profile_image ??
@@ -101,10 +147,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const user: User = {
       id: String(rawUser.id ?? data.userId ?? ''),
-      email: String(rawUser.email ?? ''),
+      email,
       name: String(rawUser.name ?? data.fullName ?? ''),
       role: String(rawUser.role ?? 'parent').toLowerCase() as UserRole,
-      phone: String(rawUser.phone ?? ''),
+      phone,
+      nationalId,
       profileImage,
       createdAt: String(rawUser.createdAt ?? new Date().toISOString()),
     };
@@ -140,6 +187,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const rawData: AuthResponse = await authService.signup(payload);
       const data = normalizeAuthResponse(rawData);
+      
+      if (payload.phone) {
+        data.user.phone = String(payload.phone);
+        if (data.user.email) {
+          localStorage.setItem(`auticare.user.phone.${data.user.email}`, String(payload.phone));
+        }
+      }
+      if (payload.nationalId) {
+        data.user.nationalId = String(payload.nationalId);
+        if (data.user.email) {
+          localStorage.setItem(`auticare.user.nationalId.${data.user.email}`, String(payload.nationalId));
+        }
+      }
+
       if (data.token) {
         localStorage.setItem('token', data.token);
       }
@@ -158,9 +219,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     void authService.logout();
-    // Remove auth-specific keys only — deliberately preserve onboarding state
-    // (latestChildId, screeningSubmitted_*, screeningResult_*, latestChildName)
-    // so that returning parents are not treated as new users after re-login.
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('userId');
@@ -201,6 +259,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const newUser = { ...user, ...fields };
     setUser(newUser);
     localStorage.setItem('user', JSON.stringify(newUser));
+    if (fields.phone && newUser.email) {
+      localStorage.setItem(`auticare.user.phone.${newUser.email}`, String(fields.phone));
+    }
+    if (fields.nationalId && newUser.email) {
+      localStorage.setItem(`auticare.user.nationalId.${newUser.email}`, String(fields.nationalId));
+    }
   };
 
   const value: AuthContextType = {
