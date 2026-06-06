@@ -17,19 +17,23 @@ import { LoadingSpinner } from '../../components/common/Loading';
 // All extra fields default to sensible values so the existing UI never crashes.
 // ---------------------------------------------------------------------------
 const normaliseResult = (raw: Record<string, unknown>, childName: string): ScreeningResult => {
-  const predictionClass = String(raw.predictionClass ?? raw.prediction_class ?? 'NO');
   const confidenceScore = Number(raw.confidenceScore ?? raw.confidence_score ?? 0);
-  const isPositive = predictionClass.toUpperCase() === 'YES';
+  const aqScore = Number(raw.aqScore ?? raw.aq_score ?? 0);
+  
+  const rawRisk = String(raw.riskLevel ?? (aqScore >= 4 ? 'high' : 'low'));
+  const rawProb = String(raw.probability ?? (aqScore >= 4 ? 'High' : 'Low'));
 
-  // Swap them to correctly map to expected types on frontend.
-  const rawRisk = String(raw.riskLevel ?? (isPositive ? 'high' : 'low'));
-  const rawProb = String(raw.probability ?? `${(confidenceScore * 100).toFixed(2)}%`);
+  // Infer autism status from riskLevel, probability, and aqScore rather than relying on predictionClass
+  const isPositive = rawProb.toLowerCase() === 'high' || 
+                     rawRisk.toLowerCase().includes('high') || 
+                     rawRisk.toLowerCase() === 'medium' ||
+                     aqScore >= 4;
 
   return {
     childName,
     predictionClass: isPositive ? 'ASD Positive' : 'ASD Negative',
     confidenceScore: Math.round(confidenceScore * 100), // fraction → percentage
-    aqScore: Number(raw.aqScore ?? raw.aq_score ?? 0),
+    aqScore,
     riskLevel: rawRisk.toLowerCase(),
     probability: rawProb,
     socialAttention:     Number(raw.socialAttention     ?? raw.social_attention     ?? 0),
