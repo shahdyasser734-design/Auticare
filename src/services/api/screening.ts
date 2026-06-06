@@ -21,9 +21,8 @@ export interface ScreeningStartResponse {
 }
 
 export interface BackendScreeningAnswer {
-  QuestionId: string | number;
-  Answer: number;
-  OptionId?: string;
+  questionId: number;
+  answerValue: number;
 }
 
 
@@ -42,17 +41,18 @@ export const screeningService = {
 
   submitScreening: async (childId: string, answers: BackendScreeningAnswer[] ): Promise<ScreeningResult> => {
     const response = await apiClient.post<ScreeningResult>('/screening/submit', {
-      ChildId: Number(childId),
-      Answers: answers,
+      childId: Number(childId),
+      answers: answers,
     });
     return response.data;
   },
 
   // New helper: submit answers using a sessionId and typed answer objects
-  submitAnswers: async (sessionId: string, answers: BackendScreeningAnswer[]): Promise<ScreeningResult> => {
+  submitAnswers: async (_sessionId: string, answers: BackendScreeningAnswer[], childId?: string): Promise<ScreeningResult> => {
+    const activeChildId = childId || localStorage.getItem('latestChildId') || '0';
     const response = await apiClient.post<ScreeningResult>('/screening/submit', {
-      SessionId: sessionId,
-      Answers: answers,
+      childId: Number(activeChildId),
+      answers: answers,
     });
     return response.data;
   },

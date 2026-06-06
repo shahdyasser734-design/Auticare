@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '../../layouts/MainLayout';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
@@ -6,11 +7,16 @@ import { Select } from '../../components/common/Select';
 import { Alert } from '../../components/common/Alert';
 import { useTheme } from '../../context/useTheme';
 import { useLanguage } from '../../context/useLanguage';
+import { useAuth } from '../../context/useAuth';
+import { ROUTES } from '../../utils/constants';
 import type { SupportedLanguage } from '../../context/LanguageContext';
 
 export const Settings = () => {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const [emailNotifications, setEmailNotifications] = useState(() => {
     try {
@@ -37,6 +43,13 @@ export const Settings = () => {
     );
     setAlert({ type: 'success', message: t.settingsSaved });
     setTimeout(() => setAlert(null), 3000);
+  };
+
+  const handleDeleteAccount = () => {
+    // Clean up local storage completely (remove all user details, cached state, etc.)
+    localStorage.clear();
+    logout();
+    navigate(ROUTES.LOGIN);
   };
 
   return (
@@ -116,7 +129,7 @@ export const Settings = () => {
             <p className="text-slate-400">
               These actions cannot be undone. Please be careful.
             </p>
-            <Button variant="danger" fullWidth>
+            <Button variant="danger" fullWidth onClick={() => setShowDeleteModal(true)}>
               {t.deleteAccount}
             </Button>
           </div>
@@ -128,6 +141,28 @@ export const Settings = () => {
           </Button>
         </div>
       </div>
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
+          <div className="bg-slate-900 border border-white/10 rounded-3xl p-6 max-w-md w-full space-y-6 shadow-2xl">
+            <div className="text-center space-y-2">
+              <span className="text-4xl" role="img" aria-label="warning">⚠️</span>
+              <h3 className="text-2xl font-bold text-white">Delete Account?</h3>
+              <p className="text-slate-400 text-sm">
+                This action is permanent and cannot be undone. All child profiles, screenings, bookings, and medical history will be permanently deleted.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Button variant="outline" fullWidth onClick={() => setShowDeleteModal(false)}>
+                Cancel
+              </Button>
+              <Button variant="danger" fullWidth onClick={handleDeleteAccount}>
+                Yes, Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 };

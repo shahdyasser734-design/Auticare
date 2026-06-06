@@ -140,7 +140,8 @@ export const ParentScreeningResults = () => {
           try {
             const data = await screeningService.getResults(id);
             if (data && data.length > 0) {
-              const raw = data[0] as unknown as Record<string, unknown>;
+              const sorted = [...data].sort((a, b) => new Date(String((b as any).createdAt ?? '')).getTime() - new Date(String((a as any).createdAt ?? '')).getTime());
+              const raw = sorted[0] as unknown as Record<string, unknown>;
               console.log('Fetched screening result from backend:', raw);
               setResult(normaliseResult(raw, childName));
               backendResultFetched = true;

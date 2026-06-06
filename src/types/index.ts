@@ -59,6 +59,7 @@ export interface AuthContextType {
   forgotPassword: (email: string) => Promise<void>;
   verifyEmail: (code: string) => Promise<void>;
   clearError: () => void;
+  updateUserFields: (fields: Partial<User>) => void;
 }
 
 export interface ScreeningQuestion {

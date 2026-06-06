@@ -1,4 +1,5 @@
 import apiClient from '../apiClient';
+import { fileUploadService } from './fileUpload';
 
 export interface Profile {
   id: string;
@@ -26,12 +27,18 @@ export const profileService = {
   },
 
   updateProfilePicture: async (file: File): Promise<Profile> => {
-    const formData = new FormData();
-    formData.append('picture', file);
-    const response = await apiClient.put<Profile>('/profile/picture', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+    const uploadRes = await fileUploadService.uploadFile(file);
+    const imageUrl = uploadRes.fileUrl;
+    
+    // PUT /profile/picture expects string URL
+    const response = await apiClient.put<Profile>('/profile/picture', JSON.stringify(imageUrl), {
+      headers: { 'Content-Type': 'application/json' },
     });
-    return response.data;
+    
+    return {
+      ...response.data,
+      profileImage: imageUrl, // Ensure the updated URL is populated in the returned profile
+    };
   },
 
   updateLicense: async (licenseNumber: string, licenseFile: File): Promise<Profile> => {

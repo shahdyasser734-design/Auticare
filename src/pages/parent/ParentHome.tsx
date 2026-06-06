@@ -242,7 +242,7 @@ export const ParentHome = () => {
                         : 'bg-primary-50/40 border-primary-100 text-slate-800 font-medium'
                     }`}>
                       <p className="font-bold text-slate-900 dark:text-white mb-0.5">{n.title}</p>
-                      <p className="text-slate-600 dark:text-slate-400">{n.content}</p>
+                      <p className="text-slate-600 dark:text-slate-400">{n.message}</p>
                       <p className="text-[10px] text-slate-400 mt-1">{formatDateTime(n.createdAt)}</p>
                     </div>
                   ))

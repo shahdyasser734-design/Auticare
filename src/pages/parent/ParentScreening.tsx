@@ -233,9 +233,8 @@ export const ParentScreening = () => {
           const answerValue = opt?.value ?? 0;
           const parsedQuestionId = Number(String(q?.id ?? qId).replace(/^q/i, ''));
           return {
-            QuestionId: Number.isNaN(parsedQuestionId) ? String(qId) : parsedQuestionId,
-            Answer: answerValue as unknown as number,
-            OptionId: optionId,
+            questionId: Number.isNaN(parsedQuestionId) ? 0 : parsedQuestionId,
+            answerValue: answerValue,
           };
         });
 
@@ -246,7 +245,7 @@ export const ParentScreening = () => {
             // Prefer session-based submit if available
             let res;
             if (sessionId) {
-              res = await screeningService.submitAnswers(sessionId, payloadAnswers as BackendScreeningAnswer[]);
+              res = await screeningService.submitAnswers(sessionId, payloadAnswers as BackendScreeningAnswer[], childId);
             } else {
               // Fallback to legacy childId-based submit
               res = await screeningService.submitScreening(childId, payloadAnswers as BackendScreeningAnswer[]);
@@ -254,30 +253,11 @@ export const ParentScreening = () => {
             submitResult = res as unknown as Record<string, unknown>;
             localStorage.setItem(`screeningResult_${childId}`, JSON.stringify(submitResult));
           } catch (e) {
-            // Save answers for retry/debugging
             localStorage.setItem(`screening_answers_${childId}`, JSON.stringify(payloadAnswers));
             console.error('Screening submit error', e);
-            
-            // Generate a realistic mock result for demonstration if backend fails
-            const totalScore = payloadAnswers.reduce((sum, ans) => sum + ans.Answer, 0);
-            const riskLevel = totalScore >= 7 ? 'high' : totalScore >= 4 ? 'medium' : 'low';
-            const mockResult = {
-              childName: childName || 'Child',
-              predictionClass: riskLevel === 'high' ? 'ASD Risk' : riskLevel === 'medium' ? 'Monitor' : 'Low Risk',
-              confidenceScore: 0.75 + Math.random() * 0.20,
-              aqScore: totalScore * 10,
-              riskLevel,
-              probability: `${Math.round((0.75 + Math.random() * 0.20) * 100)}%`,
-              socialAttention: Math.round(Math.random() * 100),
-              jointAttention: Math.round(Math.random() * 100),
-              socialCommunication: Math.round(Math.random() * 100),
-              language: Math.round(Math.random() * 100),
-              imagination: Math.round(Math.random() * 100),
-              repetitiveBehavior: Math.round(Math.random() * 100),
-              createdAt: new Date().toISOString(),
-            };
-            submitResult = mockResult;
-            localStorage.setItem(`screeningResult_${childId}`, JSON.stringify(mockResult));
+            setError('Failed to submit screening. Please check your connection and try again.');
+            setSubmitting(false);
+            return;
           }
 
           if (user?.id) {

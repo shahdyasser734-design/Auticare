@@ -3,12 +3,14 @@ import apiClient from '../apiClient';
 export interface Notification {
   id: string;
   userId: string;
-  type: 'session' | 'booking' | 'screening' | 'message' | 'system';
+  type: 'session' | 'booking' | 'screening' | 'message' | 'system' | 'treatment-plan' | 'reminder' | 'notes';
   title: string;
-  content: string;
+  message: string;
+  content?: string;
   isRead: boolean;
   createdAt: string;
   link?: string;
+  relatedId?: string;
 }
 
 export const notificationService = {

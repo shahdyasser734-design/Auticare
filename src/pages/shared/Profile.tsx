@@ -10,7 +10,7 @@ import { profileService } from '../../services/api/profile';
 import { User, Briefcase, Award, Loader2, Upload } from 'lucide-react';
 
 export const Profile = () => {
-  const { user } = useAuth();
+  const { user, updateUserFields } = useAuth();
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -60,7 +60,8 @@ export const Profile = () => {
     if (e.target.files && e.target.files[0]) {
       setUploadingPic(true);
       try {
-        await profileService.updateProfilePicture(e.target.files[0]);
+        const updated = await profileService.updateProfilePicture(e.target.files[0]);
+        updateUserFields({ profileImage: updated.profileImage });
         setAlert({ type: 'success', message: 'Profile picture updated successfully!' });
       } catch (err) {
         console.error(err);

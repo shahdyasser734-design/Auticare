@@ -34,8 +34,7 @@ export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
         { label: t.home, href: ROUTES.PARENT_HOME },
         { label: t.autismScreening, href: ROUTES.PARENT_SCREENING },
         { label: t.screeningResults, href: ROUTES.PARENT_SCREENING_RESULTS },
-        { label: t.doctors, href: ROUTES.PARENT_DOCTORS },
-        { label: t.therapists, href: ROUTES.PARENT_THERAPISTS },
+        { label: t.bookSpecialist, href: ROUTES.PARENT_BOOK_SPECIALIST },
         { label: t.myBookings, href: ROUTES.PARENT_MY_BOOKINGS },
         { label: t.sessions, href: ROUTES.PARENT_SESSIONS },
       ],
@@ -56,7 +55,14 @@ export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
     return [...roleMenu, ...baseItems];
   };
 
-  const isActive = (href: string) => location.pathname === href;
+  const isActive = (href: string) => {
+    if (href === ROUTES.PARENT_BOOK_SPECIALIST) {
+      return location.pathname === ROUTES.PARENT_BOOK_SPECIALIST ||
+             location.pathname === ROUTES.PARENT_DOCTORS ||
+             location.pathname === ROUTES.PARENT_THERAPISTS;
+    }
+    return location.pathname === href;
+  };
   const menuItems = getMenuItems();
 
   return (

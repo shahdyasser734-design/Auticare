@@ -11,19 +11,34 @@ const mergeBookings = (backend: Booking[] = []) => {
 // Helper to create notification on booking status change
 const triggerNotificationOnStatusChange = async (booking: Booking, status: Booking['status']) => {
   try {
-    const specialistName = booking.specialistName || 'Your Doctor';
+    const specialistName = booking.specialistName || 'Ahmed';
     let notificationMessage = '';
     
+    const isTherapist = booking.specialistType === 'therapist';
+    const rolePrefix = isTherapist ? 'Speech Therapist' : 'Dr.';
+    
     if (status === 'confirmed' || status === 'approved') {
-      notificationMessage = `Dr. ${specialistName} approved your booking request.`;
+      notificationMessage = `${rolePrefix} ${specialistName} approved your booking request.`;
+      if (isTherapist) {
+        notificationMessage = `Speech Therapist ${specialistName} accepted your session request.`;
+      }
     } else if (status === 'cancelled') {
-      notificationMessage = `Dr. ${specialistName} rejected your booking request.`;
+      notificationMessage = `${rolePrefix} ${specialistName} rejected your booking request.`;
     }
     
     if (notificationMessage && booking.parentId) {
       console.log(`[NOTIFICATION] Booking ${booking.id} status changed to ${status}`);
       console.log(`[NOTIFICATION] Message for parent ${booking.parentId}: ${notificationMessage}`);
-      // Note: Backend should create and send notification
+      mockState.addNotification({
+        id: `mock-notification-${Date.now()}`,
+        userId: booking.parentId,
+        type: 'booking',
+        title: status === 'cancelled' ? 'Booking rejected' : 'Booking approved',
+        message: notificationMessage,
+        relatedId: booking.id,
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      });
     }
   } catch (err) {
     console.warn('[NOTIFICATION] Failed to trigger notification:', err);
@@ -40,6 +55,21 @@ export const bookingsService = {
       const booking = response.data;
       mockState.addBooking(booking);
       console.log('[BOOKING] Successfully created booking:', booking);
+      
+      // Add notification for booking request received
+      const specialistName = booking.specialistName || 'Ahmed';
+      const rolePrefix = booking.specialistType === 'therapist' ? 'Speech Therapist' : 'Dr.';
+      mockState.addNotification({
+        id: `mock-notification-${Date.now()}`,
+        userId: booking.parentId,
+        type: 'booking',
+        title: 'Booking request sent',
+        message: `${rolePrefix} ${specialistName} received your booking request.`,
+        relatedId: booking.id,
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      });
+
       return booking;
     } catch (err) {
       console.warn('[BOOKING] API booking creation failed, using mock:', err);
@@ -60,13 +90,27 @@ export const bookingsService = {
         duration: 60,
         notes: data.notes || data.reason || 'Session request pending.',
         dateTime: data.dateTime ?? `${data.preferredDate ?? new Date().toISOString().split('T')[0]}T${data.preferredTime ?? '10:00'}`,
-        specialistName: 'Assigned Specialist',
+        specialistName: data.specialistType === 'therapist' ? 'Sarah' : 'Ahmed',
         joinLink: '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
       mockState.addBooking(newBooking);
       console.log('[BOOKING] Created new mock booking:', newBooking);
+
+      // Add notification for mock booking request received
+      const prefix = newBooking.specialistType === 'therapist' ? 'Speech Therapist' : 'Dr.';
+      mockState.addNotification({
+        id: `mock-notification-${Date.now()}`,
+        userId: newBooking.parentId,
+        type: 'booking',
+        title: 'Booking request sent',
+        message: `${prefix} ${newBooking.specialistName} received your booking request.`,
+        relatedId: newBooking.id,
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      });
+
       return newBooking;
     }
   },

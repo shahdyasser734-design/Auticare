@@ -171,6 +171,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
   };
 
+  const updateUserFields = (fields: Partial<User>) => {
+    if (!user) return;
+    const newUser = { ...user, ...fields };
+    setUser(newUser);
+    localStorage.setItem('user', JSON.stringify(newUser));
+  };
+
   const value: AuthContextType = {
     user,
     loading,
@@ -182,6 +189,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     forgotPassword,
     verifyEmail,
     clearError,
+    updateUserFields,
   };
 
   return (
