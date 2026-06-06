@@ -91,8 +91,8 @@ const LOCAL_QUESTIONS: IScreeningQuestion[] = [
     description: '',
     pageNumber: 8,
     options: [
-      { id: 'q8_yes', label: 'YES — simple words like "mama", "bye"', value: 'YES' as unknown as number },
-      { id: 'q8_no', label: 'NO — more complex phrases and sentence-like speech', value: 'NO' as unknown as number },
+      { id: 'q8_yes', label: 'YES — simple words like "mama", "bye"', value: 1 },
+      { id: 'q8_no', label: 'NO — more complex phrases and sentence-like speech', value: 0 },
     ],
   },
   {

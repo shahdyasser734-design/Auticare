@@ -21,15 +21,14 @@ const normaliseResult = (raw: Record<string, unknown>, childName: string): Scree
   const confidenceScore = Number(raw.confidenceScore ?? raw.confidence_score ?? 0);
   const isPositive = predictionClass.toUpperCase() === 'YES';
 
-  // Backend returned fields are often swapped: probability holds risk level (e.g. 'High'), riskLevel holds score (e.g. '90%').
   // Swap them to correctly map to expected types on frontend.
-  const rawRisk = String(raw.probability ?? raw.riskLevel ?? (isPositive ? 'high' : 'low'));
-  const rawProb = String(raw.riskLevel ?? raw.probability ?? `${(confidenceScore * 100).toFixed(2)}%`);
+  const rawRisk = String(raw.riskLevel ?? (isPositive ? 'high' : 'low'));
+  const rawProb = String(raw.probability ?? `${(confidenceScore * 100).toFixed(2)}%`);
 
   return {
     childName,
     predictionClass: isPositive ? 'ASD Positive' : 'ASD Negative',
-    confidenceScore: Math.round(confidenceScore * 100 * 100) / 100, // fraction → percentage
+    confidenceScore: Math.round(confidenceScore * 100), // fraction → percentage
     aqScore: Number(raw.aqScore ?? raw.aq_score ?? 0),
     riskLevel: rawRisk.toLowerCase(),
     probability: rawProb,
