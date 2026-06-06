@@ -13,6 +13,8 @@ import therapy3 from '../assets/images/therapy-3.jpg';
 import therapy4 from '../assets/images/therapy-4.jpg';
 import therapyOnline from '../assets/images/therapy-online.jpg';
 import therapySupport from '../assets/images/therapy-support.jpg';
+import therapySpeech from '../assets/images/therapy-speech.jpg';
+
 
 const specialists = [
   {
@@ -93,8 +95,10 @@ const therapyServices = [
     title: 'Speech & Communication',
     description: 'Personalized support to enhance verbal and non-verbal communication abilities.',
     image: therapyOnline,
+    cssBackground: therapySpeech,
     color: 'from-emerald-500 to-emerald-600',
   },
+
   {
     title: 'Occupational Therapy',
     description: 'Helping children build independence through adaptive daily living skills.',
@@ -341,11 +345,19 @@ export const HomeLanding = () => {
                   style={{ animationDelay: `${idx * 100}ms` }}
                 >
                   <div className="relative aspect-[4/3] lg:aspect-[16/9] w-full overflow-hidden">
-                    <img
-                      src={service.image}
-                      alt={service.title}
-                      className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
-                    />
+                    {(service as any).cssBackground ? (
+                      // CSS background-image approach for crisp, sharp rendering
+                      <div
+                        className="absolute inset-0 w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-700"
+                        style={{ backgroundImage: `url(${(service as any).cssBackground})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+                      />
+                    ) : (
+                      <img
+                        src={service.image}
+                        alt={service.title}
+                        className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
+                      />
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent" />
                     <div className={`absolute inset-0 bg-gradient-to-br ${service.color} opacity-0 group-hover:opacity-30 transition-opacity duration-500`} />
                   </div>
@@ -359,6 +371,7 @@ export const HomeLanding = () => {
                 </div>
               ))}
             </div>
+
           </div>
         </section>
 
