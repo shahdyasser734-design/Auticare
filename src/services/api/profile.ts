@@ -1,5 +1,4 @@
 import apiClient from '../apiClient';
-import { fileUploadService } from './fileUpload';
 
 export interface Profile {
   id: string;
@@ -27,13 +26,41 @@ export const profileService = {
   },
 
   updateProfilePicture: async (file: File): Promise<Profile> => {
-    // 1. Upload the file and get back a URL
-    const uploadRes = await fileUploadService.uploadFile(file);
-    const imageUrl = uploadRes.fileUrl;
+    // 1. Upload the file via multipart/form-data
+    const formData = new FormData();
+    formData.append('file', file);
+    const uploadRes = await apiClient.post<unknown>('/FileUpload/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
 
-    // 2. PUT /profile/picture — backend expects a plain JSON string (schema type: "string").
-    //    Must use JSON.stringify: Axios sends raw strings as plain bytes (no quotes),
-    //    which is invalid JSON. JSON.stringify wraps it in quotes: "https://..."
+    const raw = uploadRes.data;
+    console.log('[profile] FileUpload/upload raw response:', raw);
+
+    // Defensively extract URL — backend may use different field names
+    let imageUrl: string | null = null;
+    if (typeof raw === 'string' && raw.startsWith('http')) {
+      imageUrl = raw;
+    } else if (raw && typeof raw === 'object') {
+      const obj = raw as Record<string, unknown>;
+      imageUrl = (
+        (typeof obj.fileUrl === 'string' && obj.fileUrl) ||
+        (typeof obj.url === 'string' && obj.url) ||
+        (typeof obj.imageUrl === 'string' && obj.imageUrl) ||
+        (typeof obj.filePath === 'string' && obj.filePath) ||
+        (typeof obj.path === 'string' && obj.path) ||
+        (typeof obj.FileUrl === 'string' && obj.FileUrl) ||
+        null
+      );
+    }
+
+    if (!imageUrl) {
+      console.error('[profile] Could not extract URL from FileUpload response:', raw);
+      throw new Error('File upload succeeded but returned no URL. Raw response: ' + JSON.stringify(raw));
+    }
+
+    console.log('[profile] Extracted imageUrl:', imageUrl);
+
+    // 2. PUT /profile/picture — backend expects a JSON string body (schema type: "string")
     await apiClient.put('/profile/picture', JSON.stringify(imageUrl), {
       headers: { 'Content-Type': 'application/json' },
     });
@@ -45,6 +72,7 @@ export const profileService = {
       profileImage: imageUrl,
     };
   },
+
 
   updateLicense: async (licenseNumber: string, licenseFile: File): Promise<Profile> => {
     const formData = new FormData();

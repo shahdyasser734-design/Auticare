@@ -79,10 +79,12 @@ export const Profile = () => {
       URL.revokeObjectURL(localUrl);
       setAlert({ type: 'success', message: 'Profile picture updated successfully!' });
     } catch (err) {
-      console.error(err);
+      console.error('[Profile] Picture upload error:', err);
       setPreviewUrl(null);
       URL.revokeObjectURL(localUrl);
-      setAlert({ type: 'error', message: 'Failed to update profile picture. Please try again.' });
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      setAlert({ type: 'error', message: `Upload failed: ${msg}` });
+
     } finally {
       setUploadingPic(false);
       setTimeout(() => setAlert(null), 3000);
