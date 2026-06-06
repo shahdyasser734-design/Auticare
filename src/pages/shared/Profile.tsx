@@ -29,7 +29,6 @@ export const Profile = () => {
   const [uploadingPic, setUploadingPic] = useState(false);
   const [uploadingLicense, setUploadingLicense] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const licenseInputRef = useRef<HTMLInputElement>(null);
 
 
   const isSpecialist = user?.role === 'doctor' || user?.role === 'therapist';
