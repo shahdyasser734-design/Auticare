@@ -31,9 +31,10 @@ export const profileService = {
     const uploadRes = await fileUploadService.uploadFile(file);
     const imageUrl = uploadRes.fileUrl;
 
-    // 2. PUT /profile/picture — body must be a plain JSON string (backend schema: type "string")
-    //    We must NOT double-encode: send the string directly, not JSON.stringify(imageUrl).
-    await apiClient.put('/profile/picture', imageUrl, {
+    // 2. PUT /profile/picture — backend expects a plain JSON string (schema type: "string").
+    //    Must use JSON.stringify: Axios sends raw strings as plain bytes (no quotes),
+    //    which is invalid JSON. JSON.stringify wraps it in quotes: "https://..."
+    await apiClient.put('/profile/picture', JSON.stringify(imageUrl), {
       headers: { 'Content-Type': 'application/json' },
     });
 

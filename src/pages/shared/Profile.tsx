@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+
 import { MainLayout } from '../../layouts/MainLayout';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
@@ -27,6 +28,9 @@ export const Profile = () => {
   const [saving, setSaving] = useState(false);
   const [uploadingPic, setUploadingPic] = useState(false);
   const [uploadingLicense, setUploadingLicense] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const licenseInputRef = useRef<HTMLInputElement>(null);
+
 
   const isSpecialist = user?.role === 'doctor' || user?.role === 'therapist';
 
@@ -139,22 +143,31 @@ export const Profile = () => {
               </div>
             </div>
             
-            <div className="w-full sm:w-auto flex flex-col items-center">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Update Avatar</label>
-              <div className="relative">
-                <input
-                  type="file"
-                  accept="image/png, image/jpeg, image/jpg"
-                  onChange={handlePictureUpload}
-                  disabled={uploadingPic}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                />
-                <Button size="sm" variant="outline" disabled={uploadingPic} className="rounded-xl cursor-pointer">
-                  {uploadingPic ? <Loader2 size={16} className="animate-spin mr-1" /> : <Upload size={16} className="mr-1" />}
-                  Change Picture
-                </Button>
-              </div>
+            <div className="w-full sm:w-auto flex flex-col items-center gap-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Update Avatar</label>
+              {/* Hidden file input — triggered imperatively via ref */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png, image/jpeg, image/jpg, image/webp"
+                onChange={handlePictureUpload}
+                disabled={uploadingPic}
+                className="hidden"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={uploadingPic}
+                className="rounded-xl"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {uploadingPic
+                  ? <Loader2 size={16} className="animate-spin mr-1" />
+                  : <Upload size={16} className="mr-1" />}
+                Change Picture
+              </Button>
             </div>
+
           </div>
         </Card>
 
