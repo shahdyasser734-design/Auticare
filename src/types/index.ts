@@ -9,6 +9,12 @@ export interface User {
   nationalId?: string;
   profileImage?: string;
   createdAt: string;
+  specialization?: string;
+  specialty?: string;
+  yearsOfExperience?: number | string;
+  licenseNumber?: string;
+  bio?: string;
+  gender?: string;
 }
 
 export interface AuthResponse {

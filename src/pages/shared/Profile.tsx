@@ -48,6 +48,7 @@ export const Profile = () => {
       }
 
       await profileService.updateProfile(payload);
+      updateUserFields(payload);
       setAlert({ type: 'success', message: 'Profile updated successfully!' });
       setIsEditing(false);
     } catch (err) {
@@ -108,6 +109,7 @@ export const Profile = () => {
       try {
         const licenseNum = formData.licenseNumber || 'UNKNOWN';
         await profileService.updateLicense(licenseNum, e.target.files[0]);
+        updateUserFields({ licenseNumber: licenseNum });
         setAlert({ type: 'success', message: 'License and credentials uploaded successfully!' });
       } catch (err) {
         console.error(err);

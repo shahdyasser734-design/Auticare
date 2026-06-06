@@ -174,88 +174,70 @@ export const DoctorHome = () => {
         )}
 
         {/* Welcome Hero Banner */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-600 via-primary-500 to-secondary-500 p-8 md:p-12 text-white shadow-2xl">
-          {/* Animated Ambient background elements */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.1),transparent_50%)]" />
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl translate-x-1/3 -translate-y-1/3 animate-pulse-slow" />
-          <div className="absolute bottom-0 left-10 w-72 h-72 bg-secondary-400/10 rounded-full blur-2xl translate-y-1/3" />
-          
-          {/* Animated floating blobs and shapes */}
-          <div className="absolute top-10 left-1/2 w-8 h-8 rounded-full bg-white/10 blur-[1px] animate-float-slow" />
-          <div className="absolute bottom-12 right-1/3 w-12 h-12 rounded-full bg-white/5 blur-[2px] animate-float-delayed" />
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-8 md:p-12 text-white border border-slate-800 shadow-2xl">
+          {/* Subtle clinical grid background overlay */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(99,102,241,0.15),transparent_60%)]" />
           
           <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
             <div className="space-y-4 max-w-xl text-left">
               <div className="inline-block font-bold tracking-wider capitalize text-xs">
-                <Badge variant="secondary" size="sm">
+                <span className="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-3 py-1 rounded-full">
                   {isDoctor ? 'Clinical Specialist' : 'Development Therapist'}
-                </Badge>
+                </span>
               </div>
               <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight">
                 {getGreeting()} 👋
               </h1>
-              <p className="text-base md:text-lg opacity-90 leading-relaxed font-semibold">
+              <p className="text-base md:text-lg opacity-90 leading-relaxed font-semibold text-slate-350">
                 {getSubtitle()}
               </p>
               
               {/* Quick stats on Left side */}
               <div className="flex gap-4 pt-2">
-                <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 text-xs">
-                  <span className="font-bold text-lg block">{dashboardData?.todaySessions || 0}</span>
-                  <span className="opacity-80">Today's Sessions</span>
+                <div className="bg-white/5 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10 text-xs shadow-inner">
+                  <span className="font-black text-xl block text-indigo-300">{dashboardData?.todaySessions || 0}</span>
+                  <span className="opacity-75 font-semibold">Today's Sessions</span>
                 </div>
-                <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 text-xs">
-                  <span className="font-bold text-lg block">{dashboardData?.activeCases || 0}</span>
-                  <span className="opacity-80">Active Cases</span>
+                <div className="bg-white/5 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10 text-xs shadow-inner">
+                  <span className="font-black text-xl block text-indigo-300">{dashboardData?.activeCases || 0}</span>
+                  <span className="opacity-75 font-semibold">Active Cases</span>
                 </div>
               </div>
             </div>
 
             {/* SVG Illustration on Right side */}
             <div className="w-full lg:w-auto flex justify-center shrink-0">
-              <div className="relative w-64 h-64 md:w-72 md:h-72 bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 shadow-2xl flex items-center justify-center overflow-hidden">
+              <div className="relative w-64 h-64 md:w-72 md:h-72 bg-slate-950/40 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl flex items-center justify-center overflow-hidden">
                 <svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full max-w-[200px]">
                   {/* Outer circle decoration */}
-                  <circle cx="100" cy="100" r="80" stroke="white" strokeWidth="2" strokeDasharray="4 4" className="opacity-30" />
+                  <circle cx="100" cy="100" r="80" stroke="white" strokeWidth="1" strokeDasharray="4 4" className="opacity-20" />
                   
                   {isDoctor ? (
                     <>
                       {/* Doctor / Medical Graph Visual */}
-                      <path d="M40 140 L70 110 L100 120 L130 80 L160 90" stroke="#FFE066" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-                      <circle cx="130" cy="80" r="6" fill="#FFE066" />
-                      <circle cx="160" cy="90" r="6" fill="#FFE066" />
+                      <path d="M40 140 L70 110 L100 120 L130 80 L160 90" stroke="#818CF8" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="130" cy="80" r="6" fill="#818CF8" />
+                      <circle cx="160" cy="90" r="6" fill="#818CF8" />
                       
                       {/* Stethoscope / Shield shape inside */}
-                      <path d="M70 70 C70 50, 130 50, 130 70 C130 110, 100 130, 100 130 C100 130, 70 110, 70 70 Z" fill="white" fillOpacity="0.15" stroke="white" strokeWidth="3" />
-                      <line x1="100" y1="80" x2="100" y2="110" stroke="white" strokeWidth="3" />
+                      <path d="M70 70 C70 50, 130 50, 130 70 C130 110, 100 130, 100 130 C100 130, 70 110, 70 70 Z" fill="white" fillOpacity="0.05" stroke="white" strokeWidth="2.5" />
+                      <line x1="100" y1="80" x2="100" y2="110" stroke="white" strokeWidth="2.5" />
                       <circle cx="100" cy="65" r="8" fill="white" />
                     </>
                   ) : (
                     <>
                       {/* Therapist / Developmental Milestones Visual */}
-                      {/* Blocks / Steps */}
-                      <rect x="50" y="110" width="30" height="40" rx="4" fill="white" fillOpacity="0.2" stroke="white" strokeWidth="2" />
-                      <rect x="85" y="85" width="30" height="65" rx="4" fill="white" fillOpacity="0.2" stroke="white" strokeWidth="2" />
-                      <rect x="120" y="60" width="30" height="90" rx="4" fill="white" fillOpacity="0.3" stroke="white" strokeWidth="2" />
-                      
-                      {/* Floating balloon/success shape */}
-                      <circle cx="135" cy="40" r="10" fill="#FFE066" />
-                      <path d="M135 50 Q135 60, 140 65" stroke="#FFE066" strokeWidth="2" />
+                      <rect x="50" y="110" width="30" height="40" rx="4" fill="white" fillOpacity="0.1" stroke="white" strokeWidth="1.5" />
+                      <rect x="85" y="85" width="30" height="65" rx="4" fill="white" fillOpacity="0.1" stroke="white" strokeWidth="1.5" />
+                      <rect x="120" y="60" width="30" height="90" rx="4" fill="white" fillOpacity="0.15" stroke="white" strokeWidth="1.5" />
                     </>
                   )}
-                  {/* Floating cross icon */}
-                  <g className="animate-bounce" style={{ transformOrigin: '50px 50px' }}>
-                    <path d="M45 40 H55 M50 35 V45" stroke="white" strokeWidth="3" strokeLinecap="round" />
-                  </g>
-                  {/* Floating heart icon */}
-                  <g className="animate-pulse">
-                    <path d="M150 145 C150 142.5 152.5 140 155 140 C157.5 140 160 142.5 160 145 C160 150 150 155 150 155 C150 155 140 150 140 145 C140 142.5 142.5 140 145 140 C147.5 140 150 142.5 150 145 Z" fill="white" fillOpacity="0.3" />
-                  </g>
                 </svg>
               </div>
             </div>
           </div>
         </div>
+
 
         {/* Error Banner */}
         {error && (
@@ -308,11 +290,13 @@ export const DoctorHome = () => {
                 </h3>
                 <div className="space-y-4">
                   {todaySessions.map((session) => {
-                    const zoomLink = session.joinLink || 'https://zoom.us/j/9876543210';
+                    const zoomLink = session.joinLink;
                     return (
                       <div key={session.id} className="p-4 bg-white dark:bg-slate-900/60 border border-green-100 dark:border-green-900/20 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
-                          <p className="font-bold text-slate-900 dark:text-white">Development Session</p>
+                          <p className="font-bold text-slate-900 dark:text-white">
+                            {session.reason || (isDoctor ? 'Clinical Consultation' : 'Therapy Session')}
+                          </p>
                           <p className="text-xs text-slate-500 mt-1">
                             Time: {session.appointmentTime || (session.dateTime ? formatDateTime(session.dateTime) : 'Scheduled')}
                           </p>

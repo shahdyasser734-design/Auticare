@@ -62,9 +62,10 @@ export const DoctorSessions = () => {
               <Card key={session.id}>
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
-                    <p className="font-bold text-lg text-neutral-900">Patient Session</p>
+                    <p className="font-bold text-lg text-neutral-900">
+                      {session.reason || (session.specialistType === 'doctor' ? 'Clinical Consultation' : 'Therapy Session')}
+                    </p>
                     <p className="text-neutral-600">{session.dateTime ? formatDateTime(session.dateTime) : 'TBD'}</p>
-                    {session.reason && <p className="text-sm text-neutral-500 mt-1">Reason: {session.reason}</p>}
                     {session.notes && <p className="text-sm text-neutral-500 mt-1">Notes: {session.notes}</p>}
                     
                     {session.childId && (

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '../../layouts/MainLayout';
 import { Card } from '../../components/common/Card';
 import { Input } from '../../components/common/Input';
@@ -6,11 +7,13 @@ import { Button } from '../../components/common/Button';
 import { Avatar } from '../../components/common/Avatar';
 import { chatServiceAPI, type ChatConversation, type ChatMessage } from '../../services/api/chatService';
 import { useAuth } from '../../context/useAuth';
+import { childrenService, type Child } from '../../services/api/children';
 import { MessageSquare, Video, Send, Loader2 } from 'lucide-react';
 import { Badge } from '../../components/common/Badge';
 
 export const Chat = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<ChatConversation | null>(null);
@@ -19,6 +22,8 @@ export const Chat = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [sendingZoom, setSendingZoom] = useState(false);
+
+  const [childrenList, setChildrenList] = useState<Child[]>([]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -38,6 +43,15 @@ export const Chat = () => {
     }
   };
 
+  const fetchChildren = async () => {
+    try {
+      const list = await childrenService.getChildren();
+      setChildrenList(list);
+    } catch (err) {
+      console.warn('Failed to load patient profiles:', err);
+    }
+  };
+
   const fetchMessages = async () => {
     if (!selectedConversation) return;
     try {
@@ -51,6 +65,7 @@ export const Chat = () => {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchConversations();
+    void fetchChildren();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -119,6 +134,18 @@ export const Chat = () => {
     return otherParticipants.length > 0 ? otherParticipants[0] : 'Specialist';
   };
 
+  const getChatDetails = (chat: ChatConversation) => {
+    const parentId = chat.participantIds.find((id) => id !== user?.id);
+    const parentName = parentId ? (chat.participantNames[parentId] || 'Parent') : 'Parent';
+    const child = childrenList.find((c) => c.parentId === parentId);
+    return {
+      parentName: parentName === 'You' ? 'Sarah Johnson' : parentName,
+      childName: child ? child.name : 'Samira Ali',
+      avatar: child ? child.profileImage : undefined,
+      status: child ? 'Active' : 'Pending',
+    };
+  };
+
   const getChatSpecialty = (chat: ChatConversation): string => {
     const name = getChatName(chat).toLowerCase();
     if (name.includes('dr.') || name.includes('doctor')) return 'Doctor';
@@ -181,38 +208,47 @@ export const Chat = () => {
               </div>
             ) : (
               filteredConversations.map((conv) => {
-                const isActiveConv = selectedConversation?.id === conv.id;
-                return (
-                  <button
-                    key={conv.id}
-                    onClick={() => setSelectedConversation(conv)}
-                    className={`w-full text-left p-4 rounded-2xl transition-all duration-200 flex items-center gap-3 border ${
-                      isActiveConv
-                        ? 'bg-primary-600 text-white border-primary-500 shadow-md shadow-primary-500/20'
-                        : 'bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-150 dark:border-white/5 text-slate-800 dark:text-slate-200'
-                    }`}
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-primary-100 dark:bg-primary-950/40 text-primary-700 flex items-center justify-center font-bold text-sm shrink-0">
-                      {getChatName(conv).charAt(0)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1">
-                        <p className="font-bold text-sm truncate">{getChatName(conv)}</p>
-                        <span className={`text-[10px] shrink-0 ${isActiveConv ? 'opacity-70' : 'text-slate-400'}`}>
-                          {getLastMessageTime(conv)}
-                        </span>
+              const isActiveConv = selectedConversation?.id === conv.id;
+              const details = getChatDetails(conv);
+              const displayName = isSpecialist ? details.childName : getChatName(conv);
+              const displaySubtitle = isSpecialist ? `Parent: ${details.parentName}` : getChatSpecialty(conv);
+              
+              return (
+                <button
+                  key={conv.id}
+                  onClick={() => setSelectedConversation(conv)}
+                  className={`w-full text-left p-4 rounded-2xl transition-all duration-200 flex items-center gap-3 border ${
+                    isActiveConv
+                      ? 'bg-primary-600 text-white border-primary-500 shadow-md shadow-primary-500/20'
+                      : 'bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-150 dark:border-white/5 text-slate-800 dark:text-slate-200'
+                  }`}
+                >
+                  <Avatar name={displayName} image={isSpecialist ? details.avatar : undefined} size="md" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <p className="font-bold text-sm truncate">{displayName}</p>
+                        {isSpecialist && (
+                          <span className="text-[9px] bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider shrink-0">
+                            {details.status}
+                          </span>
+                        )}
                       </div>
-                      <p className={`text-xs font-medium ${isActiveConv ? 'opacity-80' : 'text-primary-500 dark:text-primary-400'}`}>
-                        {getChatSpecialty(conv)}
-                      </p>
-                      <p className={`text-xs truncate mt-0.5 ${isActiveConv ? 'opacity-70' : 'text-slate-500'}`}>
-                        {conv.lastMessage?.content || 'Consultation started'}
-                      </p>
+                      <span className={`text-[10px] shrink-0 ${isActiveConv ? 'opacity-70' : 'text-slate-400'}`}>
+                        {getLastMessageTime(conv)}
+                      </span>
                     </div>
-                  </button>
-                );
-              })
-            )}
+                    <p className={`text-xs font-semibold ${isActiveConv ? 'opacity-85' : 'text-slate-500 dark:text-slate-400'}`}>
+                      {displaySubtitle}
+                    </p>
+                    <p className={`text-xs truncate mt-0.5 ${isActiveConv ? 'opacity-70' : 'text-slate-500'}`}>
+                      {conv.lastMessage?.content || 'Consultation started'}
+                    </p>
+                  </div>
+                </button>
+              );
+            })
+          )}
           </div>
         </Card>
 
@@ -224,15 +260,17 @@ export const Chat = () => {
                 {/* Active Conversation Header */}
                 <div className="flex items-center justify-between pb-4 border-b border-slate-150 dark:border-white/5 mb-4 shrink-0">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 bg-primary-100 text-primary-700 font-bold rounded-2xl flex items-center justify-center">
-                      {getChatName(selectedConversation).charAt(0)}
-                    </div>
+                    <Avatar 
+                      name={isSpecialist ? getChatDetails(selectedConversation).childName : getChatName(selectedConversation)} 
+                      image={isSpecialist ? getChatDetails(selectedConversation).avatar : undefined} 
+                      size="lg" 
+                    />
                     <div>
                       <h3 className="font-bold text-lg text-slate-900 dark:text-white">
-                        {getChatName(selectedConversation)}
+                        {isSpecialist ? getChatDetails(selectedConversation).childName : getChatName(selectedConversation)}
                       </h3>
                       <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                        {getChatSpecialty(selectedConversation)}
+                        {isSpecialist ? `Parent: ${getChatDetails(selectedConversation).parentName}` : getChatSpecialty(selectedConversation)}
                       </p>
                     </div>
                   </div>
@@ -359,60 +397,65 @@ export const Chat = () => {
           </Card>
 
           {/* Specialist Patient Information Panel */}
-          {isSpecialist && selectedConversation && (
-            <Card className="lg:col-span-1 h-full flex flex-col p-6 border border-slate-200 dark:border-white/10 shadow-lg rounded-3xl bg-slate-50/50 dark:bg-slate-900/30 overflow-y-auto">
-              <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-6 border-b pb-3">Patient Portal Summary</h3>
-              
-              {/* Patient Child Avatar & Info */}
-              <div className="flex flex-col items-center text-center space-y-3 pb-6 border-b border-slate-200 dark:border-white/5">
-                <div className="w-16 h-16 rounded-full bg-primary-100 text-primary-700 font-black text-2xl flex items-center justify-center shadow-md">
-                  S
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold tracking-wider uppercase bg-primary-100 text-primary-800 dark:bg-primary-950/40 dark:text-primary-300 px-2 py-0.5 rounded-full">
-                    Patient Profile
-                  </span>
-                  <h4 className="font-black text-slate-900 dark:text-white text-base mt-2">Samira Ali</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">Age: 4 yrs · Female</p>
-                </div>
-              </div>
+          {isSpecialist && selectedConversation && (() => {
+            const details = getChatDetails(selectedConversation);
+            const parentId = selectedConversation.participantIds.find((id) => id !== user?.id);
+            const childObj = childrenList.find((c) => c.parentId === parentId);
+            const childId = childObj ? childObj.id : 'child-1';
 
-              {/* Parent Contact Details */}
-              <div className="space-y-4 py-6 border-b border-slate-200 dark:border-white/5">
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Parent Contact</span>
-                  <p className="font-bold text-slate-800 dark:text-slate-200 text-sm mt-1">Parent: {getChatName(selectedConversation)}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Role: Parent User</p>
+            return (
+              <Card className="lg:col-span-1 h-full flex flex-col p-6 border border-slate-200 dark:border-white/10 shadow-lg rounded-3xl bg-slate-50/50 dark:bg-slate-900/30 overflow-y-auto">
+                <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-6 border-b pb-3">Patient Portal Summary</h3>
+                
+                {/* Patient Child Avatar & Info */}
+                <div className="flex flex-col items-center text-center space-y-3 pb-6 border-b border-slate-200 dark:border-white/5">
+                  <Avatar name={details.childName} image={details.avatar} size="xl" />
+                  <div>
+                    <span className="text-[10px] font-bold tracking-wider uppercase bg-primary-100 text-primary-800 dark:bg-primary-950/40 dark:text-primary-300 px-2 py-0.5 rounded-full">
+                      Patient Profile
+                    </span>
+                    <h4 className="font-black text-slate-900 dark:text-white text-base mt-2">{details.childName}</h4>
+                    <p className="text-xs text-slate-500 mt-0.5">Age: {childObj?.age || 4} yrs · {childObj?.gender || 'Female'}</p>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Assigned Program</span>
-                  <p className="text-xs text-slate-700 dark:text-slate-350 mt-1 font-semibold">Development &amp; Autism Care Pathway</p>
-                </div>
-              </div>
 
-              {/* Action Links */}
-              <div className="pt-6 space-y-3">
-                <Button
-                  size="sm"
-                  fullWidth
-                  variant="outline"
-                  onClick={() => window.location.href = `/treatment-plan/child-1`}
-                  className="rounded-xl font-bold border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-900"
-                >
-                  📋 View Treatment Plan
-                </Button>
-                <Button
-                  size="sm"
-                  fullWidth
-                  variant="primary"
-                  onClick={() => window.location.href = `/doctor/patients/child-1`}
-                  className="rounded-xl font-bold bg-primary-600 text-white"
-                >
-                  🔎 View Patient Profile
-                </Button>
-              </div>
-            </Card>
-          )}
+                {/* Parent Contact Details */}
+                <div className="space-y-4 py-6 border-b border-slate-200 dark:border-white/5">
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Parent Contact</span>
+                    <p className="font-bold text-slate-800 dark:text-slate-200 text-sm mt-1">Parent: {details.parentName}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Role: Parent User</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Assigned Program</span>
+                    <p className="text-xs text-slate-700 dark:text-slate-350 mt-1 font-semibold">Development &amp; Autism Care Pathway</p>
+                  </div>
+                </div>
+
+                {/* Action Links */}
+                <div className="pt-6 space-y-3">
+                  <Button
+                    size="sm"
+                    fullWidth
+                    variant="outline"
+                    onClick={() => navigate(`/treatment-plan/${childId}`)}
+                    className="rounded-xl font-bold border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-900"
+                  >
+                    📋 View Treatment Plan
+                  </Button>
+                  <Button
+                    size="sm"
+                    fullWidth
+                    variant="primary"
+                    onClick={() => navigate(`/${user?.role}/patients/${childId}`)}
+                    className="rounded-xl font-bold bg-primary-600 text-white"
+                  >
+                    🔎 View Patient Profile
+                  </Button>
+                </div>
+              </Card>
+            );
+          })()}
         </div>
       </div>
     </MainLayout>

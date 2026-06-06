@@ -79,6 +79,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           ''
         );
 
+        const specialization = String(
+          rawUser.specialization ??
+          rawUser.specialty ??
+          (email ? localStorage.getItem(`auticare.user.specialization.${email}`) : '') ??
+          ''
+        );
+        const yearsOfExperience = (rawUser.yearsOfExperience as any) ?? (email ? (localStorage.getItem(`auticare.user.yearsOfExperience.${email}`) || undefined) : undefined);
+        const licenseNumber = String(
+          rawUser.licenseNumber ??
+          (email ? localStorage.getItem(`auticare.user.licenseNumber.${email}`) : '') ??
+          ''
+        );
+        const bio = String(
+          rawUser.bio ??
+          (email ? localStorage.getItem(`auticare.user.bio.${email}`) : '') ??
+          ''
+        );
+        const gender = String(
+          rawUser.gender ??
+          (email ? localStorage.getItem(`auticare.user.gender.${email}`) : '') ??
+          ''
+        );
+
         const updatedUser: User = {
           id: String(rawUser.id ?? rawUser.userId ?? ''),
           email,
@@ -88,6 +111,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           nationalId,
           profileImage,
           createdAt: String(rawUser.createdAt ?? new Date().toISOString()),
+          specialization,
+          specialty: specialization,
+          yearsOfExperience,
+          licenseNumber,
+          bio,
+          gender,
         };
         normalizeAndSetUser(updatedUser);
       } catch (err) {
@@ -145,6 +174,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       ''
     );
 
+    const specialization = String(
+      rawUser.specialization ??
+      rawUser.specialty ??
+      (email ? localStorage.getItem(`auticare.user.specialization.${email}`) : '') ??
+      ''
+    );
+    const yearsOfExperience = rawUser.yearsOfExperience ?? (email ? (localStorage.getItem(`auticare.user.yearsOfExperience.${email}`) || undefined) : undefined);
+    const licenseNumber = String(
+      rawUser.licenseNumber ??
+      (email ? localStorage.getItem(`auticare.user.licenseNumber.${email}`) : '') ??
+      ''
+    );
+    const bio = String(
+      rawUser.bio ??
+      (email ? localStorage.getItem(`auticare.user.bio.${email}`) : '') ??
+      ''
+    );
+    const gender = String(
+      rawUser.gender ??
+      (email ? localStorage.getItem(`auticare.user.gender.${email}`) : '') ??
+      ''
+    );
+
     const user: User = {
       id: String(rawUser.id ?? data.userId ?? ''),
       email,
@@ -154,6 +206,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       nationalId,
       profileImage,
       createdAt: String(rawUser.createdAt ?? new Date().toISOString()),
+      specialization,
+      specialty: specialization,
+      yearsOfExperience,
+      licenseNumber,
+      bio,
+      gender,
     };
 
     return { token: data.token, user };
@@ -198,6 +256,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         data.user.nationalId = String(payload.nationalId);
         if (data.user.email) {
           localStorage.setItem(`auticare.user.nationalId.${data.user.email}`, String(payload.nationalId));
+        }
+      }
+      if (payload.specialization) {
+        data.user.specialization = String(payload.specialization);
+        data.user.specialty = String(payload.specialization);
+        if (data.user.email) {
+          localStorage.setItem(`auticare.user.specialization.${data.user.email}`, String(payload.specialization));
+        }
+      }
+      if (payload.yearsOfExperience) {
+        data.user.yearsOfExperience = Number(payload.yearsOfExperience);
+        if (data.user.email) {
+          localStorage.setItem(`auticare.user.yearsOfExperience.${data.user.email}`, String(payload.yearsOfExperience));
+        }
+      }
+      if (payload.licenseNumber) {
+        data.user.licenseNumber = String(payload.licenseNumber);
+        if (data.user.email) {
+          localStorage.setItem(`auticare.user.licenseNumber.${data.user.email}`, String(payload.licenseNumber));
+        }
+      }
+      if (payload.bio) {
+        data.user.bio = String(payload.bio);
+        if (data.user.email) {
+          localStorage.setItem(`auticare.user.bio.${data.user.email}`, String(payload.bio));
+        }
+      }
+      if (payload.gender) {
+        data.user.gender = String(payload.gender);
+        if (data.user.email) {
+          localStorage.setItem(`auticare.user.gender.${data.user.email}`, String(payload.gender));
         }
       }
 
@@ -264,6 +353,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     if (fields.nationalId && newUser.email) {
       localStorage.setItem(`auticare.user.nationalId.${newUser.email}`, String(fields.nationalId));
+    }
+    if (fields.specialization && newUser.email) {
+      localStorage.setItem(`auticare.user.specialization.${newUser.email}`, String(fields.specialization));
+    }
+    if (fields.yearsOfExperience !== undefined && newUser.email) {
+      localStorage.setItem(`auticare.user.yearsOfExperience.${newUser.email}`, String(fields.yearsOfExperience));
+    }
+    if (fields.licenseNumber && newUser.email) {
+      localStorage.setItem(`auticare.user.licenseNumber.${newUser.email}`, String(fields.licenseNumber));
+    }
+    if (fields.bio && newUser.email) {
+      localStorage.setItem(`auticare.user.bio.${newUser.email}`, String(fields.bio));
+    }
+    if (fields.gender && newUser.email) {
+      localStorage.setItem(`auticare.user.gender.${newUser.email}`, String(fields.gender));
     }
   };
 
