@@ -52,8 +52,8 @@ export const DoctorPatients = () => {
     <MainLayout>
       <div className="space-y-8">
         <div>
-          <h1 className="text-4xl font-bold text-neutral-900 mb-2">My Patients</h1>
-          <p className="text-neutral-600">Manage and view your patients' information</p>
+          <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">My Patients</h1>
+          <p className="text-slate-600 dark:text-slate-400">Manage and view your patients' information</p>
         </div>
 
         <Input
@@ -75,9 +75,9 @@ export const DoctorPatients = () => {
                     <div className="flex items-center gap-4">
                       <Avatar name={patientName} size="lg" />
                       <div>
-                        <h3 className="font-bold text-neutral-900">{patientName}</h3>
-                        <p className="text-sm text-neutral-600">Age: {patient.age ?? 'N/A'}</p>
-                        <p className="text-sm text-neutral-600">{patient.gender}</p>
+                        <h3 className="font-bold text-slate-900 dark:text-white">{patientName}</h3>
+                        <p className="text-sm text-slate-650 dark:text-slate-400">Age: {patient.age ?? 'N/A'}</p>
+                        <p className="text-sm text-slate-650 dark:text-slate-400 capitalize">{patient.gender}</p>
                       </div>
                     </div>
 

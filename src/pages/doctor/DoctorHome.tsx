@@ -124,6 +124,33 @@ export const DoctorHome = () => {
         }))
       : children.map((c) => ({ ...c, status: 'active' as const }));
 
+  // State alert for Zoom room availability
+  const [zoomAlert, setZoomAlert] = useState<string | null>(null);
+
+  const handleJoinZoom = (link?: string) => {
+    if (!link || link.trim() === '' || link.includes('9876543210')) {
+      setZoomAlert('No Zoom meeting link available.');
+      setTimeout(() => setZoomAlert(null), 4000);
+      return;
+    }
+    window.open(link, '_blank');
+  };
+
+  const getGreeting = () => {
+    const fullName = user?.name || '';
+    if (isDoctor) {
+      return `Welcome, Dr. ${fullName}`;
+    }
+    return `Welcome, Therapist ${fullName}`;
+  };
+
+  const getSubtitle = () => {
+    if (isDoctor) {
+      return "Monitor patients, review assessments, and guide treatment plans.";
+    }
+    return "Support development goals, track sessions, and help children thrive.";
+  };
+
   if (loading) {
     return (
       <MainLayout>
@@ -138,21 +165,96 @@ export const DoctorHome = () => {
   return (
     <MainLayout>
       <div className="space-y-8 pb-12">
-        {/* Welcome Hero Banner */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary-600 via-primary-500 to-secondary-500 p-8 md:p-12 text-white shadow-xl">
-          <div className="relative z-10 space-y-3 max-w-2xl">
-            <Badge variant="secondary">{isDoctor ? 'Doctor' : 'Therapist'} Dashboard</Badge>
-            <h1 className="text-4xl md:text-5xl font-black tracking-tight leading-none">
-              Welcome Back, {user?.name?.split(' ')[0] || user?.name || (isDoctor ? 'Doctor' : 'Therapist')}! 👋
-            </h1>
-            <p className="text-lg opacity-90 leading-relaxed font-medium">
-              {isDoctor
-                ? "Your patient dashboard is here. Manage clinical sessions, review treatment plans, and stay connected with families."
-                : 'Track your assigned cases, manage sessions, and collaborate with the healthcare team.'}
-            </p>
+        {/* Dynamic Zoom Alert */}
+        {zoomAlert && (
+          <div className="fixed top-20 right-6 z-50 p-4 bg-orange-600 text-white rounded-2xl shadow-xl flex items-center gap-2 animate-bounce">
+            <span>⚠️</span>
+            <p className="font-bold text-sm">{zoomAlert}</p>
           </div>
-          <div className="absolute -right-16 -top-16 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
-          <div className="absolute bottom-0 right-10 w-56 h-56 bg-primary-400/20 rounded-full translate-y-1/3 blur-xl" />
+        )}
+
+        {/* Welcome Hero Banner */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-600 via-primary-500 to-secondary-500 p-8 md:p-12 text-white shadow-2xl">
+          {/* Animated Ambient background elements */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.1),transparent_50%)]" />
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl translate-x-1/3 -translate-y-1/3 animate-pulse-slow" />
+          <div className="absolute bottom-0 left-10 w-72 h-72 bg-secondary-400/10 rounded-full blur-2xl translate-y-1/3" />
+          
+          {/* Animated floating blobs and shapes */}
+          <div className="absolute top-10 left-1/2 w-8 h-8 rounded-full bg-white/10 blur-[1px] animate-float-slow" />
+          <div className="absolute bottom-12 right-1/3 w-12 h-12 rounded-full bg-white/5 blur-[2px] animate-float-delayed" />
+          
+          <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
+            <div className="space-y-4 max-w-xl text-left">
+              <div className="inline-block font-bold tracking-wider capitalize text-xs">
+                <Badge variant="secondary" size="sm">
+                  {isDoctor ? 'Clinical Specialist' : 'Development Therapist'}
+                </Badge>
+              </div>
+              <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight">
+                {getGreeting()} 👋
+              </h1>
+              <p className="text-base md:text-lg opacity-90 leading-relaxed font-semibold">
+                {getSubtitle()}
+              </p>
+              
+              {/* Quick stats on Left side */}
+              <div className="flex gap-4 pt-2">
+                <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 text-xs">
+                  <span className="font-bold text-lg block">{dashboardData?.todaySessions || 0}</span>
+                  <span className="opacity-80">Today's Sessions</span>
+                </div>
+                <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 text-xs">
+                  <span className="font-bold text-lg block">{dashboardData?.activeCases || 0}</span>
+                  <span className="opacity-80">Active Cases</span>
+                </div>
+              </div>
+            </div>
+
+            {/* SVG Illustration on Right side */}
+            <div className="w-full lg:w-auto flex justify-center shrink-0">
+              <div className="relative w-64 h-64 md:w-72 md:h-72 bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 shadow-2xl flex items-center justify-center overflow-hidden">
+                <svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full max-w-[200px]">
+                  {/* Outer circle decoration */}
+                  <circle cx="100" cy="100" r="80" stroke="white" strokeWidth="2" strokeDasharray="4 4" className="opacity-30" />
+                  
+                  {isDoctor ? (
+                    <>
+                      {/* Doctor / Medical Graph Visual */}
+                      <path d="M40 140 L70 110 L100 120 L130 80 L160 90" stroke="#FFE066" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="130" cy="80" r="6" fill="#FFE066" />
+                      <circle cx="160" cy="90" r="6" fill="#FFE066" />
+                      
+                      {/* Stethoscope / Shield shape inside */}
+                      <path d="M70 70 C70 50, 130 50, 130 70 C130 110, 100 130, 100 130 C100 130, 70 110, 70 70 Z" fill="white" fillOpacity="0.15" stroke="white" strokeWidth="3" />
+                      <line x1="100" y1="80" x2="100" y2="110" stroke="white" strokeWidth="3" />
+                      <circle cx="100" cy="65" r="8" fill="white" />
+                    </>
+                  ) : (
+                    <>
+                      {/* Therapist / Developmental Milestones Visual */}
+                      {/* Blocks / Steps */}
+                      <rect x="50" y="110" width="30" height="40" rx="4" fill="white" fillOpacity="0.2" stroke="white" strokeWidth="2" />
+                      <rect x="85" y="85" width="30" height="65" rx="4" fill="white" fillOpacity="0.2" stroke="white" strokeWidth="2" />
+                      <rect x="120" y="60" width="30" height="90" rx="4" fill="white" fillOpacity="0.3" stroke="white" strokeWidth="2" />
+                      
+                      {/* Floating balloon/success shape */}
+                      <circle cx="135" cy="40" r="10" fill="#FFE066" />
+                      <path d="M135 50 Q135 60, 140 65" stroke="#FFE066" strokeWidth="2" />
+                    </>
+                  )}
+                  {/* Floating cross icon */}
+                  <g className="animate-bounce" style={{ transformOrigin: '50px 50px' }}>
+                    <path d="M45 40 H55 M50 35 V45" stroke="white" strokeWidth="3" strokeLinecap="round" />
+                  </g>
+                  {/* Floating heart icon */}
+                  <g className="animate-pulse">
+                    <path d="M150 145 C150 142.5 152.5 140 155 140 C157.5 140 160 142.5 160 145 C160 150 150 155 150 155 C150 155 140 150 140 145 C140 142.5 142.5 140 145 140 C147.5 140 150 142.5 150 145 Z" fill="white" fillOpacity="0.3" />
+                  </g>
+                </svg>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Error Banner */}
@@ -227,7 +329,7 @@ export const DoctorHome = () => {
                           <Badge variant="success">Today</Badge>
                           <Button
                             size="sm"
-                            onClick={() => window.open(zoomLink, '_blank')}
+                            onClick={() => handleJoinZoom(zoomLink)}
                             className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer"
                           >
                             🎥 Join Zoom
@@ -252,7 +354,7 @@ export const DoctorHome = () => {
                 ) : (
                   <div className="space-y-4">
                     {pendingBookings.map((booking) => (
-                      <div key={booking.id} className="p-5 bg-orange-50/20 dark:bg-orange-950/10 border border-orange-200/40 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                       <div key={booking.id} className="p-5 bg-orange-50/20 dark:bg-orange-950/10 border border-orange-200/40 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
                           <p className="font-bold text-slate-950 dark:text-white">Appointment Request</p>
                           <p className="text-xs text-slate-500 mt-1">
@@ -303,7 +405,6 @@ export const DoctorHome = () => {
               ) : (
                 <div className="space-y-4">
                   {confirmedSessions.slice(0, 5).map((session) => {
-                    const zoomLink = session.joinLink || 'https://zoom.us/j/9876543210';
                     return (
                       <div key={session.id} className="p-5 bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
@@ -325,7 +426,7 @@ export const DoctorHome = () => {
                           <Badge variant="success">Confirmed</Badge>
                           <Button
                             size="sm"
-                            onClick={() => window.open(zoomLink, '_blank')}
+                            onClick={() => handleJoinZoom(session.joinLink)}
                             className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer"
                           >
                             🎥 Start Session

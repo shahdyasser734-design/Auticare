@@ -88,8 +88,18 @@ export const DoctorSessions = () => {
                         </Button>
                       </div>
                     )}
-                    {session.joinLink && (session.status === 'confirmed' || session.status === 'scheduled') && (
-                      <Button size="sm" onClick={() => window.open(session.joinLink, '_blank')}>
+                    {(session.status === 'confirmed' || session.status === 'scheduled') && (
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          const link = session.joinLink;
+                          if (!link || link.trim() === '' || link.includes('9876543210')) {
+                            alert('No Zoom meeting link available.');
+                            return;
+                          }
+                          window.open(link, '_blank');
+                        }}
+                      >
                         Join Meeting
                       </Button>
                     )}

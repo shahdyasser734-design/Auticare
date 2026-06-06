@@ -70,13 +70,13 @@ export const NotificationCard = ({ notification, onMarkAsRead }: NotificationCar
           </div>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <h3 className="text-xl font-semibold text-neutral-900 truncate">{notification.title}</h3>
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-white truncate">{notification.title}</h3>
               <Badge variant={notification.isRead ? 'secondary' : 'primary'} size="sm">
                 {notification.isRead ? 'Read' : 'Unread'}
               </Badge>
             </div>
-            <p className="text-neutral-700 leading-7">{notification.message}</p>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-neutral-500">
+            <p className="text-slate-700 dark:text-slate-300 leading-7">{notification.message}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
               <span>{new Date(notification.createdAt).toLocaleString([], {
                 weekday: 'short',
                 month: 'short',

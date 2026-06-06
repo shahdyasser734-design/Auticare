@@ -234,7 +234,7 @@ export const TreatmentPlan = () => {
         {/* Unified Dashboard Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column: Summary Card */}
-          <div className="lg:col-span-1 space-y-6">
+          <div className={`${editMode ? 'hidden lg:block lg:col-span-1' : 'lg:col-span-1'} space-y-6`}>
             {/* Child Profile Widget */}
             {child && (
               <Card className="overflow-hidden border border-slate-200 dark:border-white/10 shadow-xl rounded-3xl p-6 bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
@@ -314,8 +314,8 @@ export const TreatmentPlan = () => {
             )}
           </div>
 
-          {/* Right Columns: Main Treatment details */}
-          <div className="lg:col-span-2 space-y-6">
+          {/* Right Columns: Main Treatment details / Centered Editor */}
+          <div className={`${editMode ? 'lg:col-span-3 max-w-4xl mx-auto w-full' : 'lg:col-span-2'} space-y-6`}>
             {!editMode ? (
               <>
                 {/* Plan Content (View Mode) */}
@@ -450,7 +450,7 @@ export const TreatmentPlan = () => {
                 )}
               </>
             ) : (
-              /* Create & Edit Plan Mode (For Specialists) */
+              /* Create & Edit Plan Mode (For Specialists) - Centered layout properly */
               <Card className="border border-slate-200 dark:border-white/10 shadow-xl rounded-3xl p-6 md:p-8 space-y-6">
                 <div className="flex justify-between items-center border-b pb-4">
                   <h3 className="font-bold text-2xl text-slate-900 dark:text-white flex items-center gap-2">

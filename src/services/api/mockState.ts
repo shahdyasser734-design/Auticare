@@ -64,6 +64,61 @@ const defaultNotifications: Notification[] = [
     isRead: true,
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 36).toISOString(),
   },
+  // Specialist specific notifications
+  {
+    id: 'spec-notif-1',
+    userId: 'doctor-1',
+    type: 'booking',
+    title: 'New booking request from Parent Samira Ali',
+    message: 'A new booking request is pending confirmation for developmental screening.',
+    isRead: false,
+    createdAt: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
+  },
+  {
+    id: 'spec-notif-2',
+    userId: 'doctor-1',
+    type: 'session',
+    title: 'Session approved',
+    message: 'Your session with Samira Ali has been scheduled and meeting room created.',
+    isRead: false,
+    createdAt: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
+  },
+  {
+    id: 'spec-notif-3',
+    userId: 'doctor-1',
+    type: 'session',
+    title: 'Session cancelled',
+    message: 'Parent Samira Ali cancelled the scheduled follow-up session for next week.',
+    isRead: true,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
+  },
+  {
+    id: 'spec-notif-4',
+    userId: 'doctor-1',
+    type: 'treatment-plan',
+    title: 'Treatment plan viewed',
+    message: 'The clinical developmental treatment plan was viewed by parent Ali.',
+    isRead: true,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+  },
+  {
+    id: 'spec-notif-5',
+    userId: 'doctor-1',
+    type: 'message',
+    title: 'New message received',
+    message: 'Parent Ali sent you a chat update regarding therapeutic exercises.',
+    isRead: true,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 18).toISOString(),
+  },
+  {
+    id: 'spec-notif-6',
+    userId: 'doctor-1',
+    type: 'reminder',
+    title: 'Upcoming session reminder',
+    message: 'Reminder: Scheduled session with patient Samira Ali in 1 hour.',
+    isRead: false,
+    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+  }
 ];
 
 const defaultChats: ChatConversation[] = [

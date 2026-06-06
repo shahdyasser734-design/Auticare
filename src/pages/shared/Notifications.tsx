@@ -6,6 +6,7 @@ import { Alert } from '../../components/common/Alert';
 import { NotificationCard } from '../../components/common/NotificationCard';
 import { notificationsService } from '../../services/api/notificationsService';
 import type { Notification } from '../../types';
+import { useAuth } from '../../context/useAuth';
 
 const filterOptions = [
   { value: 'all', label: 'All' },
@@ -22,12 +23,24 @@ export const Notifications = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const { user } = useAuth();
+  const isSpecialist = user?.role === 'doctor' || user?.role === 'therapist';
+
   const fetchNotifications = async () => {
     setLoading(true);
     setError(null);
     try {
       const data = await notificationsService.getNotifications();
-      setNotifications(data);
+      // Filter out notifications based on user role to make it specialist-focused
+      if (isSpecialist) {
+        // Show notifications explicitly for specialist or general system alerts
+        const specData = data.filter(n => n.userId.includes('doctor') || n.userId.includes('therapist') || n.id.startsWith('spec') || n.type === 'system');
+        setNotifications(specData);
+      } else {
+        // Show parent-focused notifications
+        const parentData = data.filter(n => !n.userId.includes('doctor') && !n.userId.includes('therapist') && !n.id.startsWith('spec'));
+        setNotifications(parentData);
+      }
     } catch (error) {
       console.error(error);
       setError('Unable to load notifications. Please try again later.');
@@ -42,7 +55,13 @@ export const Notifications = () => {
       setError(null);
       try {
         const data = await notificationsService.getNotifications();
-        setNotifications(data);
+        if (isSpecialist) {
+          const specData = data.filter(n => n.userId.includes('doctor') || n.userId.includes('therapist') || n.id.startsWith('spec') || n.type === 'system');
+          setNotifications(specData);
+        } else {
+          const parentData = data.filter(n => !n.userId.includes('doctor') && !n.userId.includes('therapist') && !n.id.startsWith('spec'));
+          setNotifications(parentData);
+        }
       } catch (error) {
         console.error(error);
         setError('Unable to load notifications. Please try again later.');
@@ -52,7 +71,7 @@ export const Notifications = () => {
     };
 
     void loadNotifications();
-  }, []);
+  }, [isSpecialist]);
 
   const filteredNotifications = useMemo(() => {
     if (filter === 'read') {
@@ -118,8 +137,8 @@ export const Notifications = () => {
         <div className="space-y-3">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-neutral-900">Notifications</h1>
-              <p className="text-neutral-600 max-w-2xl">
+              <h1 className="text-4xl font-bold text-slate-900 dark:text-white">Notifications</h1>
+              <p className="text-slate-650 dark:text-slate-400 max-w-2xl">
                 Stay on top of session updates, booking reminders, test alerts, messages, and system notices.
               </p>
             </div>
@@ -162,11 +181,11 @@ export const Notifications = () => {
               </div>
             </div>
 
-            <div className="rounded-3xl bg-neutral-100 p-4 text-sm text-neutral-700">
-              <p className="font-semibold text-neutral-900">Summary</p>
+            <div className="rounded-3xl bg-slate-100 dark:bg-slate-800/80 p-4 text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/5">
+              <p className="font-semibold text-slate-900 dark:text-white">Summary</p>
               <div className="mt-2 flex flex-wrap gap-3">
-                <span className="rounded-full bg-white px-3 py-1 text-sm text-neutral-700 shadow-sm">Total {notifications.length}</span>
-                <span className="rounded-full bg-white px-3 py-1 text-sm text-neutral-700 shadow-sm">Unread {unreadCount}</span>
+                <span className="rounded-full bg-white dark:bg-slate-900 px-3 py-1 text-sm text-slate-700 dark:text-slate-300 shadow-sm border dark:border-white/5">Total {notifications.length}</span>
+                <span className="rounded-full bg-white dark:bg-slate-900 px-3 py-1 text-sm text-slate-700 dark:text-slate-300 shadow-sm border dark:border-white/5">Unread {unreadCount}</span>
               </div>
             </div>
           </Card>
