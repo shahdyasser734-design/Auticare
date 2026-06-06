@@ -46,19 +46,13 @@ const normaliseResult = (raw: Record<string, unknown>, childName: string): Scree
   };
 };
 
+// Matches the backend ScreeningAnalyticsResponse schema exactly
 export type AnalyticsResponse = {
-  totalScreenings?: number;
   totalTests?: number;
-  averageScore?: number;
-  latestConfidenceScore?: number;
-  riskLevelDistribution?: {
-    low?: number;
-    medium?: number;
-    high?: number;
-  };
   highRiskCount?: number;
   lowRiskCount?: number;
-  recentScreenings?: ScreeningResult[];
+  lastPrediction?: string | null;
+  latestConfidenceScore?: number | null;
 };
 
 // ---------------------------------------------------------------------------
@@ -245,25 +239,31 @@ export const ParentScreeningResults = () => {
 
   const analyticsData = (() => {
     const service: AnalyticsResponse = analytics ?? {};
-    const totalTests = Number(service.totalScreenings ?? service.totalTests ?? 1);
-    const highRisk = Number(service.riskLevelDistribution?.high ?? service.highRiskCount ?? 0);
-    const lowRisk = Number(service.riskLevelDistribution?.low ?? service.lowRiskCount ?? 0);
-    const mediumRisk = Number(
-      service.riskLevelDistribution?.medium ?? Math.max(0, totalTests - highRisk - lowRisk),
-    );
+    const totalTests = Number(service.totalTests ?? 1);
+    const highRisk = Number(service.highRiskCount ?? 0);
+    const lowRisk = Number(service.lowRiskCount ?? 0);
+    const mediumRisk = Math.max(0, totalTests - highRisk - lowRisk);
+
+    // latestConfidenceScore from backend is a fraction (0–1), convert to %
+    const rawLatestConf = service.latestConfidenceScore ?? null;
+    const latestConfidence = rawLatestConf !== null
+      ? Math.round(Number(rawLatestConf) * 100)
+      : result.confidenceScore;
+
+    // lastPrediction from backend may be inverted (NO/YES); always use the
+    // normalised predictionClass from the current result instead.
+    const lastPrediction = result.predictionClass;
 
     return {
       totalScreenings: totalTests,
-      averageScore: Number(service.averageScore ?? result.aqScore ?? 0),
-      latestConfidence: Number(service.latestConfidenceScore ?? result.confidenceScore ?? 0),
+      averageScore: result.aqScore ?? 0,
+      latestConfidence,
+      lastPrediction,
       riskLevelDistribution: {
         low: lowRisk,
         medium: mediumRisk,
         high: highRisk,
       },
-      recentScreenings: Array.isArray(service.recentScreenings)
-        ? service.recentScreenings as ScreeningResult[]
-        : [result],
     };
   })();
 
@@ -271,8 +271,8 @@ export const ParentScreeningResults = () => {
     totalTests: analyticsData.totalScreenings,
     highRiskCount: analyticsData.riskLevelDistribution.high,
     lowRiskCount: analyticsData.riskLevelDistribution.low,
-    lastPrediction: result.predictionClass,
-    latestConfidence: result.confidenceScore,
+    lastPrediction: analyticsData.lastPrediction,
+    latestConfidence: analyticsData.latestConfidence,
   };
 
   // ── Result UI ─────────────────────────────────────────────────────────────
