@@ -68,8 +68,18 @@ export const AddChild = () => {
       if (profileImage) {
         try {
           const upload = await fileUploadService.uploadFile(profileImage, 'specialist-document');
-          if (upload?.url) {
-            payload.profileImage = upload.url;
+          const raw = upload as any;
+          const imageUrl = (
+            (typeof raw.url === 'string' && raw.url) ||
+            (typeof raw.fileUrl === 'string' && raw.fileUrl) ||
+            (typeof raw.imageUrl === 'string' && raw.imageUrl) ||
+            (typeof raw.filePath === 'string' && raw.filePath) ||
+            (typeof raw.path === 'string' && raw.path) ||
+            (typeof raw.FileUrl === 'string' && raw.FileUrl) ||
+            null
+          );
+          if (imageUrl) {
+            payload.profileImage = imageUrl;
           }
         } catch (uploadError) {
           console.warn('Profile image upload failed; continuing without image.', uploadError);

@@ -149,7 +149,13 @@ export const PatientCarousel: React.FC<PatientCarouselProps> = ({ patients, isDo
                     </p>
                   </div>
                   {patient.profileImage && (
-                    <img src={patient.profileImage} alt={patient.name} className="w-12 h-12 rounded-full object-cover" />
+                    <img
+                      src={patient.profileImage.startsWith('http') || patient.profileImage.startsWith('data:')
+                        ? patient.profileImage
+                        : `https://auticare-production-828c.up.railway.app${patient.profileImage.startsWith('/') ? patient.profileImage : `/${patient.profileImage}`}`}
+                      alt={patient.name}
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
                   )}
                 </div>
                 {patient.lastScreening && getRiskLevelBadge(patient.lastScreening.riskLevel)}

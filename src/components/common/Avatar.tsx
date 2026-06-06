@@ -15,9 +15,12 @@ export const Avatar = ({ name = 'User', image, size = 'md' }: AvatarProps) => {
   };
 
   if (image) {
+    const formatted = image.startsWith('http://') || image.startsWith('https://') || image.startsWith('data:')
+      ? image
+      : `https://auticare-production-828c.up.railway.app${image.startsWith('/') ? image : `/${image}`}`;
     return (
       <img
-        src={image}
+        src={formatted}
         alt={name}
         className={`${sizes[size]} rounded-full object-cover`}
       />

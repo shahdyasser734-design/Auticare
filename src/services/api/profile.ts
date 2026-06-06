@@ -61,9 +61,24 @@ export const profileService = {
     console.log('[profile] Extracted imageUrl:', imageUrl);
 
     // 2. PUT /profile/picture — backend expects a JSON string body (schema type: "string")
-    await apiClient.put('/profile/picture', JSON.stringify(imageUrl), {
+    const response = await apiClient.put<Record<string, unknown>>('/profile/picture', JSON.stringify(imageUrl), {
       headers: { 'Content-Type': 'application/json' },
     });
+
+    const responseData = response.data;
+    if (responseData && typeof responseData === 'object') {
+      const returnedUrl = (
+        (typeof responseData.profileImage === 'string' && responseData.profileImage) ||
+        (typeof responseData.profile_image === 'string' && responseData.profile_image) ||
+        (typeof responseData.profilePictureUrl === 'string' && responseData.profilePictureUrl) ||
+        (typeof responseData.photoUrl === 'string' && responseData.photoUrl) ||
+        (typeof responseData.imageUrl === 'string' && responseData.imageUrl) ||
+        null
+      );
+      if (returnedUrl) {
+        imageUrl = returnedUrl;
+      }
+    }
 
     return {
       id: '',

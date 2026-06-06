@@ -2,6 +2,7 @@ import { createContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { AuthContextType, User, AuthResponse, UserRole } from '../types';
 import { authService } from '../services/authService';
+import apiClient from '../services/apiClient';
 
 const getErrorMessage = (error: unknown, fallback = 'An error occurred') => {
   if (error instanceof Error) return error.message;
@@ -40,7 +41,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const init = async () => {
       const token = localStorage.getItem('token');
-      const isAuthStr = localStorage.getItem('isAuthenticated');
       
       if (!token) {
         setIsAuthenticated(false);
@@ -48,40 +48,65 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // We already synchronously read the state.
-      // If we don't have a user but we are authenticated, we might need to fetch.
-      // But since user is also stored, we don't strictly need to fetch.
-      if (!user && isAuthStr === 'true') {
-        try {
-          const currentUser = await authService.getCurrentUser();
-          normalizeAndSetUser(currentUser);
-        } catch {
-          // If fetch fails, we don't clear everything immediately to avoid harsh redirects
-          // But we could clear if token is invalid.
-        }
+      try {
+        const response = await apiClient.get<Record<string, unknown>>('/profile');
+        const rawUser = response.data;
+        const profileImage = String(
+          rawUser.profileImage ??
+          rawUser.profile_image ??
+          (rawUser as any).profilePictureUrl ??
+          (rawUser as any).profile_picture_url ??
+          (rawUser as any).photoUrl ??
+          (rawUser as any).photo_url ??
+          (rawUser as any).imageUrl ??
+          (rawUser as any).image_url ??
+          (rawUser as any).avatarUrl ??
+          (rawUser as any).avatar_url ??
+          ''
+        );
+
+        const updatedUser: User = {
+          id: String(rawUser.id ?? rawUser.userId ?? ''),
+          email: String(rawUser.email ?? ''),
+          name: String(rawUser.name ?? ''),
+          role: String(rawUser.role ?? 'parent').toLowerCase() as UserRole,
+          phone: String(rawUser.phone ?? ''),
+          profileImage,
+          createdAt: String(rawUser.createdAt ?? new Date().toISOString()),
+        };
+        normalizeAndSetUser(updatedUser);
+      } catch (err) {
+        console.warn('[AuthContext] Failed to sync profile from backend:', err);
       }
     };
 
     void init();
-  }, [user]);
+  }, []);
 
   const normalizeAuthResponse = (data: AuthResponse) => {
-    const userFromResponse = data.user;
-    if (userFromResponse) {
-      return {
-        token: data.token,
-        user: userFromResponse,
-      };
-    }
+    const rawUser = (data.user ?? data) as any;
+    const profileImage = String(
+      rawUser.profileImage ??
+      rawUser.profile_image ??
+      (rawUser as any).profilePictureUrl ??
+      (rawUser as any).profile_picture_url ??
+      (rawUser as any).photoUrl ??
+      (rawUser as any).photo_url ??
+      (rawUser as any).imageUrl ??
+      (rawUser as any).image_url ??
+      (rawUser as any).avatarUrl ??
+      (rawUser as any).avatar_url ??
+      ''
+    );
 
     const user: User = {
-      id: String(data.userId ?? data.user?.id ?? ''),
-      email: String(data.email ?? data.user?.email ?? ''),
-      name: String(data.fullName ?? data.name ?? data.user?.name ?? ''),
-      role: String(data.role ?? data.user?.role ?? 'parent').toLowerCase() as UserRole,
-      phone: String(data.phone ?? data.user?.phone ?? ''),
-      profileImage: String(data.profileImage ?? data.user?.profileImage ?? ''),
-      createdAt: String(data.createdAt ?? data.user?.createdAt ?? new Date().toISOString()),
+      id: String(rawUser.id ?? data.userId ?? ''),
+      email: String(rawUser.email ?? ''),
+      name: String(rawUser.name ?? data.fullName ?? ''),
+      role: String(rawUser.role ?? 'parent').toLowerCase() as UserRole,
+      phone: String(rawUser.phone ?? ''),
+      profileImage,
+      createdAt: String(rawUser.createdAt ?? new Date().toISOString()),
     };
 
     return { token: data.token, user };

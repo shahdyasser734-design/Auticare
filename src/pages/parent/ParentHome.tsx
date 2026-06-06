@@ -13,6 +13,7 @@ import { notesService, type Note } from '../../services/api/notes';
 import { notificationService, type Notification } from '../../services/api/notifications';
 import { formatDateTime } from '../../utils/dateUtils';
 import { Loader2, Plus, FileText, Activity, MessageSquare, Calendar, ClipboardCheck, Bell, ChevronRight } from 'lucide-react';
+import { Avatar } from '../../components/common/Avatar';
 
 export const ParentHome = () => {
   const navigate = useNavigate();
@@ -155,9 +156,12 @@ export const ParentHome = () => {
                 <div className="grid gap-4 sm:grid-cols-2">
                   {children.map((c) => (
                     <div key={c.id} className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-100 dark:border-white/5 flex justify-between items-center gap-4">
-                      <div>
-                        <p className="font-bold text-slate-950 dark:text-white">{c.name}</p>
-                        <p className="text-xs text-slate-500 mt-1 capitalize">Age: {c.age ?? 'N/A'} yrs · {c.gender}</p>
+                      <div className="flex items-center gap-4">
+                        <Avatar name={c.name} size="md" image={c.profileImage} />
+                        <div>
+                          <p className="font-bold text-slate-950 dark:text-white">{c.name}</p>
+                          <p className="text-xs text-slate-500 mt-1 capitalize">Age: {c.age ?? 'N/A'} yrs · {c.gender}</p>
+                        </div>
                       </div>
                       <div className="flex flex-col gap-1.5 shrink-0">
                         <Button 
