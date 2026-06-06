@@ -104,7 +104,7 @@ const therapyServices = [
   {
     title: 'Family Coaching',
     description: 'Empowering parents with strategies and guidance for home-based support.',
-    image: therapy5,
+    image: therapy4,
     color: 'from-orange-500 to-orange-600',
   },
 ];
