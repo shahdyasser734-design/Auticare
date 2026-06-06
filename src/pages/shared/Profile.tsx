@@ -56,22 +56,35 @@ export const Profile = () => {
     }
   };
 
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
   const handlePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setUploadingPic(true);
-      try {
-        const updated = await profileService.updateProfilePicture(e.target.files[0]);
-        updateUserFields({ profileImage: updated.profileImage });
-        setAlert({ type: 'success', message: 'Profile picture updated successfully!' });
-      } catch (err) {
-        console.error(err);
-        setAlert({ type: 'error', message: 'Failed to update profile picture.' });
-      } finally {
-        setUploadingPic(false);
-        setTimeout(() => setAlert(null), 3000);
-      }
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Show instant local preview before upload finishes
+    const localUrl = URL.createObjectURL(file);
+    setPreviewUrl(localUrl);
+    setUploadingPic(true);
+
+    try {
+      const updated = await profileService.updateProfilePicture(file);
+      // Persist to auth context + localStorage so it survives refresh
+      updateUserFields({ profileImage: updated.profileImage });
+      setPreviewUrl(null); // switch to the persisted URL
+      URL.revokeObjectURL(localUrl);
+      setAlert({ type: 'success', message: 'Profile picture updated successfully!' });
+    } catch (err) {
+      console.error(err);
+      setPreviewUrl(null);
+      URL.revokeObjectURL(localUrl);
+      setAlert({ type: 'error', message: 'Failed to update profile picture. Please try again.' });
+    } finally {
+      setUploadingPic(false);
+      setTimeout(() => setAlert(null), 3000);
     }
   };
+
 
   const handleLicenseUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -110,7 +123,15 @@ export const Profile = () => {
         <Card className="border border-slate-200 dark:border-white/10 shadow-lg rounded-3xl p-6">
           <div className="flex flex-col sm:flex-row items-center gap-6 justify-between">
             <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
-              <Avatar name={user?.name || ''} size="xl" image={user?.profileImage} />
+              <div className="relative group">
+                <Avatar name={user?.name || ''} size="xl" image={previewUrl ?? user?.profileImage} />
+                {uploadingPic && (
+                  <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
+                    <Loader2 size={20} className="animate-spin text-white" />
+                  </div>
+                )}
+              </div>
+
               <div>
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{user?.name}</h2>
                 <p className="text-sm font-semibold text-primary-600 uppercase tracking-wider mt-1">{user?.role}</p>

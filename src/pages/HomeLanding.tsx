@@ -11,7 +11,6 @@ import therapy1 from '../assets/images/therapy-1.jpg';
 import therapy2 from '../assets/images/therapy-2.jpg';
 import therapy3 from '../assets/images/therapy-3.jpg';
 import therapy4 from '../assets/images/therapy-4.jpg';
-import therapy5 from '../assets/images/therapy-5.jpg';
 import therapyOnline from '../assets/images/therapy-online.jpg';
 import therapySupport from '../assets/images/therapy-support.jpg';
 
@@ -485,87 +484,150 @@ export const HomeLanding = () => {
           </div>
         </section>
 
-        {/* CTA SECTION */}
-        <section className="py-20 lg:py-28 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-gradient-to-br from-blue-50 dark:from-blue-900/40 to-purple-50 dark:to-purple-900/40 backdrop-blur-xl p-12 sm:p-16 text-center shadow-2xl relative overflow-hidden">
-              <div className="absolute inset-0 opacity-10 dark:opacity-20 mix-blend-overlay">
-                <img src={therapy5} alt="Background" className="w-full h-full object-cover" />
-              </div>
-              <div className="relative z-10">
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 dark:text-white mb-6 tracking-tight">
-                  Ready to Start Your Journey?
-                </h2>
-                <p className="text-lg text-slate-700 dark:text-slate-200 mb-8 max-w-2xl mx-auto">
-                  Join thousands of families who are getting compassionate, expert autism care with AutiCare.
-                </p>
+        {/* CTA SECTION — premium redesign */}
+        <section className="py-20 lg:py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+          {/* CSS gradient background — visible in both light & dark */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800 dark:from-blue-900 dark:via-indigo-950 dark:to-purple-950" />
+          {/* Soft inner glow */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(120,119,198,0.35),transparent)]" />
 
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Link to={ROUTES.SIGNUP}>
-                    <Button size="lg" className="shadow-lg hover:shadow-xl transition-shadow w-full sm:w-auto">
-                      Start Screening
-                      <ArrowRight size={20} className="ml-2" />
-                    </Button>
-                  </Link>
-                </div>
+          {/* SVG decorative puzzle-piece artwork — always visible */}
+          <svg
+            aria-hidden="true"
+            className="absolute right-0 top-0 h-full w-1/2 opacity-[0.07] pointer-events-none"
+            viewBox="0 0 500 500"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle cx="250" cy="250" r="220" fill="none" stroke="white" strokeWidth="2" />
+            <circle cx="250" cy="250" r="160" fill="none" stroke="white" strokeWidth="1.5" />
+            <circle cx="250" cy="250" r="80"  fill="none" stroke="white" strokeWidth="1" />
+            <line x1="30" y1="250" x2="470" y2="250" stroke="white" strokeWidth="1" />
+            <line x1="250" y1="30" x2="250" y2="470" stroke="white" strokeWidth="1" />
+            <g fill="white" opacity="0.5">
+              <circle cx="250" cy="70"  r="8" />
+              <circle cx="430" cy="250" r="8" />
+              <circle cx="250" cy="430" r="8" />
+              <circle cx="70"  cy="250" r="8" />
+            </g>
+            {/* Puzzle pieces */}
+            <path d="M200 160 h40 a0 0 0 0 1 40 0 v40 a0 0 0 0 0 0 40 h-40 a0 0 0 0 1-40 0v-40a0 0 0 0 0 0-40z" fill="none" stroke="white" strokeWidth="2" />
+            <path d="M280 240 h40 a0 0 0 0 1 40 0 v40 a0 0 0 0 0 0 40 h-40 a0 0 0 0 1-40 0v-40a0 0 0 0 0 0-40z" fill="none" stroke="white" strokeWidth="2" />
+            <path d="M140 300 h40 a0 0 0 0 1 40 0 v40 a0 0 0 0 0 0 40 h-40 a0 0 0 0 1-40 0v-40a0 0 0 0 0 0-40z" fill="none" stroke="white" strokeWidth="2" />
+          </svg>
 
-                <p className="text-sm text-slate-600 dark:text-slate-300 mt-8 font-medium">
-                  Confidential • Professional • Specialized Care
-                </p>
-              </div>
+          {/* Floating orbs */}
+          <div className="absolute top-12 left-12 w-40 h-40 bg-white/5 rounded-full blur-2xl" />
+          <div className="absolute bottom-16 right-24 w-60 h-60 bg-purple-500/10 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/4 w-32 h-32 bg-blue-400/10 rounded-full blur-2xl" />
+
+          <div className="relative z-10 max-w-4xl mx-auto text-center">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-white/90 text-sm font-semibold mb-8 backdrop-blur-sm">
+              <Heart size={14} className="fill-pink-300 text-pink-300" />
+              Trusted by 5,000+ Families
+            </div>
+
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-6 leading-tight tracking-tight">
+              Every Child Deserves<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-300 to-violet-300">
+                Expert Care &amp; Support
+              </span>
+            </h2>
+
+            <p className="text-lg sm:text-xl text-blue-100/90 mb-10 max-w-2xl mx-auto leading-relaxed">
+              Start with an AI-powered autism screening today. Get personalized treatment plans,
+              connect with certified specialists, and track your child's progress — all in one place.
+            </p>
+
+            {/* Trust indicators */}
+            <div className="flex flex-wrap justify-center gap-6 mb-10 text-sm text-white/70">
+              {['🔒 Confidential', '🏥 Clinically Validated', '💬 Specialist-Reviewed', '🌍 Available 24/7'].map(t => (
+                <span key={t} className="flex items-center gap-1 font-medium">{t}</span>
+              ))}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link to={ROUTES.SIGNUP}>
+                <Button size="lg" className="bg-white text-indigo-700 hover:bg-blue-50 font-bold shadow-2xl shadow-black/30 hover:shadow-black/40 transition-all duration-300 w-full sm:w-auto px-10">
+                  Begin Your Journey
+                  <ArrowRight size={20} className="ml-2" />
+                </Button>
+              </Link>
+              <Link to={ROUTES.LOGIN}>
+                <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 backdrop-blur-sm font-semibold w-full sm:w-auto px-8">
+                  Sign In
+                </Button>
+              </Link>
             </div>
           </div>
         </section>
 
+
         {/* FOOTER */}
-        <footer className="border-t border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 py-12 px-4 sm:px-6 lg:px-8">
+        <footer className="border-t border-white/10 bg-slate-900 dark:bg-navy-950 py-16 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-12">
-              <div className="col-span-2 md:col-span-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+              {/* Brand column */}
+              <div className="sm:col-span-2 lg:col-span-1">
                 <div className="flex items-center gap-2 mb-4">
                   <AutismLogo size="sm" animated={false} glow={false} />
-                  <span className="font-bold text-slate-900 dark:text-white text-lg">AutiCare</span>
+                  <span className="font-bold text-white text-xl">AutiCare</span>
                 </div>
-                <p className="text-sm text-slate-600 dark:text-slate-400 pr-4">
-                  Compassionate, professional autism care for modern families. Connect, track, and thrive.
+                <p className="text-sm text-slate-400 leading-relaxed pr-4">
+                  Empowering families through AI-powered autism screening, specialist consultations,
+                  therapy tracking, and personalized treatment planning.
                 </p>
-              </div>
-              {['Product', 'Company', 'Resources'].map((section) => (
-                <div key={section}>
-                  <h4 className="font-semibold text-slate-900 dark:text-white mb-4 text-sm uppercase tracking-wider">{section}</h4>
-                  <ul className="space-y-3 text-sm">
-                    <li>
-                      <a href="#" className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                        Features
-                      </a>
-                    </li>
-                    <li>
-                      <a href="#" className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                        Pricing
-                      </a>
-                    </li>
-                    <li>
-                      <a href="#" className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                        Blog
-                      </a>
-                    </li>
-                  </ul>
+                <div className="mt-6 flex gap-3">
+                  {/* Social icons as colored dots for style */}
+                  {['💙','🟣','🟢'].map((c, i) => (
+                    <span key={i} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm cursor-pointer hover:bg-white/20 transition-colors">{c}</span>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              {/* Platform */}
+              <div>
+                <h4 className="font-semibold text-white mb-5 text-sm uppercase tracking-wider">Platform</h4>
+                <ul className="space-y-3 text-sm">
+                  {['Autism Screening', 'Specialists', 'Treatment Plans', 'Therapy Sessions'].map(link => (
+                    <li key={link}>
+                      <a href="#" className="text-slate-400 hover:text-blue-400 transition-colors">{link}</a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Support */}
+              <div>
+                <h4 className="font-semibold text-white mb-5 text-sm uppercase tracking-wider">Support</h4>
+                <ul className="space-y-3 text-sm">
+                  {['Contact Us', 'Help Center', 'Privacy Policy', 'Terms &amp; Conditions'].map(link => (
+                    <li key={link}>
+                      <a href="#" className="text-slate-400 hover:text-blue-400 transition-colors" dangerouslySetInnerHTML={{ __html: link }} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Resources */}
+              <div>
+                <h4 className="font-semibold text-white mb-5 text-sm uppercase tracking-wider">Resources</h4>
+                <ul className="space-y-3 text-sm">
+                  {['Parent Guidance', 'Autism Awareness', 'Care Tips', 'FAQs'].map(link => (
+                    <li key={link}>
+                      <a href="#" className="text-slate-400 hover:text-blue-400 transition-colors">{link}</a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
 
-            <div className="border-t border-slate-200 dark:border-white/10 pt-8 flex flex-col sm:flex-row justify-between items-center text-sm text-slate-600 dark:text-slate-400">
-              <p>&copy; 2024 AutiCare. All rights reserved.</p>
-              <div className="flex gap-6 mt-4 sm:mt-0">
-                <a href="#" className="hover:text-slate-900 dark:hover:text-white transition-colors">
-                  Privacy Policy
-                </a>
-                <a href="#" className="hover:text-slate-900 dark:hover:text-white transition-colors">
-                  Terms of Service
-                </a>
-                <a href="#" className="hover:text-slate-900 dark:hover:text-white transition-colors">
-                  Contact Us
-                </a>
+            <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-500">
+              <p>© 2026 AutiCare. All rights reserved.</p>
+              <div className="flex gap-6">
+                <a href="#" className="hover:text-slate-300 transition-colors">Privacy Policy</a>
+                <a href="#" className="hover:text-slate-300 transition-colors">Terms of Service</a>
+                <a href="#" className="hover:text-slate-300 transition-colors">Contact Us</a>
               </div>
             </div>
           </div>

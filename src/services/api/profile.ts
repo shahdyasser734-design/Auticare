@@ -27,17 +27,21 @@ export const profileService = {
   },
 
   updateProfilePicture: async (file: File): Promise<Profile> => {
+    // 1. Upload the file and get back a URL
     const uploadRes = await fileUploadService.uploadFile(file);
     const imageUrl = uploadRes.fileUrl;
-    
-    // PUT /profile/picture expects string URL
-    const response = await apiClient.put<Profile>('/profile/picture', JSON.stringify(imageUrl), {
+
+    // 2. PUT /profile/picture — body must be a plain JSON string (backend schema: type "string")
+    //    We must NOT double-encode: send the string directly, not JSON.stringify(imageUrl).
+    await apiClient.put('/profile/picture', imageUrl, {
       headers: { 'Content-Type': 'application/json' },
     });
-    
+
     return {
-      ...response.data,
-      profileImage: imageUrl, // Ensure the updated URL is populated in the returned profile
+      id: '',
+      email: '',
+      name: '',
+      profileImage: imageUrl,
     };
   },
 
