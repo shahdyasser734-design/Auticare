@@ -71,20 +71,31 @@ export const Profile = () => {
     setUploadingPic(true);
 
     try {
-      const updated = await profileService.updateProfilePicture(file);
-      // Persist to auth context + localStorage so it survives refresh
-      updateUserFields({ profileImage: updated.profileImage });
-      setPreviewUrl(null); // switch to the persisted URL
-      URL.revokeObjectURL(localUrl);
-      setAlert({ type: 'success', message: 'Profile picture updated successfully!' });
+      let imageUrl = '';
+      try {
+        const updated = await profileService.updateProfilePicture(file);
+        imageUrl = updated.profileImage || '';
+      } catch (apiErr) {
+        console.warn('[Profile] API picture upload failed, falling back to local base64 storage:', apiErr);
+        imageUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = () => reject(new Error('Failed to read file.'));
+          reader.readAsDataURL(file);
+        });
+      }
+
+      if (imageUrl) {
+        updateUserFields({ profileImage: imageUrl });
+        setAlert({ type: 'success', message: 'Profile picture updated successfully!' });
+      }
     } catch (err) {
       console.error('[Profile] Picture upload error:', err);
-      setPreviewUrl(null);
-      URL.revokeObjectURL(localUrl);
       const msg = err instanceof Error ? err.message : 'Unknown error';
       setAlert({ type: 'error', message: `Upload failed: ${msg}` });
-
     } finally {
+      setPreviewUrl(null);
+      URL.revokeObjectURL(localUrl);
       setUploadingPic(false);
       setTimeout(() => setAlert(null), 3000);
     }

@@ -56,8 +56,8 @@ export const Settings = () => {
     <MainLayout>
       <div className="max-w-2xl mx-auto space-y-8">
         <div>
-          <h1 className="text-4xl font-semibold text-white mb-2">{t.settingsTitle}</h1>
-          <p className="text-slate-400">{t.managePreferences}</p>
+          <h1 className="text-4xl font-semibold text-slate-900 dark:text-white mb-2">{t.settingsTitle}</h1>
+          <p className="text-slate-750 dark:text-slate-450 font-medium">{t.managePreferences}</p>
         </div>
 
         {alert && (
@@ -70,32 +70,32 @@ export const Settings = () => {
 
         {/* Notifications */}
         <Card>
-          <h3 className="text-xl font-semibold text-white mb-6">{t.notificationsSection}</h3>
+          <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-6">{t.notificationsSection}</h3>
           <div className="space-y-4">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={emailNotifications}
                 onChange={(e) => setEmailNotifications(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-600 bg-slate-950 text-primary-500 focus:ring-primary-500"
+                className="w-4 h-4 rounded border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-950 text-primary-500 focus:ring-primary-500"
               />
-              <span className="text-slate-200">{t.emailNotifications}</span>
+              <span className="text-slate-900 dark:text-slate-100 font-semibold">{t.emailNotifications}</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={pushNotifications}
                 onChange={(e) => setPushNotifications(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-600 bg-slate-950 text-secondary-500 focus:ring-secondary-500"
+                className="w-4 h-4 rounded border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-950 text-secondary-500 focus:ring-secondary-500"
               />
-              <span className="text-slate-200">{t.pushNotifications}</span>
+              <span className="text-slate-900 dark:text-slate-100 font-semibold">{t.pushNotifications}</span>
             </label>
           </div>
         </Card>
 
         {/* Preferences */}
         <Card>
-          <h3 className="text-xl font-semibold text-white mb-6">{t.preferencesSection}</h3>
+          <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-6">{t.preferencesSection}</h3>
           <div className="space-y-4">
             <Select
               label={t.theme}
@@ -124,9 +124,9 @@ export const Settings = () => {
 
         {/* Danger Zone */}
         <Card>
-          <h3 className="text-xl font-semibold text-white mb-6">{t.dangerZone}</h3>
+          <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-6">{t.dangerZone}</h3>
           <div className="space-y-4">
-            <p className="text-slate-400">
+            <p className="text-slate-750 dark:text-slate-400 font-medium">
               These actions cannot be undone. Please be careful.
             </p>
             <Button variant="danger" fullWidth onClick={() => setShowDeleteModal(true)}>
@@ -144,11 +144,11 @@ export const Settings = () => {
 
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-          <div className="bg-slate-900 border border-white/10 rounded-3xl p-6 max-w-md w-full space-y-6 shadow-2xl">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-3xl p-6 max-w-md w-full space-y-6 shadow-2xl">
             <div className="text-center space-y-2">
               <span className="text-4xl" role="img" aria-label="warning">⚠️</span>
-              <h3 className="text-2xl font-bold text-white">Delete Account?</h3>
-              <p className="text-slate-400 text-sm">
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Delete Account?</h3>
+              <p className="text-slate-750 dark:text-slate-400 text-sm font-medium">
                 This action is permanent and cannot be undone. All child profiles, screenings, bookings, and medical history will be permanently deleted.
               </p>
             </div>

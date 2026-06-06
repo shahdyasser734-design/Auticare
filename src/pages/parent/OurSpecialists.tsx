@@ -214,8 +214,13 @@ const OurSpecialists = () => {
         setBookingDate('');
         setBookingTime('');
         setBookingReason('');
+        const specName = selected.name || 'Specialist';
+        const isTherapist = selected.type === 'therapist';
+        const formattedName = isTherapist
+          ? (specName.startsWith('Speech Therapist') || specName.startsWith('Therapist') ? specName : `Speech Therapist ${specName}`)
+          : (specName.startsWith('Dr.') ? specName : `Dr. ${specName}`);
         setSelected(null);
-        alert('Booking successful! The doctor will review your request shortly.');
+        alert(`Booking request sent to ${formattedName}`);
       } catch (err) {
         console.error('[BOOKING] Booking error:', err);
         const errorObj = err as { response?: { status?: number }; message?: string };

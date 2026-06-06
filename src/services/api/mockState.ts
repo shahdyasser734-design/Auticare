@@ -358,13 +358,21 @@ export const buildMockBooking = (booking: BuildBookingInput): Booking => {
   } as Booking;
 };
 
-export const createBookingNotification = (booking: Booking): Notification => ({
-  id: `mock-notification-${Date.now()}`,
-  userId: booking.parentId,
-  type: 'booking',
-  title: 'Your booking request is in progress',
-  message: `A new session with ${booking.specialistName} has been requested for ${new Date(booking.dateTime ?? booking.appointmentDate).toLocaleDateString()} at ${booking.appointmentTime}.`,
-  relatedId: booking.id,
-  isRead: false,
-  createdAt: new Date().toISOString(),
-});
+export const createBookingNotification = (booking: Booking): Notification => {
+  const isTherapist = booking.specialistType === 'therapist';
+  const specName = booking.specialistName || 'Specialist';
+  const formattedName = isTherapist
+    ? (specName.startsWith('Speech Therapist') || specName.startsWith('Therapist') ? specName : `Speech Therapist ${specName}`)
+    : (specName.startsWith('Dr.') ? specName : `Dr. ${specName}`);
+
+  return {
+    id: `mock-notification-${Date.now()}`,
+    userId: booking.parentId,
+    type: 'booking',
+    title: `Booking request sent to ${formattedName}`,
+    message: `Booking request sent to ${formattedName} for ${new Date(booking.dateTime ?? booking.appointmentDate).toLocaleDateString()} at ${booking.appointmentTime}.`,
+    relatedId: booking.id,
+    isRead: false,
+    createdAt: new Date().toISOString(),
+  };
+};

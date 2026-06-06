@@ -148,7 +148,7 @@ export const TopNav = ({ onMenuClick }: TopNavProps) => {
               <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{user?.name || 'User'}</p>
               <p className={`text-xs capitalize ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{user?.role || 'Guest'}</p>
             </div>
-            <Avatar name={user?.name || ''} size="md" />
+            <Avatar name={user?.name || ''} size="md" image={user?.profileImage} />
           </div>
         </div>
       </div>

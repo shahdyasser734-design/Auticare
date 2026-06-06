@@ -1,24 +1,25 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '../../layouts/MainLayout';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
-import { ROUTES } from '../../utils/constants';
+import { Modal } from '../../components/common/Modal';
 import { bookingsService } from '../../services/api/bookingsService';
 import { specialistsService } from '../../services/api/specialists';
+import { treatmentPlansService } from '../../services/api/treatmentPlans';
 import { BookingModal } from '../../components/specialists/BookingModal';
 import type { Booking } from '../../types';
 import type { Specialist } from '../../types';
 import { formatDateTime } from '../../utils/dateUtils';
 
 export const ParentSessions = () => {
-  const navigate = useNavigate();
   const [upcomingSessions, setUpcomingSessions] = useState<Booking[]>([]);
   const [pastSessions, setPastSessions] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [defaultSpecialist, setDefaultSpecialist] = useState<Specialist | null>(null);
+  const [connectedSpecialists, setConnectedSpecialists] = useState<Specialist[]>([]);
+  const [selectedSpecialist, setSelectedSpecialist] = useState<Specialist | null>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showSelectorModal, setShowSelectorModal] = useState(false);
 
   const fetchSessions = async () => {
     setLoading(true);
@@ -35,29 +36,41 @@ export const ParentSessions = () => {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchSessions();
-    const loadDefaultSpecialist = async () => {
+    const loadConnectedSpecialists = async () => {
       try {
-        const doctors = await specialistsService.getSpecialists('doctor');
-        if (Array.isArray(doctors) && doctors.length > 0) {
-          setDefaultSpecialist(doctors[0]);
+        const childId = localStorage.getItem('latestChildId') || 'child-1';
+        const allBookings = await bookingsService.getMyBookings().catch(() => []);
+        const allSpecs = await specialistsService.getSpecialists().catch(() => []);
+        const plans = childId ? await treatmentPlansService.getChildPlans(childId).catch(() => []) : [];
+        
+        const connectedIds = new Set<string>();
+        
+        allBookings.forEach(b => {
+          if (b.specialistId) connectedIds.add(String(b.specialistId));
+          if ((b as any).SpecialistId) connectedIds.add(String((b as any).SpecialistId));
+        });
+        
+        plans.forEach(p => {
+          if ((p as any).specialistId) connectedIds.add(String((p as any).specialistId));
+          if ((p as any).doctorId) connectedIds.add(String((p as any).doctorId));
+          if ((p as any).therapistId) connectedIds.add(String((p as any).therapistId));
+          if (Array.isArray((p as any).assignedTherapists)) {
+            (p as any).assignedTherapists.forEach((tId: any) => connectedIds.add(String(tId)));
+          }
+        });
+        
+        let connected = allSpecs.filter(spec => connectedIds.has(String(spec.id)));
+        
+        setConnectedSpecialists(connected);
+        if (connected.length > 0) {
+          setSelectedSpecialist(connected[0]);
         }
       } catch (err) {
-        console.warn('Unable to load default specialist for session booking', err);
-        setDefaultSpecialist({
-          id: 'mock-specialist-1',
-          type: 'doctor',
-          name: 'AutiCare Care Specialist',
-          specialization: 'Behavioral Support',
-          yearsOfExperience: 5,
-          rating: 4.8,
-          reviewCount: 40,
-          availableSlots: [],
-        } as Specialist);
+        console.warn('Unable to load connected specialists for session booking', err);
       }
     };
-    void loadDefaultSpecialist();
+    void loadConnectedSpecialists();
   }, []);
 
   return (
@@ -68,7 +81,17 @@ export const ParentSessions = () => {
             <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">My Sessions</h1>
             <p className="text-slate-600 dark:text-slate-400">Manage your upcoming and past sessions</p>
           </div>
-          <Button onClick={() => setShowBookingModal(true)} disabled={!defaultSpecialist}>
+          <Button 
+            onClick={() => {
+              if (connectedSpecialists.length > 1) {
+                setShowSelectorModal(true);
+              } else if (connectedSpecialists.length === 1) {
+                setSelectedSpecialist(connectedSpecialists[0]);
+                setShowBookingModal(true);
+              }
+            }} 
+            disabled={connectedSpecialists.length === 0}
+          >
             Book a New Session
           </Button>
         </div>
@@ -87,7 +110,17 @@ export const ParentSessions = () => {
                   <div className="text-center py-12">
                     <div className="w-16 h-16 bg-blue-50 dark:bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">📅</div>
                     <p className="text-slate-600 dark:text-slate-400 mb-4">No active sessions or requests</p>
-                    <Button onClick={() => navigate(ROUTES.PARENT_BOOK_SPECIALIST)}>
+                    <Button 
+                      onClick={() => {
+                        if (connectedSpecialists.length > 1) {
+                          setShowSelectorModal(true);
+                        } else if (connectedSpecialists.length === 1) {
+                          setSelectedSpecialist(connectedSpecialists[0]);
+                          setShowBookingModal(true);
+                        }
+                      }}
+                      disabled={connectedSpecialists.length === 0}
+                    >
                       Book a Session
                     </Button>
                   </div>
@@ -163,10 +196,58 @@ export const ParentSessions = () => {
           </>
         )}
       </div>
-      {defaultSpecialist && (
+      {showSelectorModal && (
+        <Modal
+          isOpen={showSelectorModal}
+          onClose={() => setShowSelectorModal(false)}
+          title="Select Connected Specialist"
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Choose a specialist from your treatment team to book a session with.
+            </p>
+            <div className="grid gap-3">
+              {connectedSpecialists.map((spec) => {
+                const isDoctor = spec.type === 'doctor';
+                return (
+                  <button
+                    key={spec.id}
+                    onClick={() => {
+                      setSelectedSpecialist(spec);
+                      setShowSelectorModal(false);
+                      setShowBookingModal(true);
+                    }}
+                    className="w-full text-left p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 hover:border-orange-500 hover:ring-2 hover:ring-orange-200 dark:hover:border-orange-500 transition-all flex items-center justify-between group cursor-pointer"
+                  >
+                    <div>
+                      <h4 className="font-bold text-slate-950 dark:text-white group-hover:text-orange-500 transition-colors">
+                        {spec.name}
+                      </h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {spec.specialization}
+                      </p>
+                    </div>
+                    <span
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
+                        isDoctor
+                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                          : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
+                      }`}
+                    >
+                      {isDoctor ? '👨‍⚕️ Doctor' : '🧑‍🏫 Therapist'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {selectedSpecialist && (
         <BookingModal
           open={showBookingModal}
-          specialist={defaultSpecialist}
+          specialist={selectedSpecialist}
           onClose={() => setShowBookingModal(false)}
           onBooked={() => {
             setShowBookingModal(false);

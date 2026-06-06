@@ -99,7 +99,6 @@ const exportPDF = (result: ScreeningResult) => {
 export const ParentScreeningResults = () => {
   const navigate = useNavigate();
   const [result, setResult] = useState<ScreeningResult | null>(null);
-  const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [childId, setChildId] = useState<string | null>(null);
   const [hasTreatmentPlan, setHasTreatmentPlan] = useState(false);
@@ -165,16 +164,6 @@ export const ParentScreeningResults = () => {
             }
           }
         }
-
-        // ── 3. Load analytics ──
-        if (id) {
-          try {
-            const analyticsData = await screeningService.getAnalytics(id);
-            setAnalytics(analyticsData);
-          } catch (analyticsError) {
-            console.warn('Unable to load analytics data:', analyticsError);
-          }
-        }
       } catch (err) {
         console.error('Error loading screening results:', err);
       } finally {
@@ -237,43 +226,9 @@ export const ParentScreeningResults = () => {
     ? 'Based on the screening results, we recommend scheduling an appointment with a specialist for a comprehensive clinical evaluation as soon as possible.'
     : 'The screening results show no immediate indicators of ASD. Continue regular developmental check-ups and monitoring.';
 
-  const analyticsData = (() => {
-    const service: AnalyticsResponse = analytics ?? {};
-    const totalTests = Number(service.totalTests ?? 1);
-    const highRisk = Number(service.highRiskCount ?? 0);
-    const lowRisk = Number(service.lowRiskCount ?? 0);
-    const mediumRisk = Math.max(0, totalTests - highRisk - lowRisk);
 
-    // latestConfidenceScore from backend is a fraction (0–1), convert to %
-    const rawLatestConf = service.latestConfidenceScore ?? null;
-    const latestConfidence = rawLatestConf !== null
-      ? Math.round(Number(rawLatestConf) * 100)
-      : result.confidenceScore;
 
-    // lastPrediction from backend may be inverted (NO/YES); always use the
-    // normalised predictionClass from the current result instead.
-    const lastPrediction = result.predictionClass;
 
-    return {
-      totalScreenings: totalTests,
-      averageScore: result.aqScore ?? 0,
-      latestConfidence,
-      lastPrediction,
-      riskLevelDistribution: {
-        low: lowRisk,
-        medium: mediumRisk,
-        high: highRisk,
-      },
-    };
-  })();
-
-  const stats = {
-    totalTests: analyticsData.totalScreenings,
-    highRiskCount: analyticsData.riskLevelDistribution.high,
-    lowRiskCount: analyticsData.riskLevelDistribution.low,
-    lastPrediction: analyticsData.lastPrediction,
-    latestConfidence: analyticsData.latestConfidence,
-  };
 
   // ── Result UI ─────────────────────────────────────────────────────────────
   return (
@@ -392,83 +347,7 @@ export const ParentScreeningResults = () => {
           </Card>
         </div>
 
-        <section className="grid gap-6 xl:grid-cols-[1.4fr,_0.9fr]">
-          <Card className="p-8 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 shadow-sm rounded-3xl">
-            <div className="flex items-center justify-between gap-4 mb-6">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-400 dark:text-slate-500">Screening Analytics</p>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Performance by domain</h2>
-              </div>
-              <span className="text-sm text-slate-500 dark:text-slate-400">Last updated {date}</span>
-            </div>
 
-            <div className="space-y-4">
-              {[
-                { label: 'Social Attention', value: result.socialAttention },
-                { label: 'Joint Attention', value: result.jointAttention },
-                { label: 'Social Communication', value: result.socialCommunication },
-                { label: 'Language', value: result.language },
-                { label: 'Imagination', value: result.imagination },
-                { label: 'Repetitive Behavior', value: result.repetitiveBehavior },
-              ].map((item) => (
-                <div key={item.label} className="space-y-2">
-                  <div className="flex justify-between text-sm font-medium text-slate-600 dark:text-slate-400">
-                    <span>{item.label}</span>
-                    <span>{item.value}%</span>
-                  </div>
-                  <div className="h-3 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-                    <div className={`h-full rounded-full ${item.value >= 70 ? 'bg-green-500' : item.value >= 40 ? 'bg-orange-400' : 'bg-red-500'}`} style={{ width: `${Math.min(100, Math.max(0, item.value))}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          <Card className="p-8 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 shadow-sm rounded-3xl">
-            <div className="space-y-6">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-400 dark:text-slate-500">Statistics</p>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Key results</h2>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {[
-                  { label: 'Total Tests', value: stats.totalTests },
-                  { label: 'High Risk Count', value: stats.highRiskCount },
-                  { label: 'Low Risk Count', value: stats.lowRiskCount },
-                  { label: 'Latest Confidence', value: `${stats.latestConfidence}%` },
-                ].map((card) => (
-                  <div key={card.label} className="rounded-3xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/80 p-5">
-                    <p className="text-sm text-slate-500 dark:text-slate-400">{card.label}</p>
-                    <p className="mt-3 text-3xl font-bold text-slate-900 dark:text-white">{card.value}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Card>
-        </section>
-
-        <Card className="p-8 bg-gradient-to-r from-slate-50 to-white dark:from-slate-900 dark:to-slate-800 border border-slate-200 dark:border-white/10 shadow-xl rounded-3xl">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-sm uppercase tracking-[0.24em] text-slate-400 dark:text-slate-500">Last prediction</p>
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{stats.lastPrediction}</h3>
-            </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              <div className="rounded-3xl bg-white dark:bg-slate-800/80 p-5 border border-slate-200 dark:border-white/10">
-                <p className="text-sm text-slate-500 dark:text-slate-400">Average AQ score</p>
-                <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{analyticsData.averageScore || result.aqScore || 'N/A'}</p>
-              </div>
-              <div className="rounded-3xl bg-white dark:bg-slate-800/80 p-5 border border-slate-200 dark:border-white/10">
-                <p className="text-sm text-slate-500 dark:text-slate-400">Latest confidence</p>
-                <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{stats.latestConfidence}%</p>
-              </div>
-              <div className="rounded-3xl bg-white dark:bg-slate-800/80 p-5 border border-slate-200 dark:border-white/10">
-                <p className="text-sm text-slate-500 dark:text-slate-400">Risk trend</p>
-                <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{analyticsData.riskLevelDistribution.high > 0 ? 'High' : analyticsData.riskLevelDistribution.medium > 0 ? 'Medium' : 'Low'}</p>
-              </div>
-            </div>
-          </div>
-        </Card>
 
         {/* Action buttons */}
         <div className="flex flex-col gap-4">

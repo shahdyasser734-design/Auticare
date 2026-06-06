@@ -1,41 +1,74 @@
 import { useEffect, useState } from 'react';
 import { MainLayout } from '../../layouts/MainLayout';
-import { bookingService, type Booking } from '../../services/api/bookings';
+import { useBookings } from '../../context/BookingsContext';
 
 export const MyBookings = () => {
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { myBookings: bookings, loading, refreshBookings } = useBookings();
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'upcoming' | 'completed'>('upcoming');
 
   useEffect(() => {
     const loadBookings = async () => {
       try {
-        setLoading(true);
-        const data = await bookingService.getMyBookings();
-        setBookings(data);
+        await refreshBookings();
       } catch (err) {
         console.error('Failed to load bookings:', err);
         setError('Could not load your bookings. Please try again later.');
-      } finally {
-        setLoading(false);
       }
     };
-    loadBookings();
+    void loadBookings();
   }, []);
 
-  // Upcoming: anything that is NOT completed and NOT cancelled
-  const upcomingBookings = bookings.filter((b) => {
+  const sortedBookings = [...bookings].sort((a, b) => {
+    const timeA = new Date(a.dateTime || a.createdAt || 0).getTime();
+    const timeB = new Date(b.dateTime || b.createdAt || 0).getTime();
+    return timeB - timeA;
+  });
+
+  // Upcoming: anything that is NOT completed
+  const upcomingBookings = sortedBookings.filter((b) => {
     const s = (b.status ?? '').toLowerCase();
-    return s !== 'completed' && s !== 'cancelled';
+    return s !== 'completed';
   });
 
   // Completed: only bookings explicitly marked completed
-  const completedBookings = bookings.filter((b) => {
+  const completedBookings = sortedBookings.filter((b) => {
     return (b.status ?? '').toLowerCase() === 'completed';
   });
 
   const displayBookings = activeTab === 'upcoming' ? upcomingBookings : completedBookings;
+
+  const getStatusLabel = (statusStr: string) => {
+    const s = (statusStr || '').toLowerCase();
+    if (s === 'pending') return 'Pending';
+    if (s === 'approved') return 'Approved';
+    if (s === 'rejected') return 'Rejected';
+    if (s === 'confirmed') return 'Confirmed';
+    if (s === 'scheduled') return 'Scheduled';
+    if (s === 'completed') return 'Completed';
+    if (s === 'cancelled') return 'Cancelled';
+    return statusStr || 'Pending';
+  };
+
+  const getStatusBadgeClass = (statusStr: string) => {
+    const s = (statusStr || '').toLowerCase();
+    if (s === 'pending') {
+      return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 dark:border-amber-900/40';
+    }
+    if (s === 'approved') {
+      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/40';
+    }
+    if (s === 'rejected' || s === 'cancelled') {
+      return 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300 border border-rose-200 dark:border-rose-900/40';
+    }
+    if (s === 'confirmed' || s === 'scheduled') {
+      return 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300 border border-sky-200 dark:border-sky-900/40';
+    }
+    if (s === 'completed') {
+      return 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300 border border-teal-200 dark:border-teal-900/40';
+    }
+    return 'bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-350 border border-slate-200 dark:border-slate-800';
+  };
 
   if (loading) {
     return (
@@ -148,17 +181,9 @@ export const MyBookings = () => {
                         Status
                       </p>
                       <span
-                        className={`mt-1 inline-block rounded-full px-3 py-1 text-sm font-semibold capitalize ${
-                          status === 'scheduled' || status === 'confirmed' || status === 'approved'
-                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                            : status === 'completed'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                            : status === 'cancelled'
-                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
-                        }`}
+                        className={`mt-1 inline-block rounded-full px-3 py-1 text-sm font-semibold capitalize ${getStatusBadgeClass(booking.status)}`}
                       >
-                        {booking.status || 'Pending'}
+                        {getStatusLabel(booking.status)}
                       </span>
                     </div>
                     <div>

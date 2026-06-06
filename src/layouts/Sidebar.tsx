@@ -117,7 +117,7 @@ export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
               : 'border-slate-200 bg-slate-50'
           }`}>
             <div className="flex items-center gap-3 mb-3">
-              <Avatar name={user?.name || ''} size="md" />
+              <Avatar name={user?.name || ''} size="md" image={user?.profileImage} />
               <div>
                 <p className={`font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{user?.name}</p>
                 <p className={`text-xs capitalize ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{user?.role}</p>

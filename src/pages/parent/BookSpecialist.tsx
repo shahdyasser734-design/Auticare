@@ -232,7 +232,12 @@ export const BookSpecialist = () => {
           onClose={() => setIsModalOpen(false)}
           onBooked={() => {
             setIsModalOpen(false);
-            setSuccessMessage(`Request sent to ${activeTab === 'doctors' ? 'doctor' : 'therapist'}. You will be notified once confirmed.`);
+            const isTherapist = selectedSpecialist.type === 'therapist';
+            const specName = selectedSpecialist.name || 'Specialist';
+            const formattedName = isTherapist
+              ? (specName.startsWith('Speech Therapist') || specName.startsWith('Therapist') ? specName : `Speech Therapist ${specName}`)
+              : (specName.startsWith('Dr.') ? specName : `Dr. ${specName}`);
+            setSuccessMessage(`Booking request sent to ${formattedName}`);
             setSearchTerm('');
           }}
         />

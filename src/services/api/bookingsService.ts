@@ -1,6 +1,6 @@
 import apiClient from '../apiClient';
 import type { Booking } from '../../types';
-import { mockState } from './mockState';
+import { mockState, createBookingNotification } from './mockState';
 
 const mergeBookings = (backend: Booking[] = []) => {
   const local = mockState.getBookings();
@@ -57,18 +57,7 @@ export const bookingsService = {
       console.log('[BOOKING] Successfully created booking:', booking);
       
       // Add notification for booking request received
-      const specialistName = booking.specialistName || 'Ahmed';
-      const rolePrefix = booking.specialistType === 'therapist' ? 'Speech Therapist' : 'Dr.';
-      mockState.addNotification({
-        id: `mock-notification-${Date.now()}`,
-        userId: booking.parentId,
-        type: 'booking',
-        title: 'Booking request sent',
-        message: `${rolePrefix} ${specialistName} received your booking request.`,
-        relatedId: booking.id,
-        isRead: false,
-        createdAt: new Date().toISOString(),
-      });
+      mockState.addNotification(createBookingNotification(booking));
 
       return booking;
     } catch (err) {
@@ -99,17 +88,7 @@ export const bookingsService = {
       console.log('[BOOKING] Created new mock booking:', newBooking);
 
       // Add notification for mock booking request received
-      const prefix = newBooking.specialistType === 'therapist' ? 'Speech Therapist' : 'Dr.';
-      mockState.addNotification({
-        id: `mock-notification-${Date.now()}`,
-        userId: newBooking.parentId,
-        type: 'booking',
-        title: 'Booking request sent',
-        message: `${prefix} ${newBooking.specialistName} received your booking request.`,
-        relatedId: newBooking.id,
-        isRead: false,
-        createdAt: new Date().toISOString(),
-      });
+      mockState.addNotification(createBookingNotification(newBooking));
 
       return newBooking;
     }

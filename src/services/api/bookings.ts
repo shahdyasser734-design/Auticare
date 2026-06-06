@@ -15,7 +15,10 @@ export interface BookingRequest {
   reason?: string;
   request?: string;
   notes?: string;
+  specialistName?: string;
+  SpecialistName?: string;
   SpecialistId?: string | number;
+  SpecialistType?: 'doctor' | 'therapist';
   ChildId?: string;
   PreferredDate?: string;
   PreferredTime?: string;

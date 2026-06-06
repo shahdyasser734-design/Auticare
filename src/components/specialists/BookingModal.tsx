@@ -76,6 +76,8 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
 
       const payload: BookingRequest = {
         specialistId: specialistIdValue,
+        specialistName: specialist.name,
+        specialistType: specialist.type || (specialist as any).role || 'doctor',
         childId,
         preferredDate: formattedDate,
         preferredTime: formattedTime,
@@ -84,6 +86,8 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
         request: reason.trim(),
         notes: reason.trim(),
         SpecialistId: specialistIdValue,
+        SpecialistName: specialist.name,
+        SpecialistType: specialist.type || (specialist as any).role || 'doctor',
         ChildId: childId,
         PreferredDate: formattedDate,
         PreferredTime: formattedTime,
