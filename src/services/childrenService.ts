@@ -3,29 +3,29 @@ import type { Child } from '../types';
 import { mockState } from './api/mockState';
 export type { Child } from '../types';
 
-const normalizeChild = (raw: any): Child => {
+const normalizeChild = (raw: Record<string, unknown>): Child => {
   const id = String(raw.id ?? raw._id ?? raw.childId ?? raw.child_id ?? '');
 
   return {
     id,
-    parentId: raw.parentId ?? raw.parent_id ?? raw.parent ?? 'parent-123',
+    parentId: (raw.parentId ?? raw.parent_id ?? raw.parent ?? 'parent-123') as string,
     name: String(raw.name ?? `${raw.firstName ?? ''} ${raw.lastName ?? ''}`.trim()),
-    age: raw.age ?? raw.ageInYears ?? raw.childAge ?? 0,
-    gender: raw.gender ?? raw.sex ?? 'Unknown',
-    dateOfBirth: raw.dateOfBirth ?? raw.date_of_birth ?? raw.dob ?? '',
-    profileImage: raw.profileImage ?? raw.profile_image ?? raw.profile_image_url ?? '',
-    medicalHistory: raw.medicalHistory ?? raw.medical_history ?? '',
-    familyAutismHistory: raw.familyAutismHistory ?? raw.family_autism_history ?? false,
-    jaundiceHistory: raw.jaundiceHistory ?? raw.jaundice_history ?? false,
-    notes: raw.notes ?? '',
-    createdAt: raw.createdAt ?? raw.created_at ?? new Date().toISOString(),
+    age: (raw.age ?? raw.ageInYears ?? raw.childAge ?? 0) as number,
+    gender: (raw.gender ?? raw.sex ?? 'Unknown') as string,
+    dateOfBirth: (raw.dateOfBirth ?? raw.date_of_birth ?? raw.dob ?? '') as string,
+    profileImage: (raw.profileImage ?? raw.profile_image ?? raw.profile_image_url ?? '') as string,
+    medicalHistory: (raw.medicalHistory ?? raw.medical_history ?? '') as string,
+    familyAutismHistory: (raw.familyAutismHistory ?? raw.family_autism_history ?? false) as boolean,
+    jaundiceHistory: (raw.jaundiceHistory ?? raw.jaundice_history ?? false) as boolean,
+    notes: (raw.notes ?? '') as string,
+    createdAt: (raw.createdAt ?? raw.created_at ?? new Date().toISOString()) as string,
   };
 };
 
 export const childrenService = {
   getChildren: async (): Promise<Child[]> => {
     try {
-      const response = await apiClient.get<any[]>('/children');
+      const response = await apiClient.get<Record<string, unknown>[]>('/children');
       const data = response.data.map(normalizeChild);
       return data.length > 0 ? data : mockState.getChildren();
     } catch (error) {
@@ -36,7 +36,7 @@ export const childrenService = {
 
   getChild: async (id: string): Promise<Child> => {
     try {
-      const response = await apiClient.get<any>(`/children/${id}`);
+      const response = await apiClient.get<Record<string, unknown>>(`/children/${id}`);
       return normalizeChild(response.data);
     } catch (error) {
       const child = mockState.getChildren().find((item) => item.id === id);
@@ -49,11 +49,11 @@ export const childrenService = {
     data: Omit<Child, 'id' | 'createdAt' | 'parentId'> & { firstName?: string; lastName?: string }
   ): Promise<Child> => {
     try {
-      const response = await apiClient.post<any>('/children', data);
+      const response = await apiClient.post<Record<string, unknown>>('/children', data);
       const child = normalizeChild(response.data);
       mockState.addChild(child);
       return child;
-    } catch (error) {
+    } catch {
       const child: Child = {
         id: `mock-child-${Date.now()}`,
         parentId: 'parent-123',
@@ -72,7 +72,7 @@ export const childrenService = {
 
   updateChild: async (id: string, data: Partial<Child>): Promise<Child> => {
     try {
-      const response = await apiClient.put<any>(`/children/${id}`, data);
+      const response = await apiClient.put<Record<string, unknown>>(`/children/${id}`, data);
       const child = normalizeChild(response.data);
       mockState.updateChild(id, data);
       return child;

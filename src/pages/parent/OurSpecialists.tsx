@@ -5,7 +5,7 @@ import BookingModalUI from '../../components/specialists/BookingModalUI';
 import SkeletonCard from '../../components/specialists/SkeletonCard';
 import { specialistsService } from '../../services/api/specialists';
 import type { Specialist as ApiSpecialist } from '../../services/api/specialists';
-import { bookingService } from '../../services/api/bookings';
+import { bookingService, type BookingRequest } from '../../services/api/bookings';
 import { useBookings } from '../../context/BookingsContext';
 
 const mockSpecialists: Specialist[] = [
@@ -14,6 +14,7 @@ const mockSpecialists: Specialist[] = [
     id: 1,
     name: 'Dr. Aisha Khan',
     specialty: 'Child Psychiatrist',
+    type: 'doctor',
     years: 14,
     rating: 4.8,
     cases: 1240,
@@ -24,6 +25,7 @@ const mockSpecialists: Specialist[] = [
     id: 2,
     name: 'Dr. Michael Tan',
     specialty: 'Pediatric Neurologist',
+    type: 'doctor',
     years: 11,
     rating: 4.7,
     cases: 860,
@@ -34,6 +36,7 @@ const mockSpecialists: Specialist[] = [
     id: 3,
     name: 'Dr. Fatima Noor',
     specialty: 'Developmental Pediatrician',
+    type: 'doctor',
     years: 9,
     rating: 4.6,
     cases: 620,
@@ -44,6 +47,7 @@ const mockSpecialists: Specialist[] = [
     id: 4,
     name: 'Dr. Ahmed Hassan',
     specialty: 'Child Psychologist',
+    type: 'doctor',
     years: 12,
     rating: 4.5,
     cases: 950,
@@ -55,6 +59,7 @@ const mockSpecialists: Specialist[] = [
     id: 5,
     name: 'Ms. Sara Gomez',
     specialty: 'Speech-Language Pathologist',
+    type: 'therapist',
     years: 8,
     rating: 4.7,
     cases: 540,
@@ -65,6 +70,7 @@ const mockSpecialists: Specialist[] = [
     id: 6,
     name: 'Mr. Daniel Lee',
     specialty: 'Occupational Therapist',
+    type: 'therapist',
     years: 7,
     rating: 4.6,
     cases: 410,
@@ -75,6 +81,7 @@ const mockSpecialists: Specialist[] = [
     id: 7,
     name: 'Ms. Hana Wong',
     specialty: 'Behavioral Therapist',
+    type: 'therapist',
     years: 10,
     rating: 4.8,
     cases: 720,
@@ -85,6 +92,7 @@ const mockSpecialists: Specialist[] = [
     id: 8,
     name: 'Mr. Carlos Rodriguez',
     specialty: 'Sensory Integration Specialist',
+    type: 'therapist',
     years: 6,
     rating: 4.5,
     cases: 380,
@@ -112,6 +120,7 @@ const OurSpecialists = () => {
     id: Number(a.id) || (index + 1),
     name: a.name,
     specialty: a.specialization || 'General',
+    type: a.type || 'doctor', // Use the API's type field
     years: a.yearsOfExperience || 0,
     rating: a.rating || 0,
     cases: a.reviewCount || 0,
@@ -123,26 +132,28 @@ const OurSpecialists = () => {
     setLoading(true);
     setError(null);
     try {
+      console.log('[SPECIALISTS] Loading specialists from API...');
       const resp = await specialistsService.getSpecialists();
-      console.log('Raw specialists API response:', resp);
+      console.log('[SPECIALISTS] Raw API response:', resp);
       const data = Array.isArray(resp)
         ? resp
-        : Array.isArray((resp as any)?.data)
-        ? (resp as any).data
+        : Array.isArray((resp as Record<string, unknown>)?.data)
+        ? ((resp as Record<string, unknown>).data as ApiSpecialist[])
         : undefined;
-      console.log('Extracted specialists data:', data);
+      console.log('[SPECIALISTS] Extracted specialists data:', data);
       if (!data) {
-        console.warn('Specialists API returned unexpected payload:', resp);
+        console.warn('[SPECIALISTS] API returned unexpected payload:', resp);
         throw new Error('Invalid specialists response');
       }
       const mapped = data.map((s: ApiSpecialist, i: number) => mapApiToUi(s, i));
-      console.log('Mapped specialists:', mapped);
+      console.log('[SPECIALISTS] Mapped specialists:', mapped);
+      console.log(`[SPECIALISTS] Loaded ${mapped.filter((s: Specialist) => s.type === 'doctor').length} doctors and ${mapped.filter((s: Specialist) => s.type === 'therapist').length} therapists`);
       setSpecialists(mapped);
     } catch (err) {
-      console.error('Failed to load specialists', err);
+      console.error('[SPECIALISTS] Failed to load specialists:', err);
       setError('Failed to load specialists. Showing fallback data.');
       // Fallback to mock data
-      console.log('Using mock specialists:', mockSpecialists);
+      console.log('[SPECIALISTS] Using mock specialists:', mockSpecialists);
       setSpecialists(mockSpecialists);
     } finally {
       setLoading(false);
@@ -150,13 +161,17 @@ const OurSpecialists = () => {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filtered = useMemo(() => {
-    if (activeTab === 'doctors') return specialists.filter((s) => s.specialty.toLowerCase().includes('doctor') || s.specialty.toLowerCase().includes('psychiatrist') || s.specialty.toLowerCase().includes('neurologist'));
-    return specialists.filter((s) => !s.specialty.toLowerCase().includes('psychiatrist') && !s.specialty.toLowerCase().includes('neurologist'));
+    // Filter by specialist type instead of specialty string matching
+    if (activeTab === 'doctors') {
+      return specialists.filter((s) => s.type === 'doctor');
+    }
+    return specialists.filter((s) => s.type === 'therapist');
   }, [activeTab, specialists]);
 
   const handleBook = (s: Specialist) => {
@@ -172,33 +187,27 @@ const OurSpecialists = () => {
       if (!selected) return;
       const childId = bookings.currentChildId;
       
-      // Debug log the selected specialist
-      console.log('Selected specialist object:', selected);
-      console.log('Selected specialist keys:', Object.keys(selected));
-      console.log('Selected specialist full dump:', JSON.stringify(selected));
-      
-      // Transform to fields that backend expects
-      // Using PascalCase field names, keep as separate date/time
-      const payload: any = {
-        SpecialistId: typeof selected.id === 'number' ? selected.id : Number(selected.id),
-        ChildId: childId || undefined,
-        PreferredDate: bookingDate || undefined,
-        PreferredTime: bookingTime || undefined,
-        Reason: bookingReason || undefined,
-      };
-
       setSubmitting(true);
       setApiError(null);
       try {
-        console.log('Creating booking - request payload:', payload);
-        const created = await bookingService.createBooking(payload as any);
-        console.log('Booking API response:', created);
+        const payload: BookingRequest = {
+          SpecialistId: typeof selected.id === 'number' ? selected.id : Number(selected.id),
+          ChildId: childId || undefined,
+          PreferredDate: bookingDate || undefined,
+          PreferredTime: bookingTime || undefined,
+          Reason: bookingReason || undefined,
+        };
+        
+        console.log(`[BOOKING] Creating booking for specialist: ${selected.name} (ID: ${selected.id}, Type: ${selected.type})`);
+        console.log('[BOOKING] Request payload:', payload);
+        const created = await bookingService.createBooking(payload);
+        console.log('[BOOKING] Booking created successfully:', created);
 
         // Add to global bookings context so UI updates across pages
         try {
           bookings.addBooking(created);
         } catch (e) {
-          console.error('Failed to update bookings context:', e);
+          console.error('[BOOKING] Failed to update bookings context:', e);
         }
 
         setOpen(false);
@@ -206,16 +215,17 @@ const OurSpecialists = () => {
         setBookingTime('');
         setBookingReason('');
         setSelected(null);
-        alert('Booking successful');
-      } catch (err: any) {
-        console.error('Booking error:', err);
-        const status = err?.response?.status;
+        alert('Booking successful! The doctor will review your request shortly.');
+      } catch (err) {
+        console.error('[BOOKING] Booking error:', err);
+        const errorObj = err as { response?: { status?: number }; message?: string };
+        const status = errorObj?.response?.status;
         if (status === 400) {
-          setApiError(err.message || 'Validation error.');
+          setApiError(errorObj.message || 'Validation error.');
         } else if (status === 403) {
           setApiError('You are not authorized to perform this action.');
         } else {
-          setApiError(err.message || 'Network error. Please try again.');
+          setApiError(errorObj.message || 'Network error. Please try again.');
         }
       } finally {
         setSubmitting(false);
@@ -228,9 +238,6 @@ const OurSpecialists = () => {
       <header className="mb-6">
         <h1 className="text-2xl md:text-3xl font-semibold text-slate-900">Our Specialists</h1>
         <p className="text-sm text-slate-500 mt-1">Book appointments with doctors and therapists</p>
-        <div className="mt-4 inline-flex rounded-full bg-emerald-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-emerald-800 shadow-sm">
-          OUR SPECIALISTS PAGE - LATEST VERSION LOADED
-        </div>
       </header>
 
       <div className="mb-6 flex items-center gap-4">
@@ -249,11 +256,6 @@ const OurSpecialists = () => {
               Therapists
             </button>
           </nav>
-        </div>
-
-        <div className="ml-auto flex items-center gap-3">
-          <div className="text-xs text-slate-500">Smooth transitions</div>
-          <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">✨</div>
         </div>
       </div>
 

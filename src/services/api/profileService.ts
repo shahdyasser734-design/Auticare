@@ -15,7 +15,7 @@ export const profileService = {
   },
 
   // For specialists: update license information
-  updateLicense: async (licenseData: Record<string, any>): Promise<User> => {
+  updateLicense: async (licenseData: Record<string, unknown>): Promise<User> => {
     const response = await apiClient.put<User>('/profile/license', licenseData);
     return response.data;
   },

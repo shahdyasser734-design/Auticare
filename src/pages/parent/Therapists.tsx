@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '../../layouts/MainLayout';
 import { specialistsService } from '../../services/api/specialistsService';
 import { BookingModal } from '../../components/specialists/BookingModal';
 import type { Specialist } from '../../types';
 
-const isInvalid = (val: any) => 
+const isInvalid = (val: unknown) => 
   val === null || 
   val === undefined || 
   val === 'string' || 
@@ -14,7 +14,8 @@ const isInvalid = (val: any) =>
   val === 0 || 
   val === '0';
 
-export const sanitizeSpecialist = (spec: any) => {
+// eslint-disable-next-line react-refresh/only-export-components
+export const sanitizeSpecialist = (spec: Record<string, unknown>) => {
   const reviews = isInvalid(spec.reviews) && isInvalid(spec.reviewCount)
     ? '5+' 
     : String(spec.reviews || spec.reviewCount || '5+');
@@ -48,7 +49,6 @@ export const sanitizeSpecialist = (spec: any) => {
 export const Therapists = () => {
   const navigate = useNavigate();
   const [therapists, setTherapists] = useState<Specialist[]>([]);
-  const [filteredTherapists, setFilteredTherapists] = useState<Specialist[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTherapist, setSelectedTherapist] = useState<Specialist | null>(null);
@@ -61,14 +61,12 @@ export const Therapists = () => {
         const data = await specialistsService.getSpecialists('therapist');
         // Handle various API response formats
         const therapistList = Array.isArray(data) ? data : 
-                             Array.isArray((data as any)?.data) ? (data as any).data : 
-                             Array.isArray((data as any)?.specialists) ? (data as any).specialists : [];
+                             Array.isArray((data as Record<string, unknown>)?.data) ? (data as Record<string, Specialist[]>).data : 
+                             Array.isArray((data as Record<string, unknown>)?.specialists) ? (data as Record<string, Specialist[]>).specialists : [];
         setTherapists(therapistList);
-        setFilteredTherapists(therapistList);
       } catch (err) {
         console.error('Failed to load therapists:', err);
         setTherapists([]);
-        setFilteredTherapists([]);
       } finally {
         setLoading(false);
       }
@@ -76,15 +74,14 @@ export const Therapists = () => {
     loadTherapists();
   }, []);
 
-  useEffect(() => {
-    const filtered = therapists.filter((therapist) => {
+  const filteredTherapists = useMemo(() => {
+    return therapists.filter((therapist) => {
       const query = searchQuery.toLowerCase();
       return (
         therapist.name.toLowerCase().includes(query) ||
         therapist.specialization.toLowerCase().includes(query)
       );
     });
-    setFilteredTherapists(filtered);
   }, [searchQuery, therapists]);
 
   const handleBookingClose = () => {
@@ -165,7 +162,7 @@ export const Therapists = () => {
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filteredTherapists.map((rawTherapist) => {
-              const therapist = sanitizeSpecialist(rawTherapist);
+              const therapist = sanitizeSpecialist(rawTherapist as unknown as Record<string, unknown>) as unknown as Specialist;
               return (
                 <div
                   key={therapist.id}

@@ -38,6 +38,7 @@ export const BookingsProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const childId = localStorage.getItem('latestChildId') || undefined;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentChildId(childId);
     void refreshBookings();
   }, []);
@@ -56,6 +57,7 @@ export const BookingsProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useBookings = () => {
   const ctx = useContext(BookingsContext);
   if (!ctx) throw new Error('useBookings must be used within BookingsProvider');

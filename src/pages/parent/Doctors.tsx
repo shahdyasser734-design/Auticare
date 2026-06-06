@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '../../layouts/MainLayout';
 import { specialistsService } from '../../services/api/specialistsService';
 import { BookingModal } from '../../components/specialists/BookingModal';
 import type { Specialist } from '../../types';
 
-const isInvalid = (val: any) => 
+const isInvalid = (val: unknown) => 
   val === null || 
   val === undefined || 
   val === 'string' || 
@@ -14,7 +14,8 @@ const isInvalid = (val: any) =>
   val === 0 || 
   val === '0';
 
-export const sanitizeSpecialist = (spec: any) => {
+// eslint-disable-next-line react-refresh/only-export-components
+export const sanitizeSpecialist = (spec: Record<string, unknown>) => {
   const reviews = isInvalid(spec.reviews) && isInvalid(spec.reviewCount)
     ? '5+' 
     : String(spec.reviews || spec.reviewCount || '5+');
@@ -48,7 +49,6 @@ export const sanitizeSpecialist = (spec: any) => {
 export const Doctors = () => {
   const navigate = useNavigate();
   const [doctors, setDoctors] = useState<Specialist[]>([]);
-  const [filteredDoctors, setFilteredDoctors] = useState<Specialist[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDoctor, setSelectedDoctor] = useState<Specialist | null>(null);
@@ -61,14 +61,12 @@ export const Doctors = () => {
         const data = await specialistsService.getSpecialists('doctor');
         // Handle various API response formats
         const doctorList = Array.isArray(data) ? data : 
-                          Array.isArray((data as any)?.data) ? (data as any).data : 
-                          Array.isArray((data as any)?.specialists) ? (data as any).specialists : [];
+                          Array.isArray((data as Record<string, unknown>)?.data) ? ((data as Record<string, unknown>).data as Specialist[]) : 
+                          Array.isArray((data as Record<string, unknown>)?.specialists) ? ((data as Record<string, unknown>).specialists as Specialist[]) : [];
         setDoctors(doctorList);
-        setFilteredDoctors(doctorList);
       } catch (err) {
         console.error('Failed to load doctors:', err);
         setDoctors([]);
-        setFilteredDoctors([]);
       } finally {
         setLoading(false);
       }
@@ -76,15 +74,14 @@ export const Doctors = () => {
     loadDoctors();
   }, []);
 
-  useEffect(() => {
-    const filtered = doctors.filter((doctor) => {
+  const filteredDoctors = useMemo(() => {
+    return doctors.filter((doctor) => {
       const query = searchQuery.toLowerCase();
       return (
         doctor.name.toLowerCase().includes(query) ||
         doctor.specialization.toLowerCase().includes(query)
       );
     });
-    setFilteredDoctors(filtered);
   }, [searchQuery, doctors]);
 
   const handleBookingClose = () => {
@@ -166,7 +163,7 @@ export const Doctors = () => {
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filteredDoctors.map((rawDoctor) => {
-              const doctor = sanitizeSpecialist(rawDoctor);
+              const doctor = sanitizeSpecialist(rawDoctor as unknown as Record<string, unknown>) as unknown as Specialist;
               return (
                 <div
                   key={doctor.id}

@@ -91,7 +91,7 @@ const SpecialistCard = ({ data, type, onBook }: { data: SpecialistDisplay; type:
 export const BookSpecialist = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState<'doctors' | 'therapists'>('doctors');
+  const activeTab = location.pathname.includes('/therapists') ? 'therapists' : 'doctors';
   const [specialists, setSpecialists] = useState<SpecialistDisplay[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSpecialist, setSelectedSpecialist] = useState<SpecialistDisplay | null>(null);
@@ -105,14 +105,6 @@ export const BookSpecialist = () => {
       s.specialization.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [specialists, searchTerm]);
-
-  useEffect(() => {
-    if (location.pathname.includes('/therapists')) {
-      setActiveTab('therapists');
-    } else if (location.pathname.includes('/doctors')) {
-      setActiveTab('doctors');
-    }
-  }, [location.pathname]);
 
   useEffect(() => {
     const fetchSpecialists = async () => {
@@ -168,12 +160,12 @@ export const BookSpecialist = () => {
                   className="absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-slate-900 dark:bg-orange-500 rounded-xl transition-all duration-300 ease-out"
                   style={{ left: activeTab === 'doctors' ? '6px' : 'calc(50% + 3px)' }}
                 />
-                <button
+                 <button
                   className={clsx(
                     "relative z-10 px-6 py-3 rounded-xl font-bold text-sm transition-colors duration-300 min-w-[140px]",
                     activeTab === 'doctors' ? "text-white" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   )}
-                  onClick={() => { navigate(ROUTES.PARENT_DOCTORS); setActiveTab('doctors'); setSearchTerm(''); }}
+                  onClick={() => { navigate(ROUTES.PARENT_DOCTORS); setSearchTerm(''); }}
                 >
                   👨‍⚕️ Doctors
                 </button>
@@ -182,7 +174,7 @@ export const BookSpecialist = () => {
                     "relative z-10 px-6 py-3 rounded-xl font-bold text-sm transition-colors duration-300 min-w-[140px]",
                     activeTab === 'therapists' ? "text-white" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   )}
-                  onClick={() => { navigate(ROUTES.PARENT_THERAPISTS); setActiveTab('therapists'); setSearchTerm(''); }}
+                  onClick={() => { navigate(ROUTES.PARENT_THERAPISTS); setSearchTerm(''); }}
                 >
                   🧑‍🏫 Therapists
                 </button>

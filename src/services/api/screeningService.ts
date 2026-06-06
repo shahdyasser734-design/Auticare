@@ -23,7 +23,7 @@ export const screeningService = {
   // Submit screening answers
   submitScreening: async (
     childId: string,
-    answers: Record<string, any>
+    answers: Record<string, unknown>
   ): Promise<ScreeningResult> => {
     const response = await apiClient.post<ScreeningResult>('/screening/submit', {
       childId,

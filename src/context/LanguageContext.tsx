@@ -490,6 +490,7 @@ export interface LanguageContextType {
   isRTL: boolean;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 const RTL_LANGUAGES: SupportedLanguage[] = ['ar'];

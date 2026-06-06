@@ -11,7 +11,7 @@ export const chatServiceAPI = {
         participantIds,
       });
       return response.data;
-    } catch (error) {
+    } catch {
       const conversations = mockState.getChats();
       return conversations[0] ?? conversations[conversations.length - 1];
     }
@@ -55,7 +55,7 @@ export const chatServiceAPI = {
       const created = response.data;
       mockState.addMessage(chatId, created);
       return created;
-    } catch (error) {
+    } catch {
       const message: ChatMessage = {
         id: `mock-msg-${Date.now()}`,
         chatId,
@@ -81,7 +81,7 @@ export const chatServiceAPI = {
       const created = response.data;
       mockState.addMessage(chatId, created);
       return created;
-    } catch (error) {
+    } catch {
       const message: ChatMessage = {
         id: `mock-msg-${Date.now()}`,
         chatId,

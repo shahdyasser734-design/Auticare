@@ -65,10 +65,10 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
       const dateTimeIso = `${formattedDate}T${formattedTime}`;
       const specialistIdValue =
         specialist.id ||
-        (specialist as any)._id ||
-        (specialist as any).specialistId ||
-        (specialist as any).doctorId ||
-        (specialist as any).therapistId;
+        (specialist as unknown as Record<string, unknown>)._id as string ||
+        (specialist as unknown as Record<string, unknown>).specialistId as string ||
+        (specialist as unknown as Record<string, unknown>).doctorId as string ||
+        (specialist as unknown as Record<string, unknown>).therapistId as string;
 
       if (!specialistIdValue) {
         throw new Error('Specialist identifier could not be determined.');
@@ -98,11 +98,11 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
       onBooked();
     } catch (err) {
       console.error('Booking failed', err);
-      const responseErrors = (err as any)?.response?.data?.errors;
+      const responseErrors = (err as Record<string, unknown> & { response?: { data?: { errors?: Record<string, unknown[]> } } })?.response?.data?.errors;
       const firstValidationError = responseErrors
-        ? Object.values(responseErrors).flat()[0]
+        ? (Object.values(responseErrors).flat()[0] as string)
         : null;
-      setError(firstValidationError || (err as any)?.message || 'Failed to create booking. Please try again.');
+      setError(firstValidationError || (err as Error)?.message || 'Failed to create booking. Please try again.');
     } finally {
       setSubmitting(false);
     }

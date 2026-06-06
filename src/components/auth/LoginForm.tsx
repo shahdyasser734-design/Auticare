@@ -50,7 +50,7 @@ export const LoginForm = () => {
           // If they do, send them straight to the dashboard so they don't
           // repeat the onboarding flow every time they log in.
           try {
-            const res = await apiClient.get<any[]>('/children');
+            const res = await apiClient.get<unknown[]>('/children');
             const children = Array.isArray(res.data) ? res.data : [];
             if (children.length > 0) {
               navigate(ROUTES.PARENT_HOME, { replace: true });

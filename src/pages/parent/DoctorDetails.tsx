@@ -4,7 +4,7 @@ import { MainLayout } from '../../layouts/MainLayout';
 import { specialistsService, type Specialist } from '../../services/api/specialists';
 import { BookingModal } from '../../components/specialists/BookingModal';
 
-const isInvalid = (val: any) => 
+const isInvalid = (val: unknown) => 
   val === null || 
   val === undefined || 
   val === 'string' || 
@@ -13,7 +13,7 @@ const isInvalid = (val: any) =>
   val === 0 || 
   val === '0';
 
-export const sanitizeSpecialist = (spec: any) => {
+const sanitizeSpecialist = (spec: Record<string, unknown>) => {
   const reviews = isInvalid(spec.reviews) && isInvalid(spec.reviewCount)
     ? '5+' 
     : String(spec.reviews || spec.reviewCount || '5+');
@@ -58,7 +58,7 @@ export const DoctorDetails = () => {
       try {
         setLoading(true);
         const data = await specialistsService.getSpecialist(id);
-        setDoctor(sanitizeSpecialist(data));
+        setDoctor(sanitizeSpecialist(data as unknown as Record<string, unknown>) as unknown as Specialist);
       } catch (err) {
         console.error('Failed to load doctor details:', err);
         setError('Could not load doctor details. Please try again.');

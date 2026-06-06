@@ -4,7 +4,7 @@ import { ScreeningLayout } from '../../layouts/ScreeningLayout';
 import { Button } from '../../components/common/Button';
 import { ScreeningProgress, ScreeningQuestion } from '../../components/screening/ScreeningComponents';
 import { ROUTES } from '../../utils/constants';
-import { screeningService } from '../../services/api/screening';
+import { screeningService, type BackendScreeningAnswer } from '../../services/api/screening';
 import type { ScreeningQuestion as IScreeningQuestion } from '../../types';
 import { LoadingSpinner } from '../../components/common/Loading';
 import { useAuth } from '../../context/useAuth';
@@ -91,8 +91,8 @@ const LOCAL_QUESTIONS: IScreeningQuestion[] = [
     description: '',
     pageNumber: 8,
     options: [
-      { id: 'q8_yes', label: 'YES — simple words like "mama", "bye"', value: 'YES' as any },
-      { id: 'q8_no', label: 'NO — more complex phrases and sentence-like speech', value: 'NO' as any },
+      { id: 'q8_yes', label: 'YES — simple words like "mama", "bye"', value: 'YES' as unknown as number },
+      { id: 'q8_no', label: 'NO — more complex phrases and sentence-like speech', value: 'NO' as unknown as number },
     ],
   },
   {
@@ -234,7 +234,7 @@ export const ParentScreening = () => {
           const parsedQuestionId = Number(String(q?.id ?? qId).replace(/^q/i, ''));
           return {
             QuestionId: Number.isNaN(parsedQuestionId) ? String(qId) : parsedQuestionId,
-            Answer: answerValue as any,
+            Answer: answerValue as unknown as number,
             OptionId: optionId,
           };
         });
@@ -246,10 +246,10 @@ export const ParentScreening = () => {
             // Prefer session-based submit if available
             let res;
             if (sessionId) {
-              res = await screeningService.submitAnswers(sessionId, payloadAnswers);
+              res = await screeningService.submitAnswers(sessionId, payloadAnswers as BackendScreeningAnswer[]);
             } else {
               // Fallback to legacy childId-based submit
-              res = await screeningService.submitScreening(childId, payloadAnswers as any);
+              res = await screeningService.submitScreening(childId, payloadAnswers as BackendScreeningAnswer[]);
             }
             submitResult = res as unknown as Record<string, unknown>;
             localStorage.setItem(`screeningResult_${childId}`, JSON.stringify(submitResult));

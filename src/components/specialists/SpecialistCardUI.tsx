@@ -1,11 +1,13 @@
 // UI-only component; relies on the project's JSX runtime (no React symbol needed)
 
 export type Availability = 'online' | 'offline' | 'busy';
+export type SpecialistType = 'doctor' | 'therapist';
 
 export type Specialist = {
   id: number;
   name: string;
   specialty: string;
+  type?: SpecialistType; // Optional type field for better filtering
   years: number;
   rating: number;
   cases: number;
@@ -27,12 +29,14 @@ export const SpecialistCardUI = ({
       ? 'bg-amber-100 text-amber-800'
       : 'bg-slate-100 text-slate-600';
 
-  // Determine if this is a doctor or therapist for styling
-  const isDoctor = specialist.specialty.toLowerCase().includes('doctor') || 
-                   specialist.specialty.toLowerCase().includes('psychiatrist') || 
-                   specialist.specialty.toLowerCase().includes('pediatrician') ||
-                   specialist.specialty.toLowerCase().includes('psychologist') ||
-                   specialist.specialty.toLowerCase().includes('neurologist');
+  // Prefer type field if available, otherwise fall back to string matching
+  const isDoctor = specialist.type === 'doctor' || (!specialist.type && (
+    specialist.specialty.toLowerCase().includes('doctor') || 
+    specialist.specialty.toLowerCase().includes('psychiatrist') || 
+    specialist.specialty.toLowerCase().includes('pediatrician') ||
+    specialist.specialty.toLowerCase().includes('psychologist') ||
+    specialist.specialty.toLowerCase().includes('neurologist')
+  ));
 
   const bgGradient = isDoctor 
     ? 'bg-gradient-to-br from-sky-50 to-white'

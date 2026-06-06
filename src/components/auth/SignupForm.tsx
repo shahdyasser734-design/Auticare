@@ -117,7 +117,7 @@ export const SignupForm = () => {
         fullName: formData.name,
         email: formData.email,
         password: formData.password,
-        role: formData.role === ROLES.DOCTOR ? 'Specialist' : (formData.role as string).charAt(0).toUpperCase() + (formData.role as string).slice(1),
+        role: (formData.role as string).charAt(0).toUpperCase() + (formData.role as string).slice(1),
         phone: formData.phone,
         nationalId: formData.nationalId,
       };

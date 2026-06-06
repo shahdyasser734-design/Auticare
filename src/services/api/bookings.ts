@@ -38,7 +38,7 @@ export const bookingService = {
       const booking = response.data;
       mockState.addBooking(booking);
       return booking;
-    } catch (error) {
+    } catch {
       const booking = buildMockBooking(data);
       mockState.addBooking(booking);
       return booking;

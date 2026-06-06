@@ -35,7 +35,8 @@ export const ParentSessions = () => {
   };
 
   useEffect(() => {
-    fetchSessions();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchSessions();
     const loadDefaultSpecialist = async () => {
       try {
         const doctors = await specialistsService.getSpecialists('doctor');

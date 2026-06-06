@@ -504,7 +504,7 @@ export const TreatmentPlan = () => {
                     <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Status</label>
                     <select
                       value={status}
-                      onChange={(e) => setStatus(e.target.value as any)}
+                      onChange={(e) => setStatus(e.target.value as 'active' | 'completed' | 'paused')}
                       className="w-full p-3.5 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 shadow-sm outline-none focus:border-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white text-sm"
                     >
                       <option value="active">Active</option>

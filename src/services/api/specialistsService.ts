@@ -1,12 +1,33 @@
 import apiClient from '../apiClient';
 import type { Specialist } from '../../types';
 
-export const normalizeSpecialist = (raw: any): Specialist => {
-  const specId = String(raw.id ?? raw.specialistId ?? '');
+interface RawSpecialist {
+  id?: unknown;
+  specialistId?: unknown;
+  type?: unknown;
+  name?: unknown;
+  specialization?: unknown;
+  yearsOfExperience?: unknown;
+  yearsExperience?: unknown;
+  rating?: unknown;
+  reviewCount?: unknown;
+  reviews?: unknown;
+  availableSlots?: unknown;
+  profileImage?: unknown;
+  licenseNumber?: unknown;
+  certifications?: unknown;
+  email?: unknown;
+  bio?: unknown;
+  about?: unknown;
+}
+
+export const normalizeSpecialist = (raw: Record<string, unknown>): Specialist => {
+  const r = raw as RawSpecialist;
+  const specId = String(r.id ?? r.specialistId ?? '');
   
   // Determine type based on specialization/title
   let calculatedType: 'doctor' | 'therapist' = 'doctor';
-  const specialization = String(raw.specialization ?? '').toLowerCase();
+  const specialization = String(r.specialization ?? '').toLowerCase();
   if (
     specialization.includes('therapist') || 
     specialization.includes('therapy') ||
@@ -18,28 +39,34 @@ export const normalizeSpecialist = (raw: any): Specialist => {
     calculatedType = 'therapist';
   }
   
+  const typeValue = (r.type === 'doctor' || r.type === 'therapist') ? r.type : calculatedType;
+
   return {
     id: specId,
-    name: String(raw.name ?? ''),
-    type: raw.type ?? calculatedType,
-    specialization: String(raw.specialization ?? ''),
-    yearsOfExperience: Number(raw.yearsOfExperience ?? raw.yearsExperience ?? 0),
-    rating: Number(raw.rating ?? 0),
-    reviewCount: Number(raw.reviewCount ?? raw.reviews ?? 0),
-    availableSlots: Array.isArray(raw.availableSlots) ? raw.availableSlots : [],
-    profileImage: raw.profileImage ?? '',
-    licenseNumber: raw.licenseNumber ?? '',
-    certifications: Array.isArray(raw.certifications) ? raw.certifications : [],
-    email: raw.email ?? '',
-    bio: raw.bio ?? raw.about ?? '',
+    name: String(r.name ?? ''),
+    type: typeValue,
+    specialization: String(r.specialization ?? ''),
+    yearsOfExperience: Number(r.yearsOfExperience ?? r.yearsExperience ?? 0),
+    rating: Number(r.rating ?? 0),
+    reviewCount: Number(r.reviewCount ?? r.reviews ?? 0),
+    availableSlots: Array.isArray(r.availableSlots) ? r.availableSlots : [],
+    profileImage: String(r.profileImage ?? ''),
+    licenseNumber: String(r.licenseNumber ?? ''),
+    certifications: Array.isArray(r.certifications) ? r.certifications : [],
+    email: String(r.email ?? ''),
+    bio: String(r.bio ?? r.about ?? ''),
   };
 };
 
 export const specialistsService = {
   // Get all specialists (with optional type filter)
   getSpecialists: async (type?: 'doctor' | 'therapist'): Promise<Specialist[]> => {
-    const response = await apiClient.get<any[]>('/specialists');
-    const allSpecs = (response.data || []).map(normalizeSpecialist);
+    const response = await apiClient.get<unknown>('/specialists');
+    const data = response.data;
+    const list = Array.isArray(data) ? data : 
+                 Array.isArray((data as Record<string, unknown>)?.data) ? ((data as Record<string, unknown>).data as Record<string, unknown>[]) : 
+                 Array.isArray((data as Record<string, unknown>)?.specialists) ? ((data as Record<string, unknown>).specialists as Record<string, unknown>[]) : [];
+    const allSpecs = list.map(normalizeSpecialist);
     
     if (type) {
       return allSpecs.filter((s) => s.type === type);
@@ -49,9 +76,9 @@ export const specialistsService = {
 
   // Get specific specialist details
   getSpecialist: async (id: string): Promise<Specialist> => {
-    const response = await apiClient.get<any>(`/specialists/${id}`);
-    const rawData = response.data?.data || response.data;
-    return normalizeSpecialist(rawData);
+    const response = await apiClient.get<Record<string, unknown>>(`/specialists/${id}`);
+    const rawData = (response.data as Record<string, unknown>)?.data ?? response.data;
+    return normalizeSpecialist((rawData || {}) as Record<string, unknown>);
   },
 
   // Get doctors only

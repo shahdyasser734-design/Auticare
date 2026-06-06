@@ -1,5 +1,51 @@
 import apiClient from '../apiClient';
 
+export interface ScreeningDetail {
+  id: string;
+  date: string;
+  riskLevel: 'low' | 'medium' | 'high';
+  score?: number;
+  aqScore?: number;
+  predictionClass?: string;
+}
+
+export interface TreatmentPlanDetail {
+  id: string;
+  title: string;
+  status: 'active' | 'completed' | 'on-hold';
+  startDate?: string;
+  endDate?: string;
+  goalsCompleted?: number;
+  totalGoals?: number;
+  progressPercentage?: number;
+}
+
+export interface UpcomingSession {
+  id: string;
+  date: string;
+  time: string;
+  type: 'doctor' | 'therapist';
+  status: 'scheduled' | 'pending' | 'confirmed';
+}
+
+export interface PatientCard {
+  id: string;
+  name: string;
+  age?: number;
+  gender?: string;
+  profileImage?: string;
+  status: 'active' | 'in-treatment' | 'pending';
+  lastScreening?: ScreeningDetail;
+  treatmentPlan?: TreatmentPlanDetail;
+  upcomingSession?: UpcomingSession;
+  lastActivityDate?: string;
+  lastActivityType?: 'session' | 'screening' | 'note' | 'session-completed';
+  parentName?: string;
+  parentPhone?: string;
+  assignedTherapist?: string;
+  assignedDoctor?: string;
+}
+
 export interface DashboardParentData {
   childrenCount: number;
   upcomingScreenings: number;
@@ -27,9 +73,12 @@ export interface DashboardSpecialistData {
   activePatients?: number;
   pendingPlans?: number;
   completedSessions?: number;
+  pendingRequests?: number;
+  unreadMessages?: number;
   recentNotes?: Array<Record<string, unknown>>;
   sessions?: Array<Record<string, unknown>>;
   assignedChildren?: AssignedChild[];
+  patients?: PatientCard[];
 }
 
 const mockSpecialistDashboard: DashboardSpecialistData = {
@@ -38,7 +87,10 @@ const mockSpecialistDashboard: DashboardSpecialistData = {
   upcomingSessions: 0,
   completedSessions: 0,
   pendingPlans: 0,
+  pendingRequests: 0,
+  unreadMessages: 0,
   assignedChildren: [],
+  patients: [],
 };
 
 export const dashboardService = {

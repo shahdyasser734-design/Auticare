@@ -16,11 +16,11 @@ export const Profile = () => {
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    phone: user?.phone || '',
-    bio: (user as any)?.bio || '',
-    specialty: (user as any)?.specialization || (user as any)?.specialty || '',
-    yearsOfExperience: (user as any)?.yearsOfExperience || '',
-    licenseNumber: (user as any)?.licenseNumber || '',
+    phone: (user as unknown as Record<string, unknown>)?.phone as string || '',
+    bio: (user as unknown as Record<string, unknown>)?.bio as string || '',
+    specialty: (user as unknown as Record<string, unknown>)?.specialization as string || (user as unknown as Record<string, unknown>)?.specialty as string || '',
+    yearsOfExperience: (user as unknown as Record<string, unknown>)?.yearsOfExperience as string || '',
+    licenseNumber: (user as unknown as Record<string, unknown>)?.licenseNumber as string || '',
   });
   
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -33,7 +33,7 @@ export const Profile = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         name: formData.name,
         phone: formData.phone,
       };
