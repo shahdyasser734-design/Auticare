@@ -50,8 +50,8 @@ export const normalizeBooking = (b: any): Booking => {
     status = 'confirmed'; // Standardize approved to confirmed as expected by some components
   }
   
-  // Generate deterministic unique Zoom meeting URL so all participants use the same URL
-  const joinLink = idStr ? `https://zoom.us/j/${idStr}` : '';
+  // Generate deterministic unique Zoom meeting URL so all participants use the same URL, unless already provided by backend
+  const joinLink = b.meetingLink || b.joinLink || b.meeting_link || b.join_link || (idStr ? `https://zoom.us/j/${idStr}` : '');
 
   // Handle names
   const specName = b.specialistName || b.SpecialistName || '';

@@ -13,6 +13,7 @@ import { FileUpload } from '../../components/common/FileUpload';
 import { fileUploadService } from '../../services/api/fileUploadService';
 import { Activity, Plus, Trash2, CheckCircle2, User, FileText, BarChart3, Edit, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import type { Child, TreatmentPlan as TreatmentPlanType, Specialist } from '../../types';
+import { cleanIntId } from '../../utils/zoomHelper';
 
 export const TreatmentPlan = () => {
   const { childId } = useParams<{ childId: string }>();
@@ -27,6 +28,7 @@ export const TreatmentPlan = () => {
   const [child, setChild] = useState<Child | null>(null);
   const [specialist, setSpecialist] = useState<Specialist | null>(null);
   const [publishSuccess, setPublishSuccess] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
   
   // Treatment Plan states
   const [plan, setPlan] = useState<TreatmentPlanType | null>(null);
@@ -125,8 +127,8 @@ export const TreatmentPlan = () => {
       } else {
         // Create plan expects CreateTreatmentPlanRequest
         const createPayload = {
-          childId: Number(childId),
-          specialistId: 1, // dummy value greater than 0, overwritten by backend
+          childId: cleanIntId(childId),
+          specialistId: cleanIntId(user?.id || 1),
           startDate: new Date(startDate).toISOString(),
           endDate: endDate ? new Date(endDate).toISOString() : null,
           goal: goals.join('\n'),
@@ -200,6 +202,9 @@ export const TreatmentPlan = () => {
 
     } catch (err) {
       console.error('Error saving treatment plan:', err);
+      const errMsg = err instanceof Error ? err.message : 'Failed to publish treatment plan. Please check all fields.';
+      setPublishError(errMsg);
+      setTimeout(() => setPublishError(null), 6000);
     } finally {
       setSaving(false);
     }
@@ -292,6 +297,21 @@ export const TreatmentPlan = () => {
               </p>
               <p className="text-sm text-slate-700 dark:text-slate-350">
                 The treatment plan has been saved successfully. Child profile and specialist dashboard have been updated.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Error Banner */}
+        {publishError && (
+          <div className="rounded-3xl border border-red-200 bg-red-50/50 dark:bg-red-950/20 p-5 flex items-start gap-4 animate-fade-in-down">
+            <span className="text-2xl text-red-500">❌</span>
+            <div>
+              <p className="text-sm font-semibold text-red-800 dark:text-red-300 uppercase tracking-wider mb-1">
+                Failed to Publish Treatment Plan
+              </p>
+              <p className="text-sm text-slate-700 dark:text-slate-350">
+                {publishError}
               </p>
             </div>
           </div>

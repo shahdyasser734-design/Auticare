@@ -7,6 +7,8 @@ import { Button } from '../../components/common/Button';
 import { bookingService, type Booking } from '../../services/api/bookings';
 
 import { useAuth } from '../../context/useAuth';
+import { Loader2 } from 'lucide-react';
+import { getOrCreateSessionMeetingLink } from '../../utils/zoomHelper';
 
 export const DoctorSessions = () => {
   const navigate = useNavigate();
@@ -43,40 +45,21 @@ export const DoctorSessions = () => {
     }
   };
 
-  const checkSessionStart = (session: Booking) => {
-    if (!session.appointmentDate) return { started: true };
-    let sessionDateStr = session.appointmentDate;
-    let sessionTimeStr = session.appointmentTime || '00:00';
-    if (sessionTimeStr.includes('-')) {
-      sessionTimeStr = sessionTimeStr.split('-')[0].trim();
-    }
-    const sessionDateTime = new Date(`${sessionDateStr}T${sessionTimeStr}`);
-    if (isNaN(sessionDateTime.getTime())) {
-      return { started: true };
-    }
-    const now = new Date();
-    // Allow joining up to 10 minutes before the scheduled time
-    const tenMinutesBefore = new Date(sessionDateTime.getTime() - 10 * 60 * 1000);
-    if (now < tenMinutesBefore) {
-      return { started: false, message: 'Session has not started yet.' };
-    }
-    return { started: true };
-  };
+  const [joiningZoom, setJoiningZoom] = useState<string | null>(null);
 
-  const handleJoinZoom = (session: Booking) => {
-    const link = session.joinLink;
-    if (!link || link.trim() === '') {
-      setZoomAlert('No Zoom meeting link available.');
+  const handleJoinZoom = async (session: Booking) => {
+    setJoiningZoom(session.id);
+    try {
+      const link = await getOrCreateSessionMeetingLink(session, isDoctor);
+      window.open(link, '_blank');
+    } catch (err) {
+      console.error('Failed to join Zoom session:', err);
+      setZoomAlert('Error establishing Zoom link. Opening fallback room.');
       setTimeout(() => setZoomAlert(null), 4000);
-      return;
+      window.open(session.joinLink || `https://zoom.us/j/${session.id}`, '_blank');
+    } finally {
+      setJoiningZoom(null);
     }
-    const check = checkSessionStart(session);
-    if (!check.started) {
-      setZoomAlert(check.message || 'Session has not started yet.');
-      setTimeout(() => setZoomAlert(null), 4000);
-      return;
-    }
-    window.open(link, '_blank');
   };
 
   return (
@@ -167,9 +150,19 @@ export const DoctorSessions = () => {
                       <Button
                         size="sm"
                         onClick={() => handleJoinZoom(session)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer"
+                        disabled={joiningZoom === session.id}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer flex items-center gap-1"
                       >
-                        🎥 {isDoctor ? 'Start Session' : 'Join Session'}
+                        {joiningZoom === session.id ? (
+                          <>
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            Connecting...
+                          </>
+                        ) : (
+                          <>
+                            🎥 {isDoctor ? 'Start Session' : 'Join Session'}
+                          </>
+                        )}
                       </Button>
                     )}
                   </div>
