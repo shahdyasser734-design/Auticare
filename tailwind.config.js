@@ -8,15 +8,16 @@ export default {
   theme: {
     extend: {
       colors: {
+        white: "#FCFCFC",
         "soft-bg": "#f8f9fb",
         "soft-gray": "#e8eaed",
         "soft-text": "#2c3e50",
 
         slate: {
-          50: "#FFF8F0",
-          100: "#F6F1E8",
-          200: "#EADBC8",
-          300: "#D9C7B0",
+          50: "#F5F6F8",
+          100: "#F0F2F5",
+          200: "#E5E7EB",
+          300: "#DADDE2",
           400: "#BFA68E",
           500: "#9E8670",
           600: "#7E6855",

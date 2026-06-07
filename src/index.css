@@ -10,17 +10,17 @@
   font-family: 'Inter', system-ui, sans-serif;
 
   /* Light mode palette */
-  --bg: #fdf8f3;
-  --bg-secondary: #f5ede2;
-  --surface: rgba(255, 250, 245, 0.96);
-  --surface-strong: #fff;
-  --surface-muted: rgba(255, 250, 245, 0.7);
-  --border: rgba(180, 140, 100, 0.2);
+  --bg: #F5F6F8;
+  --bg-secondary: #E5E7EB;
+  --surface: rgba(252, 252, 252, 0.96);
+  --surface-strong: #FCFCFC;
+  --surface-muted: rgba(248, 249, 250, 0.7);
+  --border: rgba(229, 231, 235, 0.8);
   --text: #1a1410;
-  --muted: #7a6a5a;
+  --muted: #6b7280;
   --accent: #e07c2e;
   --accent-strong: #c4621a;
-  --shadow: 0 24px 80px -36px rgba(224, 124, 46, 0.25);
+  --shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
 }
 
 .dark {
