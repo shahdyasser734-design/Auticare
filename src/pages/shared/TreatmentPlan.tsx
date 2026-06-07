@@ -105,7 +105,7 @@ export const TreatmentPlan = () => {
       if (plan?.id) {
         // Update plan expects UpdateTreatmentPlanRequest
         const updatePayload = {
-          goal: goals.join('\n'),
+          goal: goals.length > 0 ? goals.join('\n') : 'Development Plan',
           notes: finalNotes,
           progress: plan.progressOverview ? JSON.stringify(plan.progressOverview) : '',
           endDate: endDate ? new Date(endDate).toISOString() : null
@@ -131,9 +131,9 @@ export const TreatmentPlan = () => {
         const createPayload = {
           childId: cleanIntId(childId),
           specialistId: cleanIntId(user?.id || 1),
-          startDate: new Date(startDate).toISOString(),
+          startDate: startDate ? new Date(startDate).toISOString() : new Date().toISOString(),
           endDate: endDate ? new Date(endDate).toISOString() : null,
-          goal: goals.join('\n'),
+          goal: goals.length > 0 ? goals.join('\n') : 'Development Plan',
           notes: finalNotes
         };
         savedPlan = await treatmentPlansService.createPlan(createPayload as any) as any;
@@ -377,7 +377,6 @@ export const TreatmentPlan = () => {
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    required
                     fullWidth
                   />
                   <Input
