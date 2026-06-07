@@ -113,7 +113,7 @@ export const DoctorSessions = () => {
                   <div className="space-y-2 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-bold text-lg text-neutral-900 block">
-                        {session.reason || (session.specialistType === 'doctor' ? 'Clinical Consultation' : 'Therapy Session')}
+                        {session.reason || (session.specialistType === 'doctor' ? `${session.childName || 'Child'}'s Clinical Consultation` : `${session.childName || 'Child'}'s Therapy Session`)}
                       </span>
                       <Badge variant={session.joinLink ? 'success' : 'warning'}>
                         {session.joinLink ? '🟢 Zoom Available' : '🔴 No Zoom Link'}
@@ -123,8 +123,13 @@ export const DoctorSessions = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-400">
                       <p><strong>Child Name:</strong> {session.childName || 'Emma Johnson'}</p>
                       <p><strong>Parent Name:</strong> {session.parentName || 'Sarah Johnson'}</p>
-                      <p><strong>Doctor Name:</strong> {session.doctorName || 'Dr. Ahmed'}</p>
-                      <p><strong>Therapist Name:</strong> {session.therapistName || 'Therapist Sarah'}</p>
+                      {isDoctor ? (
+                        <p><strong>Assigned Therapist:</strong> {session.therapistName || 'Therapist Sarah'}</p>
+                      ) : (
+                        <p><strong>Doctor Name:</strong> {session.doctorName || 'Dr. Ahmed'}</p>
+                      )}
+                      <p><strong>Treatment Plan:</strong> Active</p>
+                      <p><strong>Session Type:</strong> {session.specialistType === 'doctor' ? 'Doctor Consultation' : 'Therapy Session'}</p>
                     </div>
 
                     <p className="text-sm text-neutral-650 mt-1">

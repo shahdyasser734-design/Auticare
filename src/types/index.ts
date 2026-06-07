@@ -206,6 +206,8 @@ export interface Booking {
   therapistName?: string;
   parentName?: string;
   childName?: string;
+  treatmentId?: string | number;
+  TreatmentId?: string | number;
 }
 
 export interface TreatmentPlan {

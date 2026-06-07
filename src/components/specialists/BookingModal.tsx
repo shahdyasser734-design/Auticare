@@ -4,6 +4,7 @@ import { Modal } from '../common/Modal';
 import { bookingService, type BookingRequest } from '../../services/api/bookings';
 import { childrenService } from '../../services/childrenService';
 import { mockState, createBookingNotification } from '../../services/api/mockState';
+import { treatmentPlansService } from '../../services/api/treatmentPlans';
 import type { Child, Specialist } from '../../types';
 
 interface BookingModalProps {
@@ -74,6 +75,19 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
         throw new Error('Specialist identifier could not be determined.');
       }
 
+      let treatmentPlanIdVal: number | undefined = undefined;
+      if (childId) {
+        try {
+          const plans = await treatmentPlansService.getChildPlans(childId);
+          const activePlan = plans.find(p => p.status === 'active') || plans[0];
+          if (activePlan) {
+            treatmentPlanIdVal = Number(activePlan.id);
+          }
+        } catch (planErr) {
+          console.warn('Could not find active treatment plan for child during booking:', planErr);
+        }
+      }
+
       const payload: BookingRequest = {
         specialistId: specialistIdValue,
         specialistName: specialist.name,
@@ -95,6 +109,8 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
         Reason: reason.trim(),
         Notes: reason.trim(),
         Request: reason.trim(),
+        treatmentId: treatmentPlanIdVal,
+        TreatmentId: treatmentPlanIdVal,
       };
       const booking = await bookingService.createBooking(payload);
       const notification = createBookingNotification(booking);

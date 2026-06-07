@@ -26,6 +26,7 @@ export const TreatmentPlan = () => {
   const [editMode, setEditMode] = useState(false);
   const [child, setChild] = useState<Child | null>(null);
   const [specialist, setSpecialist] = useState<Specialist | null>(null);
+  const [publishSuccess, setPublishSuccess] = useState(false);
   
   // Treatment Plan states
   const [plan, setPlan] = useState<TreatmentPlanType | null>(null);
@@ -47,46 +48,47 @@ export const TreatmentPlan = () => {
   const [uploadedDocs, setUploadedDocs] = useState<{ name: string; url: string }[]>([]);
   const [uploading, setUploading] = useState(false);
 
-  useEffect(() => {
-    const loadPlanData = async () => {
-      if (!childId) return;
-      try {
-        setLoading(true);
-        // 1. Fetch child profile
-        const childData = await childrenService.getChild(childId);
-        setChild(childData);
+  const loadPlanData = async () => {
+    if (!childId) return;
+    try {
+      setLoading(true);
+      // 1. Fetch child profile
+      const childData = await childrenService.getChild(childId);
+      setChild(childData);
 
-        // 2. Fetch treatment plans for child
-        const plans = await treatmentPlansService.getChildPlans(childId);
-        if (plans && plans.length > 0) {
-          const activePlan = plans[0] as any; // Cast to any for type compatibility
-          setPlan(activePlan);
-          setTitle(activePlan.title);
-          setDescription(activePlan.description || '');
-          setStartDate(activePlan.startDate ? activePlan.startDate.split('T')[0] : '');
-          setEndDate(activePlan.endDate ? activePlan.endDate.split('T')[0] : '');
-          setGoals(activePlan.goals || []);
-          setStatus(activePlan.status || 'active');
-          
-          // Fetch specialist details who authored the plan
-          if (activePlan.doctorId) {
-            try {
-              const specData = await specialistsService.getSpecialist(activePlan.doctorId);
-              setSpecialist(specData);
-            } catch (err) {
-              console.warn('Could not load plan author details:', err);
-            }
+      // 2. Fetch treatment plans for child
+      const plans = await treatmentPlansService.getChildPlans(childId);
+      if (plans && plans.length > 0) {
+        const activePlan = plans[0] as any; // Cast to any for type compatibility
+        setPlan(activePlan);
+        setTitle(activePlan.title);
+        setDescription(activePlan.description || '');
+        setStartDate(activePlan.startDate ? activePlan.startDate.split('T')[0] : '');
+        setEndDate(activePlan.endDate ? activePlan.endDate.split('T')[0] : '');
+        setGoals(activePlan.goals || []);
+        setStatus(activePlan.status || 'active');
+        
+        // Fetch specialist details who authored the plan
+        if (activePlan.doctorId) {
+          try {
+            const specData = await specialistsService.getSpecialist(activePlan.doctorId);
+            setSpecialist(specData);
+          } catch (err) {
+            console.warn('Could not load plan author details:', err);
           }
-        } else {
-          // If no plan and not specialist, child doesn't have one yet
-          setPlan(null);
         }
-      } catch (err) {
-        console.error('Error loading treatment plan:', err);
-      } finally {
-        setLoading(false);
+      } else {
+        // If no plan and not specialist, child doesn't have one yet
+        setPlan(null);
       }
-    };
+    } catch (err) {
+      console.error('Error loading treatment plan:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     void loadPlanData();
   }, [childId]);
 
@@ -135,6 +137,8 @@ export const TreatmentPlan = () => {
 
       setPlan(savedPlan);
       setEditMode(false);
+      setPublishSuccess(true);
+      setTimeout(() => setPublishSuccess(false), 5000);
       
       // Load current user profile details as author if new
       if (!specialist && user) {
@@ -190,6 +194,9 @@ export const TreatmentPlan = () => {
       } catch (notifErr) {
         console.warn('Could not store mock notifications:', notifErr);
       }
+
+      // Refresh plan, child and dashboard data immediately
+      await loadPlanData();
 
     } catch (err) {
       console.error('Error saving treatment plan:', err);
@@ -274,6 +281,21 @@ export const TreatmentPlan = () => {
             </Button>
           )}
         </div>
+
+        {/* Success Banner */}
+        {publishSuccess && (
+          <div className="rounded-3xl border border-green-200 bg-green-50/50 dark:bg-green-950/20 p-5 flex items-start gap-4 animate-fade-in-down">
+            <span className="text-2xl text-green-500">✅</span>
+            <div>
+              <p className="text-sm font-semibold text-green-800 dark:text-green-300 uppercase tracking-wider mb-1">
+                Treatment Plan Published Successfully
+              </p>
+              <p className="text-sm text-slate-700 dark:text-slate-350">
+                The treatment plan has been saved successfully. Child profile and specialist dashboard have been updated.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Clinical Disclaimer for Parents */}
         {!isSpecialist && (

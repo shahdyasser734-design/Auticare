@@ -26,6 +26,8 @@ export interface BookingRequest {
   Reason?: string;
   Request?: string;
   Notes?: string;
+  treatmentId?: string | number;
+  TreatmentId?: string | number;
 }
 
 export const normalizeBooking = (b: any): Booking => {
@@ -64,6 +66,8 @@ export const normalizeBooking = (b: any): Booking => {
     therapistName = specName ? `Therapist ${specName.replace(/^Therapist\s+/i, '')}` : 'Therapist Sarah';
   }
 
+  const treatmentId = b.treatmentId || b.TreatmentId || '';
+
   return {
     id: idStr,
     parentId: String(b.parentId || b.ParentId || ''),
@@ -86,6 +90,8 @@ export const normalizeBooking = (b: any): Booking => {
     reason: b.reason || '',
     doctorName,
     therapistName,
+    treatmentId,
+    TreatmentId: treatmentId,
   };
 };
 
