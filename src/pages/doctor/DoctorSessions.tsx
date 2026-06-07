@@ -8,7 +8,7 @@ import { bookingService, type Booking } from '../../services/api/bookings';
 
 import { useAuth } from '../../context/useAuth';
 import { Loader2 } from 'lucide-react';
-import { getOrCreateSessionMeetingLink } from '../../utils/zoomHelper';
+import { getOrCreateSessionMeetingLink, cleanIntId } from '../../utils/zoomHelper';
 
 export const DoctorSessions = () => {
   const navigate = useNavigate();
@@ -50,13 +50,14 @@ export const DoctorSessions = () => {
   const handleJoinZoom = async (session: Booking) => {
     setJoiningZoom(session.id);
     try {
-      const link = await getOrCreateSessionMeetingLink(session, isDoctor);
+      const isSpecialist = isDoctor || user?.role === 'therapist';
+      const link = await getOrCreateSessionMeetingLink(session, isSpecialist);
       window.open(link, '_blank');
     } catch (err) {
       console.error('Failed to join Zoom session:', err);
       setZoomAlert('Error establishing Zoom link. Opening fallback room.');
       setTimeout(() => setZoomAlert(null), 4000);
-      window.open(session.joinLink || `https://zoom.us/j/${session.id}`, '_blank');
+      window.open(session.zoomUrl || session.joinLink || `https://zoom.us/j/${session.id}`, '_blank');
     } finally {
       setJoiningZoom(null);
     }
@@ -90,85 +91,94 @@ export const DoctorSessions = () => {
               </div>
             </Card>
           ) : (
-            sessions.map((session) => (
-              <Card key={session.id} className="border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-md transition rounded-2xl p-5">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="space-y-2 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-bold text-lg text-neutral-900 block">
-                        {session.reason || (session.specialistType === 'doctor' ? `${session.childName || 'Child'}'s Clinical Consultation` : `${session.childName || 'Child'}'s Therapy Session`)}
-                      </span>
-                      <Badge variant={session.joinLink ? 'success' : 'warning'}>
-                        {session.joinLink ? '🟢 Zoom Available' : '🔴 No Zoom Link'}
-                      </Badge>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-400">
-                      <p><strong>Child Name:</strong> {session.childName || 'Emma Johnson'}</p>
-                      <p><strong>Parent Name:</strong> {session.parentName || 'Sarah Johnson'}</p>
-                      {isDoctor ? (
-                        <p><strong>Assigned Therapist:</strong> {session.therapistName || 'Therapist Sarah'}</p>
-                      ) : (
-                        <p><strong>Doctor Name:</strong> {session.doctorName || 'Dr. Ahmed'}</p>
-                      )}
-                      <p><strong>Treatment Plan:</strong> Active</p>
-                      <p><strong>Session Type:</strong> {session.specialistType === 'doctor' ? 'Doctor Consultation' : 'Therapy Session'}</p>
-                    </div>
-
-                    <p className="text-sm text-neutral-650 mt-1">
-                      <strong>Date & Time:</strong> {session.appointmentDate || 'TBD'} at {session.appointmentTime || 'TBD'}
-                    </p>
-                    {session.notes && <p className="text-sm text-neutral-500 italic mt-1">Notes: {session.notes}</p>}
-                    
-                    {session.childId && (
-                      <button
-                        onClick={() => navigate(`/${user?.role}/patients/${session.childId}`)}
-                        className="mt-2 text-sm font-semibold text-primary-600 hover:text-primary-700 underline cursor-pointer block text-left"
-                      >
-                        🔎 Review Child Profile & Screening Records
-                      </button>
-                    )}
-                  </div>
-                  
-                  <div className="flex flex-col sm:flex-row items-center gap-4 shrink-0">
-                    <Badge variant={session.status === 'confirmed' || session.status === 'scheduled' ? 'success' : 'warning'}>
-                      {session.status}
-                    </Badge>
-                    
-                    {session.status === 'pending' && (
-                      <div className="flex gap-2">
-                        <Button size="sm" onClick={() => handleUpdateStatus(session.id, 'confirmed')}>
-                          Confirm & Approve
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => handleUpdateStatus(session.id, 'cancelled')}>
-                          Reject
-                        </Button>
+            sessions.map((session) => {
+              const meetingUrl = session.zoomUrl || session.joinLink || (session.id ? `https://zoom.us/j/${cleanIntId(session.id)}` : '');
+              return (
+                <Card key={session.id} className="border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-md transition rounded-2xl p-5">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="space-y-2 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-bold text-lg text-neutral-900 block">
+                          {session.reason || (session.specialistType === 'doctor' ? `${session.childName || 'Child'}'s Clinical Consultation` : `${session.childName || 'Child'}'s Therapy Session`)}
+                        </span>
+                        <Badge variant={meetingUrl ? 'success' : 'warning'}>
+                          {meetingUrl ? '🟢 Zoom Available' : '🔴 No Zoom Link'}
+                        </Badge>
                       </div>
-                    )}
-                    
-                    {(session.status === 'confirmed' || session.status === 'scheduled') && (
-                      <Button
-                        size="sm"
-                        onClick={() => handleJoinZoom(session)}
-                        disabled={joiningZoom === session.id}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer flex items-center gap-1"
-                      >
-                        {joiningZoom === session.id ? (
-                          <>
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            Connecting...
-                          </>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-400">
+                        <p><strong>Child Name:</strong> {session.childName || 'Emma Johnson'}</p>
+                        <p><strong>Parent Name:</strong> {session.parentName || 'Sarah Johnson'}</p>
+                        {isDoctor ? (
+                          <p><strong>Assigned Therapist:</strong> {session.therapistName || 'Therapist Sarah'}</p>
                         ) : (
-                          <>
-                            🎥 {isDoctor ? 'Start Session' : 'Join Session'}
-                          </>
+                          <p><strong>Doctor Name:</strong> {session.doctorName || 'Dr. Ahmed'}</p>
                         )}
-                      </Button>
-                    )}
+                        <p><strong>Treatment Plan:</strong> Active</p>
+                        <p><strong>Session Type:</strong> {session.specialistType === 'doctor' ? 'Doctor Consultation' : 'Therapy Session'}</p>
+                      </div>
+
+                      <p className="text-sm text-neutral-650 mt-1">
+                        <strong>Date & Time:</strong> {session.appointmentDate || 'TBD'} at {session.appointmentTime || 'TBD'}
+                      </p>
+                      {session.notes && <p className="text-sm text-neutral-500 italic mt-1">Notes: {session.notes}</p>}
+                      
+                      {session.childId && (
+                        <button
+                          onClick={() => navigate(`/${user?.role}/patients/${session.childId}`)}
+                          className="mt-2 text-sm font-semibold text-primary-600 hover:text-primary-700 underline cursor-pointer block text-left"
+                        >
+                          🔎 Review Child Profile & Screening Records
+                        </button>
+                      )}
+                    </div>
+                    
+                    <div className="flex flex-col sm:flex-row items-center gap-4 shrink-0">
+                      <Badge variant={session.status === 'confirmed' || session.status === 'scheduled' ? 'success' : 'warning'}>
+                        {session.status}
+                      </Badge>
+                      
+                      {session.status === 'pending' && (
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={() => handleUpdateStatus(session.id, 'confirmed')}>
+                            Confirm & Approve
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => handleUpdateStatus(session.id, 'cancelled')}>
+                            Reject
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {(session.status === 'confirmed' || session.status === 'scheduled') && (
+                        meetingUrl ? (
+                          <Button
+                            size="sm"
+                            onClick={() => handleJoinZoom(session)}
+                            disabled={joiningZoom === session.id}
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer flex items-center gap-1"
+                          >
+                            {joiningZoom === session.id ? (
+                              <>
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                Connecting...
+                              </>
+                            ) : (
+                              <>
+                                🎥 {isDoctor ? 'Start Session' : 'Join Session'}
+                              </>
+                            )}
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-red-500 font-semibold bg-red-50 dark:bg-red-950/20 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/30">
+                            No Zoom meeting link available.
+                          </span>
+                        )
+                      )}
+                    </div>
                   </div>
-                </div>
-              </Card>
-            ))
+                </Card>
+              );
+            })
           )}
         </div>
       </div>

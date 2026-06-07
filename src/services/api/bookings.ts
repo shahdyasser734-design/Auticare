@@ -87,6 +87,7 @@ export const normalizeBooking = (b: any): Booking => {
     updatedAt: b.updatedAt || new Date().toISOString(),
     dateTime,
     joinLink,
+    zoomUrl: joinLink,
     reason: b.reason || '',
     doctorName,
     therapistName,
@@ -174,11 +175,38 @@ export const bookingService = {
       const response = await apiClient.patch<Booking>(`/bookings/${id}/status`, { status });
       const booking = normalizeBooking(response.data);
       mockState.addBooking(booking);
+      
+      if (status === 'confirmed' || status === 'approved') {
+        try {
+          const tId = booking.treatmentId || (booking as any).TreatmentId;
+          const cleanIntId = (idVal: any): number => {
+            if (typeof idVal === 'number') return idVal;
+            if (!idVal) return 1;
+            const cleaned = String(idVal).replace(/\D/g, '');
+            const parsed = parseInt(cleaned, 10);
+            return isNaN(parsed) || parsed <= 0 ? 1 : parsed;
+          };
+          
+          await apiClient.post('/sessions', {
+            treatmentId: cleanIntId(tId),
+            parentId: cleanIntId(booking.parentId),
+            specialistId: cleanIntId(booking.specialistId),
+            sessionDate: new Date(booking.appointmentDate || booking.dateTime || Date.now()).toISOString(),
+            duration: booking.duration || 60,
+            meetingLink: booking.joinLink || `https://zoom.us/j/${booking.id}`,
+            sessionNotes: booking.notes || booking.reason || 'Session scheduled'
+          });
+          console.log('[BOOKING] Session created on backend successfully.');
+        } catch (sessErr) {
+          console.warn('[BOOKING] Failed to create backend session during approval:', sessErr);
+        }
+      }
+
       return booking;
-    } catch {
+    } catch (err) {
       const bookings = mockState.updateBookingStatus(id, status);
       const booking = bookings.find((item) => item.id === id);
-      if (!booking) throw new Error('Booking not found');
+      if (!booking) throw new Error('Booking not found', { cause: err });
       return normalizeBooking(booking);
     }
   },

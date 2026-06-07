@@ -14,6 +14,7 @@ import { fileUploadService } from '../../services/api/fileUploadService';
 import { Activity, Plus, Trash2, CheckCircle2, User, FileText, BarChart3, Edit, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import type { Child, TreatmentPlan as TreatmentPlanType, Specialist } from '../../types';
 import { cleanIntId } from '../../utils/zoomHelper';
+import { mockState } from '../../services/api/mockState';
 
 export const TreatmentPlan = () => {
   const { childId } = useParams<{ childId: string }>();
@@ -95,16 +96,17 @@ export const TreatmentPlan = () => {
   }, [childId]);
 
   const handleSavePlan = async () => {
-    if (!childId || !title.trim() || !description.trim()) return;
+    if (!childId || !title.trim()) return;
     setSaving(true);
     try {
       let savedPlan: TreatmentPlanType;
+      const finalNotes = notes.trim() || description.trim() || 'Development and Clinical Treatment Plan';
       
       if (plan?.id) {
         // Update plan expects UpdateTreatmentPlanRequest
         const updatePayload = {
           goal: goals.join('\n'),
-          notes: notes || description,
+          notes: finalNotes,
           progress: plan.progressOverview ? JSON.stringify(plan.progressOverview) : '',
           endDate: endDate ? new Date(endDate).toISOString() : null
         };
@@ -118,8 +120,8 @@ export const TreatmentPlan = () => {
           savedPlan = {
             ...plan,
             goals,
-            notes: notes || description,
-            description,
+            notes: finalNotes,
+            description: description || finalNotes,
             endDate: endDate || undefined,
             updatedAt: new Date().toISOString()
           } as any;
@@ -132,7 +134,7 @@ export const TreatmentPlan = () => {
           startDate: new Date(startDate).toISOString(),
           endDate: endDate ? new Date(endDate).toISOString() : null,
           goal: goals.join('\n'),
-          notes: notes || description
+          notes: finalNotes
         };
         savedPlan = await treatmentPlansService.createPlan(createPayload as any) as any;
       }
@@ -158,13 +160,14 @@ export const TreatmentPlan = () => {
 
       // Role-specific notifications creation
       try {
-        const specialistName = user?.name || 'Specialist';
-        const specialistRolePrefix = user?.role === 'doctor' ? 'Dr.' : 'Therapist';
+        let docName = user?.name || specialist?.name || 'Specialist';
+        if (docName.toLowerCase().startsWith('dr. ')) {
+          docName = docName.substring(4);
+        } else if (docName.toLowerCase().startsWith('dr.')) {
+          docName = docName.substring(3);
+        }
+        const formattedDocName = `Dr. ${docName.trim()}`;
         const childName = child?.name || 'Child';
-        
-        // Retrieve existing notifications
-        const storedNotifsRaw = localStorage.getItem('auticare.mock.notifications');
-        const storedNotifs = storedNotifsRaw ? JSON.parse(storedNotifsRaw) : [];
         
         // 1. Parent notification
         const parentNotif = {
@@ -172,7 +175,8 @@ export const TreatmentPlan = () => {
           userId: child?.parentId || 'parent-123',
           type: 'treatment-plan' as const,
           title: 'Treatment Plan Published',
-          message: `${specialistRolePrefix} ${specialistName} created a Treatment Plan for ${childName}`,
+          message: `${formattedDocName} created a Treatment Plan for ${childName}`,
+          content: `${formattedDocName} created a Treatment Plan for ${childName}`,
           isRead: false,
           createdAt: new Date().toISOString()
         };
@@ -185,14 +189,15 @@ export const TreatmentPlan = () => {
             type: 'treatment-plan' as const,
             title: 'New Assignment',
             message: `New Treatment Plan assigned for ${childName}`,
+            content: `New Treatment Plan assigned for ${childName}`,
             isRead: false,
             createdAt: new Date().toISOString()
           };
         });
         
-        storedNotifs.push(parentNotif, ...therapistNotifs);
-        localStorage.setItem('auticare.mock.notifications', JSON.stringify(storedNotifs));
-        console.log('Appended mock notifications successfully.');
+        mockState.addNotification(parentNotif as any);
+        therapistNotifs.forEach(notif => mockState.addNotification(notif as any));
+        console.log('Appended mock notifications successfully using mockState.');
       } catch (notifErr) {
         console.warn('Could not store mock notifications:', notifErr);
       }
@@ -356,14 +361,13 @@ export const TreatmentPlan = () => {
                 />
 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Description Summary</label>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Description Summary (Optional)</label>
                   <textarea
                     placeholder="e.g. Custom clinical pathway focusing on language stimulation, joint attention milestones, and behavioral routines..."
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     className="w-full p-4 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none dark:bg-slate-900 dark:border-white/10 dark:text-white text-sm"
                     rows={3}
-                    required
                   />
                 </div>
 
@@ -495,7 +499,7 @@ export const TreatmentPlan = () => {
                 <Button variant="outline" onClick={() => setEditMode(false)} disabled={saving}>
                   Cancel
                 </Button>
-                <Button onClick={handleSavePlan} disabled={saving || !title.trim() || !description.trim()} className="bg-green-600 hover:bg-green-700 text-white font-semibold">
+                <Button onClick={handleSavePlan} disabled={saving || !title.trim()} className="bg-green-600 hover:bg-green-700 text-white font-semibold">
                   {saving ? 'Saving Pathway...' : 'Publish Treatment Plan'}
                 </Button>
               </div>

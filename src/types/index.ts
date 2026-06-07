@@ -201,6 +201,7 @@ export interface Booking {
   dateTime?: string;
   specialistName?: string;
   joinLink?: string;
+  zoomUrl?: string;
   reason?: string;
   doctorName?: string;
   therapistName?: string;

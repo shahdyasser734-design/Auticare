@@ -11,7 +11,7 @@ import { BookingModal } from '../../components/specialists/BookingModal';
 import type { Booking } from '../../types';
 import type { Specialist } from '../../types';
 import { Loader2 } from 'lucide-react';
-import { getOrCreateSessionMeetingLink } from '../../utils/zoomHelper';
+import { getOrCreateSessionMeetingLink, cleanIntId } from '../../utils/zoomHelper';
 
 
 export const ParentSessions = () => {
@@ -159,6 +159,7 @@ export const ParentSessions = () => {
                     .filter(s => s.status !== 'completed')
                     .map((session) => {
                       const canJoin = session.status === 'scheduled' || session.status === 'confirmed';
+                      const meetingUrl = session.zoomUrl || session.joinLink || (session.id ? `https://zoom.us/j/${cleanIntId(session.id)}` : '');
                       return (
                         <Card key={session.id} className="border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-md transition rounded-2xl p-5">
                           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -167,8 +168,8 @@ export const ParentSessions = () => {
                                 <span className="font-bold text-lg text-slate-900 dark:text-white block">
                                   {session.reason || (session.specialistType === 'doctor' ? 'Clinical Consultation' : 'Therapy Session')}
                                 </span>
-                                <Badge variant={session.joinLink ? 'success' : 'warning'}>
-                                  {session.joinLink ? '🟢 Zoom Available' : '🔴 No Zoom Link'}
+                                <Badge variant={meetingUrl ? 'success' : 'warning'}>
+                                  {meetingUrl ? '🟢 Zoom Available' : '🔴 No Zoom Link'}
                                 </Badge>
                               </div>
                               
@@ -190,23 +191,29 @@ export const ParentSessions = () => {
                                 {session.status}
                               </Badge>
                               {canJoin && (
-                                <Button 
-                                  size="sm" 
-                                  onClick={() => handleJoinZoom(session)}
-                                  disabled={joiningZoom === session.id}
-                                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center gap-1 rounded-xl cursor-pointer"
-                                >
-                                  {joiningZoom === session.id ? (
-                                    <>
-                                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                      Connecting...
-                                    </>
-                                  ) : (
-                                    <>
-                                      🎥 Join Session
-                                    </>
-                                  )}
-                                </Button>
+                                meetingUrl ? (
+                                  <Button 
+                                    size="sm" 
+                                    onClick={() => handleJoinZoom(session)}
+                                    disabled={joiningZoom === session.id}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center gap-1 rounded-xl cursor-pointer"
+                                  >
+                                    {joiningZoom === session.id ? (
+                                      <>
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                        Connecting...
+                                      </>
+                                    ) : (
+                                      <>
+                                        🎥 Join Session
+                                      </>
+                                    )}
+                                  </Button>
+                                ) : (
+                                  <span className="text-xs text-red-500 font-semibold bg-red-50 dark:bg-red-950/20 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/30">
+                                    No Zoom meeting link available.
+                                  </span>
+                                )
                               )}
                             </div>
                           </div>

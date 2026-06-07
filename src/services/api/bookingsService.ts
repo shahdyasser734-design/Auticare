@@ -144,6 +144,32 @@ export const bookingsService = {
       const booking = normalizeBooking(response.data);
       mockState.addBooking(booking);
       
+      if (status === 'confirmed' || status === 'approved') {
+        try {
+          const tId = booking.treatmentId || (booking as any).TreatmentId;
+          const cleanIntId = (idVal: any): number => {
+            if (typeof idVal === 'number') return idVal;
+            if (!idVal) return 1;
+            const cleaned = String(idVal).replace(/\D/g, '');
+            const parsed = parseInt(cleaned, 10);
+            return isNaN(parsed) || parsed <= 0 ? 1 : parsed;
+          };
+          
+          await apiClient.post('/sessions', {
+            treatmentId: cleanIntId(tId),
+            parentId: cleanIntId(booking.parentId),
+            specialistId: cleanIntId(booking.specialistId),
+            sessionDate: new Date(booking.appointmentDate || booking.dateTime || Date.now()).toISOString(),
+            duration: booking.duration || 60,
+            meetingLink: booking.joinLink || `https://zoom.us/j/${booking.id}`,
+            sessionNotes: booking.notes || booking.reason || 'Session scheduled'
+          });
+          console.log('[BOOKING] Session created on backend successfully.');
+        } catch (sessErr) {
+          console.warn('[BOOKING] Failed to create backend session during approval:', sessErr);
+        }
+      }
+
       // Trigger notification for booking status changes
       await triggerNotificationOnStatusChange(booking, status);
       console.log('[BOOKING] Status updated successfully:', booking);
