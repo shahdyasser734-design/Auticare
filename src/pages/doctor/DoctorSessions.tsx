@@ -7,8 +7,7 @@ import { Button } from '../../components/common/Button';
 import { bookingService, type Booking } from '../../services/api/bookings';
 
 import { useAuth } from '../../context/useAuth';
-import { Loader2 } from 'lucide-react';
-import { getOrCreateSessionMeetingLink, cleanIntId } from '../../utils/zoomHelper';
+import { cleanIntId } from '../../utils/zoomHelper';
 
 export const DoctorSessions = () => {
   const navigate = useNavigate();
@@ -17,7 +16,6 @@ export const DoctorSessions = () => {
   
   const [sessions, setSessions] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [zoomAlert, setZoomAlert] = useState<string | null>(null);
 
   const fetchSessions = async () => {
     try {
@@ -45,34 +43,11 @@ export const DoctorSessions = () => {
     }
   };
 
-  const [joiningZoom, setJoiningZoom] = useState<string | null>(null);
 
-  const handleJoinZoom = async (session: Booking) => {
-    setJoiningZoom(session.id);
-    try {
-      const link = await getOrCreateSessionMeetingLink(session, false);
-      window.open(link, '_blank');
-    } catch (err) {
-      console.error('Failed to join Zoom session:', err);
-      setZoomAlert('Error establishing Zoom link. Opening fallback room.');
-      setTimeout(() => setZoomAlert(null), 4000);
-      window.open(session.zoomUrl || session.joinLink || `https://zoom.us/j/${session.id}`, '_blank');
-    } finally {
-      setJoiningZoom(null);
-    }
-  };
 
   return (
     <MainLayout>
       <div className="space-y-8">
-        {/* Dynamic Zoom Alert */}
-        {zoomAlert && (
-          <div className="fixed top-20 right-6 z-50 p-4 bg-orange-600 text-white rounded-2xl shadow-xl flex items-center gap-2 animate-bounce">
-            <span>⚠️</span>
-            <p className="font-bold text-sm">{zoomAlert}</p>
-          </div>
-        )}
-
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold text-neutral-900 mb-2">My Sessions</h1>

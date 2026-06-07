@@ -11,7 +11,7 @@ import { dashboardService, type DashboardSpecialistData, type PatientCard } from
 import { bookingService, type Booking } from '../../services/api/bookings';
 import { notificationService, type Notification } from '../../services/api/notifications';
 import { childrenService, type Child } from '../../services/api/children';
-import { getOrCreateSessionMeetingLink, cleanIntId } from '../../utils/zoomHelper';
+import { cleanIntId } from '../../utils/zoomHelper';
 
 import { Loader2, Calendar, Users, Bell, ClipboardList, ArrowRight, Activity } from 'lucide-react';
 
@@ -125,24 +125,8 @@ export const DoctorHome = () => {
         }))
       : children.map((c) => ({ ...c, status: 'active' as const }));
 
-  // State alert for Zoom room availability
-  const [zoomAlert, setZoomAlert] = useState<string | null>(null);
-  const [joiningZoom, setJoiningZoom] = useState<string | null>(null);
 
-  const handleJoinZoom = async (session: Booking) => {
-    setJoiningZoom(session.id);
-    try {
-      const link = await getOrCreateSessionMeetingLink(session, false);
-      window.open(link, '_blank');
-    } catch (err) {
-      console.error('Failed to join Zoom session:', err);
-      setZoomAlert('Error establishing Zoom link. Opening fallback room.');
-      setTimeout(() => setZoomAlert(null), 4000);
-      window.open(session.zoomUrl || session.joinLink || `https://zoom.us/j/${session.id}`, '_blank');
-    } finally {
-      setJoiningZoom(null);
-    }
-  };
+
 
   const getGreeting = () => {
     const fullName = user?.name || '';
@@ -173,13 +157,7 @@ export const DoctorHome = () => {
   return (
     <MainLayout>
       <div className="space-y-8 pb-12">
-        {/* Dynamic Zoom Alert */}
-        {zoomAlert && (
-          <div className="fixed top-20 right-6 z-50 p-4 bg-orange-600 text-white rounded-2xl shadow-xl flex items-center gap-2 animate-bounce">
-            <span>⚠️</span>
-            <p className="font-bold text-sm">{zoomAlert}</p>
-          </div>
-        )}
+
 
         {/* Welcome Hero Banner */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-8 md:p-12 text-white border border-slate-800 shadow-2xl">
