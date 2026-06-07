@@ -15,7 +15,6 @@ export const getOrCreateSessionMeetingLink = async (
 ): Promise<string> => {
   const tId = session.treatmentId || (session as any).TreatmentId;
   const meetingId = cleanIntId(session.id);
-  const fallbackLink = `https://zoom.us/j/${meetingId}`;
 
   // If there's no treatment plan ID, try to search for the child's active plan
   let finalTreatmentId = tId;
@@ -63,7 +62,6 @@ export const getOrCreateSessionMeetingLink = async (
             specialistId: cleanIntId(session.specialistId),
             sessionDate: new Date(session.appointmentDate || session.dateTime || Date.now()).toISOString(),
             duration: session.duration || 60,
-            meetingLink: fallbackLink,
             sessionNotes: session.notes || session.reason || 'Session scheduled'
           });
           const newLink = createRes.data?.meetingLink || createRes.data?.joinLink;
@@ -80,6 +78,9 @@ export const getOrCreateSessionMeetingLink = async (
     }
   }
 
-  // Fallback if no treatmentId or calls failed
-  return session.joinLink || fallbackLink;
+  if (session.joinLink) {
+    return session.joinLink;
+  }
+  
+  throw new Error('No Zoom meeting link available.');
 };

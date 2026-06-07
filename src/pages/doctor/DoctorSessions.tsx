@@ -53,11 +53,12 @@ export const DoctorSessions = () => {
     try {
       const link = await getOrCreateSessionMeetingLink(session, isDoctor);
       if (newWindow) newWindow.location.href = link;
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to join Zoom session:', err);
-      setZoomAlert('Error establishing Zoom link. Opening fallback room.');
+      if (newWindow) newWindow.close();
+      const errMsg = err.message || 'Error establishing Zoom link.';
+      setZoomAlert(errMsg);
       setTimeout(() => setZoomAlert(null), 4000);
-      if (newWindow) newWindow.location.href = session.zoomUrl || session.joinLink || `https://zoom.us/j/${session.id}`;
     } finally {
       setJoiningZoom(null);
     }
