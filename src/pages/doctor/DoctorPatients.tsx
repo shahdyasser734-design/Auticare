@@ -5,7 +5,7 @@ import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Avatar } from '../../components/common/Avatar';
-import { dashboardService } from '../../services/api/dashboard';
+import { bookingService } from '../../services/api/bookings';
 import type { Child } from '../../services/api/children';
 
 export const DoctorPatients = () => {
@@ -17,16 +17,24 @@ export const DoctorPatients = () => {
   const fetchPatients = async () => {
     try {
       setLoading(true);
-      const dashData = await dashboardService.getSpecialistDashboard();
-      const mappedPatients = (dashData.patients || dashData.assignedChildren || []).map((p: any) => ({
-        id: p.id || p.childId,
-        name: p.name || p.childName || 'Unknown Patient',
-        age: p.age,
-        gender: p.gender || 'Unknown',
-        parentId: '',
-        dateOfBirth: '',
-        status: p.status || 'active',
-      }));
+      const bookings = await bookingService.getMyBookings();
+      const uniqueChildren = new Map();
+      
+      bookings.forEach(b => {
+        if (b.childId && !uniqueChildren.has(b.childId)) {
+          uniqueChildren.set(b.childId, {
+            id: b.childId,
+            name: b.childName || 'Unknown Patient',
+            age: null,
+            gender: 'Unknown',
+            parentId: b.parentId || '',
+            dateOfBirth: '',
+            status: 'active',
+          });
+        }
+      });
+      
+      const mappedPatients = Array.from(uniqueChildren.values());
       setPatients(mappedPatients as any[]);
     } catch (err) {
       console.error('Error fetching patients:', err);
@@ -45,18 +53,24 @@ export const DoctorPatients = () => {
     setSearchQuery(query);
     if (query.length >= 2) {
       try {
-        const dashData = await dashboardService.getSpecialistDashboard();
-        const results = dashData.patients || dashData.assignedChildren || [];
-        const mappedPatients = results.map((p: any) => ({
-          id: p.id || p.childId,
-          name: p.name || p.childName || 'Unknown Patient',
-          age: p.age,
-          gender: p.gender || 'Unknown',
-          parentId: '',
-          dateOfBirth: '',
-          status: p.status || 'active',
-        }));
-        setPatients(mappedPatients.filter(p => (p.name ?? '').toLowerCase().includes(query.toLowerCase())) as any[]);
+        const bookings = await bookingService.getMyBookings();
+        const uniqueChildren = new Map();
+        
+        bookings.forEach(b => {
+          if (b.childId && !uniqueChildren.has(b.childId)) {
+            uniqueChildren.set(b.childId, {
+              id: b.childId,
+              name: b.childName || 'Unknown Patient',
+              age: null,
+              gender: 'Unknown',
+              parentId: b.parentId || '',
+              dateOfBirth: '',
+              status: 'active',
+            });
+          }
+        });
+        const mappedPatients = Array.from(uniqueChildren.values());
+        setPatients(mappedPatients.filter((p: any) => (p.name ?? '').toLowerCase().includes(query.toLowerCase())) as any[]);
       } catch (err) {
         console.error('Error:', err);
       }

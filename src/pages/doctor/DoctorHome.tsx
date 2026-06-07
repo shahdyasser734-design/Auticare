@@ -10,7 +10,7 @@ import { useAuth } from '../../context/useAuth';
 import { dashboardService, type DashboardSpecialistData, type PatientCard } from '../../services/api/dashboard';
 import { bookingService, type Booking } from '../../services/api/bookings';
 import { notificationService, type Notification } from '../../services/api/notifications';
-import { childrenService, type Child } from '../../services/api/children';
+import type { Child } from '../../services/api/children';
 import { getOrCreateSessionMeetingLink, cleanIntId } from '../../utils/zoomHelper';
 
 import { Loader2, Calendar, Users, Bell, ClipboardList, ArrowRight, Activity } from 'lucide-react';
@@ -54,26 +54,43 @@ export const DoctorHome = () => {
           console.warn('[DASHBOARD] Failed to fetch bookings:', err);
           return [];
         }),
-        childrenService.getChildren().catch(() => []),
+        bookingService.getMyBookings().catch((err) => {
+          console.warn('[DASHBOARD] Failed to fetch all bookings for patients:', err);
+          return [];
+        }),
         notificationService.getNotifications().catch((err) => {
           console.warn('[DASHBOARD] Failed to fetch notifications:', err);
           return [];
         }),
       ]);
 
+      // Extract patients exclusively from booking relationships
+      const uniqueChildren = new Map();
+      childList.forEach((b: Booking) => {
+        if (b.childId && !uniqueChildren.has(b.childId)) {
+          uniqueChildren.set(b.childId, {
+            id: b.childId,
+            name: b.childName || 'Unknown Patient',
+            age: null,
+            gender: 'Unknown',
+            status: 'active',
+            assignedDoctor: isDoctor ? user?.name : b.specialistName,
+            assignedTherapist: !isDoctor ? user?.name : b.specialistName,
+            parentId: b.parentId || '',
+            parentName: b.parentName || 'Parent'
+          });
+        }
+      });
+      const extractedPatients = Array.from(uniqueChildren.values());
+
       setDashboardData(dashData);
-
-      // Extract patients from dashboard data
-      const patientsFromAPI: PatientCard[] = dashData?.patients ?? [];
-      console.log('[DASHBOARD] Loaded patients from API:', patientsFromAPI.length);
-      setPatients(patientsFromAPI);
-
+      setPatients(extractedPatients as any[]);
       setSessions(bookingData);
-      setChildren(childList);
+      setChildren(extractedPatients as any[]);
       setNotifications(notifData.slice(0, 5));
 
       console.log(
-        `[DASHBOARD] Dashboard ready - ${patientsFromAPI.length} patients, ${bookingData.length} bookings, ${notifData.length} notifications`
+        `[DASHBOARD] Dashboard ready - ${extractedPatients.length} patients, ${bookingData.length} bookings, ${notifData.length} notifications`
       );
     } catch (err) {
       console.error('[DASHBOARD] Error fetching dashboard data:', err);
@@ -107,23 +124,8 @@ export const DoctorHome = () => {
   // Build stats from API data
   const stats = isDoctor ? createDoctorStats(dashboardData) : createTherapistStats(dashboardData);
 
-  // Merge API assigned children with local children list
-  const assignedChildrenFromAPI = dashboardData?.assignedChildren ?? [];
-  const displayChildren =
-    assignedChildrenFromAPI.length > 0
-      ? assignedChildrenFromAPI.map((ac) => ({
-          id: ac.id,
-          parentId: '',
-          name: ac.name,
-          age: ac.age ?? 0,
-          gender: ac.gender ?? 'Unknown',
-          dateOfBirth: '',
-          createdAt: '',
-          status: ac.status,
-          assignedDoctor: ac.assignedDoctor,
-          assignedTherapist: ac.assignedTherapist,
-        }))
-      : children.map((c) => ({ ...c, status: 'active' as const }));
+  // Display children directly from the extracted bookings
+  const displayChildren = children.map((c) => ({ ...c, status: 'active' as const }));
 
 
 
