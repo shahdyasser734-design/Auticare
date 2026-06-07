@@ -137,7 +137,8 @@ export const TreatmentPlan = () => {
           goal: goals.length > 0 ? goals.join('\n') : 'Development Plan',
           notes: finalNotes
         };
-        savedPlan = await treatmentPlansService.createPlan({ request: createPayload } as any) as any;
+        console.log("SENDING TREATMENT PLAN PAYLOAD:", JSON.stringify(createPayload, null, 2));
+        savedPlan = await treatmentPlansService.createPlan(createPayload as any) as any;
       }
 
       setPlan(savedPlan);
