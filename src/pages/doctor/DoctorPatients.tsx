@@ -5,7 +5,8 @@ import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Avatar } from '../../components/common/Avatar';
-import { childrenService, type Child } from '../../services/api/children';
+import { dashboardService } from '../../services/api/dashboard';
+import type { Child } from '../../services/api/children';
 
 export const DoctorPatients = () => {
   const navigate = useNavigate();
@@ -15,10 +16,20 @@ export const DoctorPatients = () => {
 
   const fetchPatients = async () => {
     try {
-      const data = await childrenService.getChildren();
-      setPatients(data);
+      setLoading(true);
+      const dashData = await dashboardService.getSpecialistDashboard();
+      const mappedPatients = (dashData.patients || dashData.assignedChildren || []).map((p: any) => ({
+        id: p.id || p.childId,
+        name: p.name || p.childName || 'Unknown Patient',
+        age: p.age,
+        gender: p.gender || 'Unknown',
+        parentId: '',
+        dateOfBirth: '',
+        status: p.status || 'active',
+      }));
+      setPatients(mappedPatients as any[]);
     } catch (err) {
-      console.error('Error:', err);
+      console.error('Error fetching patients:', err);
     } finally {
       setLoading(false);
     }
@@ -34,8 +45,18 @@ export const DoctorPatients = () => {
     setSearchQuery(query);
     if (query.length >= 2) {
       try {
-        const results = await childrenService.getChildren();
-        setPatients(results.filter(p => (p.name ?? '').toLowerCase().includes(query.toLowerCase())));
+        const dashData = await dashboardService.getSpecialistDashboard();
+        const results = dashData.patients || dashData.assignedChildren || [];
+        const mappedPatients = results.map((p: any) => ({
+          id: p.id || p.childId,
+          name: p.name || p.childName || 'Unknown Patient',
+          age: p.age,
+          gender: p.gender || 'Unknown',
+          parentId: '',
+          dateOfBirth: '',
+          status: p.status || 'active',
+        }));
+        setPatients(mappedPatients.filter(p => (p.name ?? '').toLowerCase().includes(query.toLowerCase())) as any[]);
       } catch (err) {
         console.error('Error:', err);
       }
