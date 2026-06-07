@@ -14,7 +14,6 @@ export const getOrCreateSessionMeetingLink = async (
   isDoctor: boolean
 ): Promise<string> => {
   const tId = session.treatmentId || (session as any).TreatmentId;
-  const meetingId = cleanIntId(session.id);
 
   // If there's no treatment plan ID, try to search for the child's active plan
   let finalTreatmentId = tId;
