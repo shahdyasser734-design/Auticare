@@ -59,7 +59,7 @@ export const TreatmentPlan = () => {
         // 2. Fetch treatment plans for child
         const plans = await treatmentPlansService.getChildPlans(childId);
         if (plans && plans.length > 0) {
-          const activePlan = plans[0]; // Get latest plan
+          const activePlan = plans[0] as any; // Cast to any for type compatibility
           setPlan(activePlan);
           setTitle(activePlan.title);
           setDescription(activePlan.description || '');
@@ -94,26 +94,43 @@ export const TreatmentPlan = () => {
     if (!childId || !title.trim() || !description.trim()) return;
     setSaving(true);
     try {
-      const payload: Partial<TreatmentPlanType> = {
-        childId,
-        doctorId: user?.id || '',
-        title,
-        description,
-        startDate,
-        endDate: endDate || undefined,
-        goals,
-        status,
-        homeActivities,
-        recommendations: Array.isArray(recommendations) ? recommendations : [recommendations],
-        notes,
-        assignedTherapists
-      };
-
       let savedPlan: TreatmentPlanType;
+      
       if (plan?.id) {
-        savedPlan = await treatmentPlansService.updatePlan(plan.id, payload);
+        // Update plan expects UpdateTreatmentPlanRequest
+        const updatePayload = {
+          goal: goals.join('\n'),
+          notes: notes || description,
+          progress: plan.progressOverview ? JSON.stringify(plan.progressOverview) : '',
+          endDate: endDate ? new Date(endDate).toISOString() : null
+        };
+        await treatmentPlansService.updatePlan(plan.id, updatePayload as any);
+        
+        // Re-fetch to populate full state
+        const plans = await treatmentPlansService.getChildPlans(childId);
+        if (plans && plans.length > 0) {
+          savedPlan = plans[0] as any;
+        } else {
+          savedPlan = {
+            ...plan,
+            goals,
+            notes: notes || description,
+            description,
+            endDate: endDate || undefined,
+            updatedAt: new Date().toISOString()
+          } as any;
+        }
       } else {
-        savedPlan = await treatmentPlansService.createPlan(payload);
+        // Create plan expects CreateTreatmentPlanRequest
+        const createPayload = {
+          childId: Number(childId),
+          specialistId: 1, // dummy value greater than 0, overwritten by backend
+          startDate: new Date(startDate).toISOString(),
+          endDate: endDate ? new Date(endDate).toISOString() : null,
+          goal: goals.join('\n'),
+          notes: notes || description
+        };
+        savedPlan = await treatmentPlansService.createPlan(createPayload as any) as any;
       }
 
       setPlan(savedPlan);
@@ -132,6 +149,48 @@ export const TreatmentPlan = () => {
           availableSlots: []
         });
       }
+
+      // Role-specific notifications creation
+      try {
+        const specialistName = user?.name || 'Specialist';
+        const specialistRolePrefix = user?.role === 'doctor' ? 'Dr.' : 'Therapist';
+        const childName = child?.name || 'Child';
+        
+        // Retrieve existing notifications
+        const storedNotifsRaw = localStorage.getItem('auticare.mock.notifications');
+        const storedNotifs = storedNotifsRaw ? JSON.parse(storedNotifsRaw) : [];
+        
+        // 1. Parent notification
+        const parentNotif = {
+          id: `notif-tp-parent-${Date.now()}`,
+          userId: child?.parentId || 'parent-123',
+          type: 'treatment-plan' as const,
+          title: 'Treatment Plan Published',
+          message: `${specialistRolePrefix} ${specialistName} created a Treatment Plan for ${childName}`,
+          isRead: false,
+          createdAt: new Date().toISOString()
+        };
+        
+        // 2. Therapist notification
+        const therapistNotifs = (assignedTherapists.length ? assignedTherapists : ['Sarah Jenkins (Speech Therapist)']).map((_, idx) => {
+          return {
+            id: `notif-tp-therapist-${Date.now()}-${idx}`,
+            userId: 'therapist-1',
+            type: 'treatment-plan' as const,
+            title: 'New Assignment',
+            message: `New Treatment Plan assigned for ${childName}`,
+            isRead: false,
+            createdAt: new Date().toISOString()
+          };
+        });
+        
+        storedNotifs.push(parentNotif, ...therapistNotifs);
+        localStorage.setItem('auticare.mock.notifications', JSON.stringify(storedNotifs));
+        console.log('Appended mock notifications successfully.');
+      } catch (notifErr) {
+        console.warn('Could not store mock notifications:', notifErr);
+      }
+
     } catch (err) {
       console.error('Error saving treatment plan:', err);
     } finally {
@@ -510,7 +569,11 @@ export const TreatmentPlan = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-slate-200 dark:border-white/10">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 pt-6 border-t border-slate-200 dark:border-white/10">
+                      <div>
+                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Creation Date</p>
+                        <p className="font-bold text-slate-800 dark:text-slate-200">{plan.createdAt ? new Date(plan.createdAt).toLocaleDateString() : new Date().toLocaleDateString()}</p>
+                      </div>
                       <div>
                         <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Start Date</p>
                         <p className="font-bold text-slate-800 dark:text-slate-200">{startDate ? new Date(startDate).toLocaleDateString() : 'N/A'}</p>

@@ -28,8 +28,69 @@ export interface BookingRequest {
   Notes?: string;
 }
 
+export const normalizeBooking = (b: any): Booking => {
+  if (!b) return b;
+  
+  const idVal = b.id || b.bookingId || b.BookingId || '';
+  const idStr = String(idVal);
+  
+  // Normalize date and time
+  const appointmentDate = b.appointmentDate || (b.bookingDate ? b.bookingDate.split('T')[0] : b.preferredDate || '');
+  const appointmentTime = b.appointmentTime || b.bookingTime || b.preferredTime || '';
+  const dateTime = b.dateTime || b.bookingDate || `${appointmentDate}T${appointmentTime}`;
+  
+  // Status mapping: convert status to lowercase for frontend logic
+  let status = b.status || 'pending';
+  if (typeof status === 'string') {
+    status = status.toLowerCase();
+  }
+  if (status === 'approved') {
+    status = 'confirmed'; // Standardize approved to confirmed as expected by some components
+  }
+  
+  // Generate deterministic unique Zoom meeting URL so all participants use the same URL
+  const joinLink = idStr ? `https://zoom.us/j/${idStr}` : '';
+
+  // Handle names
+  const specName = b.specialistName || b.SpecialistName || '';
+  const specType = b.specialistType || b.SpecialistType || 'doctor';
+  
+  let doctorName = 'Dr. Ahmed';
+  let therapistName = 'Therapist Sarah';
+  
+  if (specType === 'doctor') {
+    doctorName = specName ? `Dr. ${specName.replace(/^Dr\.\s+/i, '')}` : 'Dr. Ahmed';
+  } else if (specType === 'therapist') {
+    therapistName = specName ? `Therapist ${specName.replace(/^Therapist\s+/i, '')}` : 'Therapist Sarah';
+  }
+
+  return {
+    id: idStr,
+    parentId: String(b.parentId || b.ParentId || ''),
+    parentName: b.parentName || b.ParentName || 'Sarah Johnson',
+    childId: String(b.childId || b.ChildId || ''),
+    childName: b.childName || b.ChildName || 'Emma Johnson',
+    specialistId: String(b.specialistId || b.SpecialistId || ''),
+    specialistName: specName,
+    specialistType: specType,
+    status: status as any,
+    appointmentDate,
+    appointmentTime,
+    duration: b.duration || 60,
+    notes: b.notes || b.reason || '',
+    consultationNotes: b.consultationNotes || '',
+    createdAt: b.createdAt || new Date().toISOString(),
+    updatedAt: b.updatedAt || new Date().toISOString(),
+    dateTime,
+    joinLink,
+    reason: b.reason || '',
+    doctorName,
+    therapistName,
+  };
+};
+
 const mergeBookings = (backend: Booking[] = []) => {
-  const local = mockState.getBookings();
+  const local = mockState.getBookings().map(normalizeBooking);
   const uniqueLocal = local.filter((item) => !backend.some((backendBooking) => backendBooking.id === item.id));
   return [...backend, ...uniqueLocal].sort((a, b) => (new Date(b.dateTime ?? b.createdAt).getTime() - new Date(a.dateTime ?? a.createdAt).getTime()));
 };
@@ -38,11 +99,12 @@ export const bookingService = {
   createBooking: async (data: BookingRequest): Promise<Booking> => {
     try {
       const response = await apiClient.post<Booking>('/bookings', data);
-      const booking = response.data;
+      const booking = normalizeBooking(response.data);
       mockState.addBooking(booking);
       return booking;
-    } catch {
-      const booking = buildMockBooking(data);
+    } catch (err) {
+      console.warn('[BOOKING] API createBooking failed, using fallback:', err);
+      const booking = normalizeBooking(buildMockBooking(data));
       mockState.addBooking(booking);
       return booking;
     }
@@ -51,18 +113,18 @@ export const bookingService = {
   getBooking: async (id: string): Promise<Booking> => {
     try {
       const response = await apiClient.get<Booking>(`/bookings/${id}`);
-      return response.data;
+      return normalizeBooking(response.data);
     } catch {
       const booking = mockState.getBookings().find((item) => item.id === id);
       if (!booking) throw new Error('Booking not found');
-      return booking;
+      return normalizeBooking(booking);
     }
   },
 
   updateBooking: async (id: string, data: Partial<Booking>): Promise<Booking> => {
     try {
       const response = await apiClient.put<Booking>(`/bookings/${id}`, data);
-      const booking = response.data;
+      const booking = normalizeBooking(response.data);
       mockState.addBooking(booking);
       return booking;
     } catch {
@@ -71,7 +133,7 @@ export const bookingService = {
       );
       const booking = bookings.find((item) => item.id === id);
       if (!booking) throw new Error('Booking not found');
-      return booking;
+      return normalizeBooking(booking);
     }
   },
 
@@ -86,32 +148,32 @@ export const bookingService = {
   getMyBookings: async (): Promise<Booking[]> => {
     try {
       const response = await apiClient.get<Booking[]>('/bookings/my-bookings');
-      return mergeBookings(response.data);
+      return mergeBookings(response.data.map(normalizeBooking));
     } catch {
-      return mockState.getBookings();
+      return mockState.getBookings().map(normalizeBooking);
     }
   },
 
   getUpcomingBookings: async (): Promise<Booking[]> => {
     try {
       const response = await apiClient.get<Booking[]>('/bookings/upcoming');
-      return mergeBookings(response.data);
+      return mergeBookings(response.data.map(normalizeBooking));
     } catch {
-      return mockState.getBookings().filter((booking) => booking.status !== 'cancelled');
+      return mockState.getBookings().map(normalizeBooking).filter((booking) => booking.status !== 'cancelled');
     }
   },
 
   updateBookingStatus: async (id: string, status: Booking['status']): Promise<Booking> => {
     try {
       const response = await apiClient.patch<Booking>(`/bookings/${id}/status`, { status });
-      const booking = response.data;
+      const booking = normalizeBooking(response.data);
       mockState.addBooking(booking);
       return booking;
     } catch {
       const bookings = mockState.updateBookingStatus(id, status);
       const booking = bookings.find((item) => item.id === id);
       if (!booking) throw new Error('Booking not found');
-      return booking;
+      return normalizeBooking(booking);
     }
   },
 };

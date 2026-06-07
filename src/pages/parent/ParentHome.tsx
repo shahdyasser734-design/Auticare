@@ -28,13 +28,16 @@ export const ParentHome = () => {
   const fetchDashboard = async () => {
     try {
       setLoading(true);
-      const [db, childList, planList, noteList, notifList] = await Promise.all([
+      const childList = await childrenService.getChildren().catch(() => []);
+      
+      const [db, plansArrays, noteList, notifList] = await Promise.all([
         dashboardService.getParentDashboard().catch(() => null),
-        childrenService.getChildren().catch(() => []),
-        treatmentPlansService.getMyPlans().catch(() => []),
+        Promise.all(childList.map(c => treatmentPlansService.getChildPlans(c.id).catch(() => []))),
         notesService.getMyNotes().catch(() => []),
         notificationService.getNotifications().catch(() => []),
       ]);
+
+      const planList = plansArrays.flat();
 
       setDashboardData(db);
       setChildren(childList);

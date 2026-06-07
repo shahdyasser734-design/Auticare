@@ -202,6 +202,10 @@ export interface Booking {
   specialistName?: string;
   joinLink?: string;
   reason?: string;
+  doctorName?: string;
+  therapistName?: string;
+  parentName?: string;
+  childName?: string;
 }
 
 export interface TreatmentPlan {

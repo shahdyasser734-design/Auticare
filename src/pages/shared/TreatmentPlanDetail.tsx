@@ -21,7 +21,7 @@ export const TreatmentPlanDetail = () => {
       try {
         setLoading(true);
         const planData = await treatmentPlansService.getPlan(planId);
-        setPlan(planData);
+        setPlan(planData as any);
 
         const sessionsData = await sessionsService.getTreatmentSessions(planId);
         setSessions(sessionsData);

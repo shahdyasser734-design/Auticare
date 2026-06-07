@@ -1,11 +1,12 @@
 import apiClient from '../apiClient';
 import type { Booking } from '../../types';
 import { mockState, createBookingNotification } from './mockState';
+import { normalizeBooking } from './bookings';
 
 const mergeBookings = (backend: Booking[] = []) => {
-  const local = mockState.getBookings();
+  const local = mockState.getBookings().map(normalizeBooking);
   const uniqueLocal = local.filter((item) => !backend.some((backendBooking) => backendBooking.id === item.id));
-  return [...backend, ...uniqueLocal].sort((a, b) => new Date(a.dateTime ?? a.createdAt).getTime() - new Date(b.dateTime ?? b.createdAt).getTime());
+  return [...backend, ...uniqueLocal].sort((a, b) => new Date(b.dateTime ?? b.createdAt).getTime() - new Date(a.dateTime ?? a.createdAt).getTime());
 };
 
 // Helper to create notification on booking status change
@@ -52,7 +53,7 @@ export const bookingsService = {
     try {
       console.log('[BOOKING] Creating booking with data:', data);
       const response = await apiClient.post<Booking>('/bookings', data);
-      const booking = response.data;
+      const booking = normalizeBooking(response.data);
       mockState.addBooking(booking);
       console.log('[BOOKING] Successfully created booking:', booking);
       
@@ -65,9 +66,9 @@ export const bookingsService = {
       const booking = mockState.getBookings().find((item) => item.id === data.id);
       if (booking) {
         console.log('[BOOKING] Found existing mock booking:', booking);
-        return booking;
+        return normalizeBooking(booking);
       }
-      const newBooking: Booking = {
+      const newBooking: Booking = normalizeBooking({
         id: `mock-booking-${Date.now()}`,
         parentId: data.parentId ?? 'user-123',
         childId: data.childId ?? 'child-1',
@@ -83,7 +84,7 @@ export const bookingsService = {
         joinLink: '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      };
+      });
       mockState.addBooking(newBooking);
       console.log('[BOOKING] Created new mock booking:', newBooking);
 
@@ -98,12 +99,12 @@ export const bookingsService = {
     try {
       const response = await apiClient.get<Booking>(`/bookings/${id}`);
       console.log('[BOOKING] Fetched booking:', response.data);
-      return response.data;
+      return normalizeBooking(response.data);
     } catch {
       const booking = mockState.getBookings().find((item) => item.id === id);
       if (!booking) throw new Error('Booking not found');
       console.log('[BOOKING] Retrieved mock booking:', booking);
-      return booking;
+      return normalizeBooking(booking);
     }
   },
 
@@ -112,10 +113,10 @@ export const bookingsService = {
       console.log('[BOOKING] Fetching my bookings from API...');
       const response = await apiClient.get<Booking[]>('/bookings/my-bookings');
       console.log('[BOOKING] Fetched my bookings from API:', response.data.length, 'items');
-      return mergeBookings(response.data);
+      return mergeBookings(response.data.map(normalizeBooking));
     } catch (err) {
       console.warn('[BOOKING] Failed to fetch my bookings from API:', err);
-      return mockState.getBookings();
+      return mockState.getBookings().map(normalizeBooking);
     }
   },
 
@@ -124,10 +125,10 @@ export const bookingsService = {
       console.log('[BOOKING] Fetching upcoming bookings from API...');
       const response = await apiClient.get<Booking[]>('/bookings/upcoming');
       console.log('[BOOKING] Fetched upcoming bookings from API:', response.data.length, 'items');
-      return mergeBookings(response.data);
+      return mergeBookings(response.data.map(normalizeBooking));
     } catch (err) {
       console.warn('[BOOKING] Failed to fetch upcoming bookings from API:', err);
-      const mockBookings = mockState.getBookings().filter((booking) => booking.status !== 'cancelled');
+      const mockBookings = mockState.getBookings().map(normalizeBooking).filter((booking) => booking.status !== 'cancelled');
       console.log('[BOOKING] Using mock bookings:', mockBookings.length, 'items');
       return mockBookings;
     }
@@ -140,7 +141,7 @@ export const bookingsService = {
     try {
       console.log(`[BOOKING] Updating booking ${id} status to ${status}`);
       const response = await apiClient.patch<Booking>(`/bookings/${id}/status`, { status });
-      const booking = response.data;
+      const booking = normalizeBooking(response.data);
       mockState.addBooking(booking);
       
       // Trigger notification for booking status changes
@@ -153,24 +154,25 @@ export const bookingsService = {
       const booking = bookings.find((item) => item.id === id);
       if (!booking) throw new Error('Booking not found', { cause: err });
       
+      const normalized = normalizeBooking(booking);
       // Also trigger notification in mock mode
-      await triggerNotificationOnStatusChange(booking, status);
-      console.log('[BOOKING] Status updated in mock state:', booking);
-      return booking;
+      await triggerNotificationOnStatusChange(normalized, status);
+      console.log('[BOOKING] Status updated in mock state:', normalized);
+      return normalized;
     }
   },
 
   cancelBooking: async (id: string, reason?: string): Promise<Booking> => {
     try {
       const response = await apiClient.patch<Booking>(`/bookings/${id}/cancel`, { reason });
-      const booking = response.data;
+      const booking = normalizeBooking(response.data);
       mockState.addBooking(booking);
       return booking;
     } catch {
       const bookings = mockState.updateBookingStatus(id, 'cancelled');
       const booking = bookings.find((item) => item.id === id);
       if (!booking) throw new Error('Booking not found');
-      return booking;
+      return normalizeBooking(booking);
     }
   },
 

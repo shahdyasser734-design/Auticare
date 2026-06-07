@@ -10,7 +10,7 @@ import { treatmentPlansService } from '../../services/api/treatmentPlans';
 import { BookingModal } from '../../components/specialists/BookingModal';
 import type { Booking } from '../../types';
 import type { Specialist } from '../../types';
-import { formatDateTime } from '../../utils/dateUtils';
+
 
 export const ParentSessions = () => {
   const [upcomingSessions, setUpcomingSessions] = useState<Booking[]>([]);
@@ -20,6 +20,7 @@ export const ParentSessions = () => {
   const [selectedSpecialist, setSelectedSpecialist] = useState<Specialist | null>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showSelectorModal, setShowSelectorModal] = useState(false);
+  const [zoomAlert, setZoomAlert] = useState<string | null>(null);
 
   const fetchSessions = async () => {
     setLoading(true);
@@ -73,9 +74,53 @@ export const ParentSessions = () => {
     void loadConnectedSpecialists();
   }, []);
 
+  const checkSessionStart = (session: Booking) => {
+    if (!session.appointmentDate) return { started: true };
+    let sessionDateStr = session.appointmentDate;
+    let sessionTimeStr = session.appointmentTime || '00:00';
+    if (sessionTimeStr.includes('-')) {
+      sessionTimeStr = sessionTimeStr.split('-')[0].trim();
+    }
+    const sessionDateTime = new Date(`${sessionDateStr}T${sessionTimeStr}`);
+    if (isNaN(sessionDateTime.getTime())) {
+      return { started: true };
+    }
+    const now = new Date();
+    // Allow joining up to 10 minutes before the scheduled time
+    const tenMinutesBefore = new Date(sessionDateTime.getTime() - 10 * 60 * 1000);
+    if (now < tenMinutesBefore) {
+      return { started: false, message: 'Session has not started yet.' };
+    }
+    return { started: true };
+  };
+
+  const handleJoinZoom = (session: Booking) => {
+    const link = session.joinLink;
+    if (!link || link.trim() === '') {
+      setZoomAlert('No Zoom meeting link available.');
+      setTimeout(() => setZoomAlert(null), 4000);
+      return;
+    }
+    const check = checkSessionStart(session);
+    if (!check.started) {
+      setZoomAlert(check.message || 'Session has not started yet.');
+      setTimeout(() => setZoomAlert(null), 4000);
+      return;
+    }
+    window.open(link, '_blank');
+  };
+
   return (
     <MainLayout>
       <div className="space-y-8">
+        {/* Dynamic Zoom Alert */}
+        {zoomAlert && (
+          <div className="fixed top-20 right-6 z-50 p-4 bg-orange-600 text-white rounded-2xl shadow-xl flex items-center gap-2 animate-bounce">
+            <span>⚠️</span>
+            <p className="font-bold text-sm">{zoomAlert}</p>
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">My Sessions</h1>
@@ -130,30 +175,44 @@ export const ParentSessions = () => {
                   {upcomingSessions
                     .filter(s => s.status !== 'completed')
                     .map((session) => {
-                      const zoomLink = session.joinLink || 'https://zoom.us/j/9876543210';
                       const canJoin = session.status === 'scheduled' || session.status === 'confirmed';
                       return (
                         <Card key={session.id} className="border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-md transition rounded-2xl p-5">
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                            <div>
-                              <p className="font-bold text-lg text-slate-900 dark:text-white">
-                                👨‍⚕️ {session.specialistName || 'Specialist Consultation'}
+                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="space-y-2 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="font-bold text-lg text-slate-900 dark:text-white block">
+                                  {session.reason || (session.specialistType === 'doctor' ? 'Clinical Consultation' : 'Therapy Session')}
+                                </span>
+                                <Badge variant={session.joinLink ? 'success' : 'warning'}>
+                                  {session.joinLink ? '🟢 Zoom Available' : '🔴 No Zoom Link'}
+                                </Badge>
+                              </div>
+                              
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-400">
+                                <p><strong>Child Name:</strong> {session.childName || 'Emma Johnson'}</p>
+                                <p><strong>Parent Name:</strong> {session.parentName || 'Sarah Johnson'}</p>
+                                <p><strong>Doctor Name:</strong> {session.doctorName || 'Dr. Ahmed'}</p>
+                                <p><strong>Therapist Name:</strong> {session.therapistName || 'Therapist Sarah'}</p>
+                              </div>
+
+                              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                                <strong>Date & Time:</strong> {session.appointmentDate || 'TBD'} at {session.appointmentTime || 'TBD'}
                               </p>
-                              <p className="text-slate-600 dark:text-slate-400 mt-1">
-                                {session.dateTime ? formatDateTime(session.dateTime) : 'Preferred time scheduled'}
-                              </p>
-                              {session.reason && <p className="text-xs text-slate-500 mt-1">Reason: {session.reason}</p>}
-                              {session.notes && <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-white/5">Session Note: {session.notes}</p>}
+                              {session.notes && <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-white/5 font-mono text-xs">Session Note: {session.notes}</p>}
                             </div>
-                            <div className="flex items-center gap-3 self-start sm:self-center">
-                              <Badge>{session.status}</Badge>
+                            
+                            <div className="flex items-center gap-3 shrink-0">
+                              <Badge variant={session.status === 'confirmed' || session.status === 'scheduled' ? 'success' : 'warning'}>
+                                {session.status}
+                              </Badge>
                               {canJoin && (
                                 <Button 
                                   size="sm" 
-                                  onClick={() => window.open(zoomLink, '_blank')}
+                                  onClick={() => handleJoinZoom(session)}
                                   className="bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center gap-1 rounded-xl cursor-pointer"
                                 >
-                                  🎥 Join Zoom Session
+                                  🎥 Join Session
                                 </Button>
                               )}
                             </div>
@@ -176,17 +235,27 @@ export const ParentSessions = () => {
                     .filter((value, index, self) => self.findIndex(t => t.id === value.id) === index)
                     .map((session) => (
                       <Card key={session.id} className="border border-slate-200 dark:border-white/10 rounded-2xl p-5 bg-slate-50/50">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                          <div>
-                            <p className="font-bold text-lg text-slate-900 dark:text-white">
-                              👨‍⚕️ {session.specialistName || 'Specialist Consultation'}
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div className="space-y-2 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-bold text-lg text-slate-900 dark:text-white block">
+                                {session.reason || (session.specialistType === 'doctor' ? 'Clinical Consultation' : 'Therapy Session')}
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-400">
+                              <p><strong>Child Name:</strong> {session.childName || 'Emma Johnson'}</p>
+                              <p><strong>Parent Name:</strong> {session.parentName || 'Sarah Johnson'}</p>
+                              <p><strong>Doctor Name:</strong> {session.doctorName || 'Dr. Ahmed'}</p>
+                              <p><strong>Therapist Name:</strong> {session.therapistName || 'Therapist Sarah'}</p>
+                            </div>
+
+                            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                              <strong>Date & Time:</strong> {session.appointmentDate || 'TBD'} at {session.appointmentTime || 'TBD'}
                             </p>
-                            <p className="text-slate-600 dark:text-slate-400 mt-1">
-                              {session.dateTime ? formatDateTime(session.dateTime) : 'TBD'}
-                            </p>
-                            {session.notes && <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 bg-slate-100/50 p-3 rounded-xl">Session Summary: {session.notes}</p>}
+                            {session.notes && <p className="text-sm text-slate-550 dark:text-slate-450 mt-2 bg-slate-100/50 p-3 rounded-xl">Session Summary: {session.notes}</p>}
                           </div>
-                          <Badge>{session.status}</Badge>
+                          <Badge>Completed</Badge>
                         </div>
                       </Card>
                     ))}

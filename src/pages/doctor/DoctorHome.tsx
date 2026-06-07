@@ -11,7 +11,7 @@ import { dashboardService, type DashboardSpecialistData, type PatientCard } from
 import { bookingService, type Booking } from '../../services/api/bookings';
 import { notificationService, type Notification } from '../../services/api/notifications';
 import { childrenService, type Child } from '../../services/api/children';
-import { formatDateTime } from '../../utils/dateUtils';
+
 import { Loader2, Calendar, Users, Bell, ClipboardList, ArrowRight, Activity } from 'lucide-react';
 
 const isToday = (dateStr?: string): boolean => {
@@ -127,9 +127,36 @@ export const DoctorHome = () => {
   // State alert for Zoom room availability
   const [zoomAlert, setZoomAlert] = useState<string | null>(null);
 
-  const handleJoinZoom = (link?: string) => {
-    if (!link || link.trim() === '' || link.includes('9876543210')) {
+  const checkSessionStart = (session: Booking) => {
+    if (!session.appointmentDate) return { started: true };
+    let sessionDateStr = session.appointmentDate;
+    let sessionTimeStr = session.appointmentTime || '00:00';
+    if (sessionTimeStr.includes('-')) {
+      sessionTimeStr = sessionTimeStr.split('-')[0].trim();
+    }
+    const sessionDateTime = new Date(`${sessionDateStr}T${sessionTimeStr}`);
+    if (isNaN(sessionDateTime.getTime())) {
+      return { started: true };
+    }
+    const now = new Date();
+    // Allow joining up to 10 minutes before the scheduled time
+    const tenMinutesBefore = new Date(sessionDateTime.getTime() - 10 * 60 * 1000);
+    if (now < tenMinutesBefore) {
+      return { started: false, message: 'Session has not started yet.' };
+    }
+    return { started: true };
+  };
+
+  const handleJoinZoom = (session: Booking) => {
+    const link = session.joinLink;
+    if (!link || link.trim() === '') {
       setZoomAlert('No Zoom meeting link available.');
+      setTimeout(() => setZoomAlert(null), 4000);
+      return;
+    }
+    const check = checkSessionStart(session);
+    if (!check.started) {
+      setZoomAlert(check.message || 'Session has not started yet.');
       setTimeout(() => setZoomAlert(null), 4000);
       return;
     }
@@ -290,16 +317,27 @@ export const DoctorHome = () => {
                 </h3>
                 <div className="space-y-4">
                   {todaySessions.map((session) => {
-                    const zoomLink = session.joinLink;
                     return (
-                      <div key={session.id} className="p-4 bg-white dark:bg-slate-900/60 border border-green-100 dark:border-green-900/20 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                        <div>
-                          <p className="font-bold text-slate-900 dark:text-white">
-                            {session.reason || (isDoctor ? 'Clinical Consultation' : 'Therapy Session')}
+                      <div key={session.id} className="p-5 bg-white dark:bg-slate-900/60 border border-green-100 dark:border-green-900/20 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div className="space-y-2 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-bold text-slate-900 dark:text-white text-lg block">
+                              {session.reason || (session.specialistType === 'doctor' ? 'Clinical Consultation' : 'Therapy Session')}
+                            </span>
+                            <Badge variant={session.joinLink ? 'success' : 'warning'}>
+                              {session.joinLink ? '🟢 Zoom Available' : '🔴 No Zoom Link'}
+                            </Badge>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-400">
+                            <p><strong>Child:</strong> {session.childName || 'Emma Johnson'}</p>
+                            <p><strong>Parent:</strong> {session.parentName || 'Sarah Johnson'}</p>
+                            <p><strong>Doctor:</strong> {session.doctorName || 'Dr. Ahmed'}</p>
+                            <p><strong>Therapist:</strong> {session.therapistName || 'Therapist Sarah'}</p>
+                          </div>
+                          <p className="text-xs text-slate-500">
+                            <strong>Date & Time:</strong> {session.appointmentDate || 'Today'} at {session.appointmentTime || 'Scheduled'}
                           </p>
-                          <p className="text-xs text-slate-500 mt-1">
-                            Time: {session.appointmentTime || (session.dateTime ? formatDateTime(session.dateTime) : 'Scheduled')}
-                          </p>
+                          {session.notes && <p className="text-xs text-slate-500 italic">Notes: {session.notes}</p>}
                           {session.childId && (
                             <button
                               onClick={() => navigate(`/${user?.role}/patients/${session.childId}`)}
@@ -313,10 +351,10 @@ export const DoctorHome = () => {
                           <Badge variant="success">Today</Badge>
                           <Button
                             size="sm"
-                            onClick={() => handleJoinZoom(zoomLink)}
+                            onClick={() => handleJoinZoom(session)}
                             className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer"
                           >
-                            🎥 Join Zoom
+                            🎥 {isDoctor ? 'Start Session' : 'Join Session'}
                           </Button>
                         </div>
                       </div>
@@ -390,11 +428,24 @@ export const DoctorHome = () => {
                 <div className="space-y-4">
                   {confirmedSessions.slice(0, 5).map((session) => {
                     return (
-                      <div key={session.id} className="p-5 bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                        <div>
-                          <p className="font-bold text-slate-950 dark:text-white text-base">Development Session</p>
+                      <div key={session.id} className="p-5 bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div className="space-y-2 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-bold text-slate-950 dark:text-white text-lg block">
+                              {session.reason || (session.specialistType === 'doctor' ? 'Clinical Consultation' : 'Therapy Session')}
+                            </span>
+                            <Badge variant={session.joinLink ? 'success' : 'warning'}>
+                              {session.joinLink ? '🟢 Zoom Available' : '🔴 No Zoom Link'}
+                            </Badge>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-400">
+                            <p><strong>Child:</strong> {session.childName || 'Emma Johnson'}</p>
+                            <p><strong>Parent:</strong> {session.parentName || 'Sarah Johnson'}</p>
+                            <p><strong>Doctor:</strong> {session.doctorName || 'Dr. Ahmed'}</p>
+                            <p><strong>Therapist:</strong> {session.therapistName || 'Therapist Sarah'}</p>
+                          </div>
                           <p className="text-xs text-slate-500 mt-1">
-                            Time: {session.dateTime ? formatDateTime(session.dateTime) : `${session.appointmentDate || ''} at ${session.appointmentTime || 'TBD'}`}
+                            <strong>Date & Time:</strong> {session.appointmentDate || 'TBD'} at {session.appointmentTime || 'TBD'}
                           </p>
                           {session.notes && <p className="text-xs text-slate-500 mt-1">Notes: {session.notes}</p>}
                           {session.childId && (
@@ -410,10 +461,10 @@ export const DoctorHome = () => {
                           <Badge variant="success">Confirmed</Badge>
                           <Button
                             size="sm"
-                            onClick={() => handleJoinZoom(session.joinLink)}
+                            onClick={() => handleJoinZoom(session)}
                             className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer"
                           >
-                            🎥 Start Session
+                            🎥 {isDoctor ? 'Start Session' : 'Join Session'}
                           </Button>
                         </div>
                       </div>
