@@ -50,8 +50,7 @@ export const DoctorSessions = () => {
   const handleJoinZoom = async (session: Booking) => {
     setJoiningZoom(session.id);
     try {
-      const isSpecialist = isDoctor || user?.role === 'therapist';
-      const link = await getOrCreateSessionMeetingLink(session, isSpecialist);
+      const link = await getOrCreateSessionMeetingLink(session, false);
       window.open(link, '_blank');
     } catch (err) {
       console.error('Failed to join Zoom session:', err);
