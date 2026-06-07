@@ -11,7 +11,7 @@ import { dashboardService, type DashboardSpecialistData, type PatientCard } from
 import { bookingService, type Booking } from '../../services/api/bookings';
 import { notificationService, type Notification } from '../../services/api/notifications';
 import { childrenService, type Child } from '../../services/api/children';
-import { cleanIntId } from '../../utils/zoomHelper';
+import { getOrCreateSessionMeetingLink, cleanIntId } from '../../utils/zoomHelper';
 
 import { Loader2, Calendar, Users, Bell, ClipboardList, ArrowRight, Activity } from 'lucide-react';
 
@@ -128,6 +128,24 @@ export const DoctorHome = () => {
 
 
 
+  const [joiningZoom, setJoiningZoom] = useState<string | null>(null);
+  const [zoomAlert, setZoomAlert] = useState<string | null>(null);
+
+  const handleJoinZoom = async (session: Booking) => {
+    setJoiningZoom(session.id);
+    try {
+      const link = await getOrCreateSessionMeetingLink(session, false);
+      window.open(link, '_blank');
+    } catch (err) {
+      console.error('Failed to join Zoom session:', err);
+      setZoomAlert('Error establishing Zoom link. Opening fallback room.');
+      setTimeout(() => setZoomAlert(null), 4000);
+      window.open(session.zoomUrl || session.joinLink || `https://zoom.us/j/${session.id}`, '_blank');
+    } finally {
+      setJoiningZoom(null);
+    }
+  };
+
   const getGreeting = () => {
     const fullName = user?.name || '';
     if (isDoctor) {
@@ -158,6 +176,14 @@ export const DoctorHome = () => {
     <MainLayout>
       <div className="space-y-8 pb-12">
 
+
+        {/* Dynamic Zoom Alert */}
+        {zoomAlert && (
+          <div className="fixed top-20 right-6 z-50 p-4 bg-orange-600 text-white rounded-2xl shadow-xl flex items-center gap-2 animate-bounce">
+            <span>⚠️</span>
+            <p className="font-bold text-sm">{zoomAlert}</p>
+          </div>
+        )}
 
         {/* Welcome Hero Banner */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-8 md:p-12 text-white border border-slate-800 shadow-2xl">
@@ -288,19 +314,21 @@ export const DoctorHome = () => {
                               {meetingUrl ? '🟢 Zoom Available' : '🔴 No Zoom Link'}
                             </Badge>
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm text-slate-700 dark:text-slate-300 bg-green-50/50 dark:bg-green-900/10 p-3 rounded-xl border border-green-100 dark:border-green-900/20">
-                            <p><strong className="text-slate-900 dark:text-slate-100">Child Name:</strong> {session.childName || 'Emma Johnson'}</p>
-                            <p><strong className="text-slate-900 dark:text-slate-100">Parent Name:</strong> {session.parentName || 'Sarah Johnson'}</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm text-slate-700 dark:text-slate-300 bg-green-50/50 dark:bg-green-900/10 p-4 rounded-xl border border-green-200 dark:border-green-900/20">
+                            <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Child Name:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.childName || 'Emma Johnson'}</span></p>
+                            <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Parent Name:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.parentName || 'Sarah Johnson'}</span></p>
                             {isDoctor ? (
-                              <p><strong className="text-slate-900 dark:text-slate-100">Assigned Therapist:</strong> {session.therapistName || 'Therapist Sarah'}</p>
+                              <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Assigned Therapist:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.therapistName || 'Therapist Sarah'}</span></p>
                             ) : (
-                              <p><strong className="text-slate-900 dark:text-slate-100">Doctor Name:</strong> {session.doctorName || 'Dr. Ahmed'}</p>
+                              <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Doctor Name:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.doctorName || 'Dr. Ahmed'}</span></p>
                             )}
                           </div>
-                          <p className="text-sm text-slate-800 dark:text-slate-200 mt-2 font-medium">
-                            <strong className="text-slate-900 dark:text-slate-100">Date & Time:</strong> {session.appointmentDate || 'Today'} at {session.appointmentTime || 'Scheduled'}
-                          </p>
-                          {session.notes && <p className="text-sm text-slate-600 dark:text-slate-400 italic mt-1 bg-slate-50 dark:bg-slate-900/40 p-2 rounded-lg border border-slate-100 dark:border-slate-800">Notes: {session.notes}</p>}
+                          <div className="mt-3 bg-white dark:bg-transparent rounded-lg">
+                            <p className="text-sm text-slate-800 dark:text-slate-200 font-medium">
+                              <strong className="text-slate-900 dark:text-slate-100">Date & Time:</strong> {session.appointmentDate || 'Today'} at {session.appointmentTime || 'Scheduled'}
+                            </p>
+                            {session.notes && <p className="text-sm text-slate-600 dark:text-slate-400 italic mt-2 bg-slate-100 dark:bg-slate-900/40 p-3 rounded-lg border border-slate-200 dark:border-slate-800">Notes: {session.notes}</p>}
+                          </div>
                           {session.childId && (
                             <button
                               onClick={() => navigate(`/${user?.role}/patients/${session.childId}`)}
@@ -315,10 +343,20 @@ export const DoctorHome = () => {
                           {meetingUrl ? (
                             <Button
                               size="sm"
-                              onClick={() => window.open(meetingUrl, '_blank')}
+                              onClick={() => handleJoinZoom(session)}
+                              disabled={joiningZoom === session.id}
                               className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer flex items-center gap-1"
                             >
-                              🎥 {isDoctor ? 'Start Session' : 'Join Session'}
+                              {joiningZoom === session.id ? (
+                                <>
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  Connecting...
+                                </>
+                              ) : (
+                                <>
+                                  🎥 {isDoctor ? 'Start Session' : 'Join Session'}
+                                </>
+                              )}
                             </Button>
                           ) : (
                             <span className="text-xs text-red-500 font-semibold bg-red-50 dark:bg-red-950/20 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/30">
@@ -408,19 +446,21 @@ export const DoctorHome = () => {
                               {meetingUrl ? '🟢 Zoom Available' : '🔴 No Zoom Link'}
                             </Badge>
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
-                            <p><strong className="text-slate-900 dark:text-slate-100">Child Name:</strong> {session.childName || 'Emma Johnson'}</p>
-                            <p><strong className="text-slate-900 dark:text-slate-100">Parent Name:</strong> {session.parentName || 'Sarah Johnson'}</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Child Name:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.childName || 'Emma Johnson'}</span></p>
+                            <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Parent Name:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.parentName || 'Sarah Johnson'}</span></p>
                             {isDoctor ? (
-                              <p><strong className="text-slate-900 dark:text-slate-100">Assigned Therapist:</strong> {session.therapistName || 'Therapist Sarah'}</p>
+                              <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Assigned Therapist:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.therapistName || 'Therapist Sarah'}</span></p>
                             ) : (
-                              <p><strong className="text-slate-900 dark:text-slate-100">Doctor Name:</strong> {session.doctorName || 'Dr. Ahmed'}</p>
+                              <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Doctor Name:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.doctorName || 'Dr. Ahmed'}</span></p>
                             )}
                           </div>
-                          <p className="text-sm text-slate-800 dark:text-slate-200 mt-2 font-medium">
-                            <strong className="text-slate-900 dark:text-slate-100">Date & Time:</strong> {session.appointmentDate || 'TBD'} at {session.appointmentTime || 'TBD'}
-                          </p>
-                          {session.notes && <p className="text-sm text-slate-600 dark:text-slate-400 italic mt-1 bg-slate-50 dark:bg-slate-900/40 p-2 rounded-lg border border-slate-100 dark:border-slate-800">Notes: {session.notes}</p>}
+                          <div className="mt-3 bg-white dark:bg-transparent rounded-lg">
+                            <p className="text-sm text-slate-800 dark:text-slate-200 font-medium">
+                              <strong className="text-slate-900 dark:text-slate-100">Date & Time:</strong> {session.appointmentDate || 'TBD'} at {session.appointmentTime || 'TBD'}
+                            </p>
+                            {session.notes && <p className="text-sm text-slate-600 dark:text-slate-400 italic mt-2 bg-slate-100 dark:bg-slate-900/40 p-3 rounded-lg border border-slate-200 dark:border-slate-800">Notes: {session.notes}</p>}
+                          </div>
                           {session.childId && (
                             <button
                               onClick={() => navigate(`/${user?.role}/patients/${session.childId}`)}
@@ -435,10 +475,20 @@ export const DoctorHome = () => {
                           {meetingUrl ? (
                             <Button
                               size="sm"
-                              onClick={() => window.open(meetingUrl, '_blank')}
+                              onClick={() => handleJoinZoom(session)}
+                              disabled={joiningZoom === session.id}
                               className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer flex items-center gap-1"
                             >
-                              🎥 {isDoctor ? 'Start Session' : 'Join Session'}
+                              {joiningZoom === session.id ? (
+                                <>
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  Connecting...
+                                </>
+                              ) : (
+                                <>
+                                  🎥 {isDoctor ? 'Start Session' : 'Join Session'}
+                                </>
+                              )}
                             </Button>
                           ) : (
                             <span className="text-xs text-red-500 font-semibold bg-red-50 dark:bg-red-950/20 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/30">

@@ -21,7 +21,8 @@ export const TreatmentPlan = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const isSpecialist = user?.role === 'doctor' || user?.role === 'therapist';
+  const isDoctor = user?.role === 'doctor';
+  const isParent = user?.role === 'parent';
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -136,7 +137,7 @@ export const TreatmentPlan = () => {
           goal: goals.length > 0 ? goals.join('\n') : 'Development Plan',
           notes: finalNotes
         };
-        savedPlan = await treatmentPlansService.createPlan(createPayload as any) as any;
+        savedPlan = await treatmentPlansService.createPlan({ request: createPayload } as any) as any;
       }
 
       setPlan(savedPlan);
@@ -273,7 +274,7 @@ export const TreatmentPlan = () => {
             Back to previous page
           </button>
 
-          {isSpecialist && !editMode && (
+          {isDoctor && !editMode && (
             <Button
               onClick={() => {
                 setEditMode(true);
@@ -323,7 +324,7 @@ export const TreatmentPlan = () => {
         )}
 
         {/* Clinical Disclaimer for Parents */}
-        {!isSpecialist && (
+        {isParent && (
           <div className="rounded-3xl border border-orange-200 bg-orange-50/50 dark:bg-orange-950/20 p-5 flex items-start gap-4">
             <span className="text-2xl text-orange-500">🛡️</span>
             <div>
@@ -597,7 +598,7 @@ export const TreatmentPlan = () => {
                   <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto mb-6">
                     A detailed clinical treatment plan hasn't been designed for this child profile yet.
                   </p>
-                  {isSpecialist && (
+                  {isDoctor && (
                     <Button onClick={() => setEditMode(true)} className="rounded-2xl">
                       Create Treatment Plan Now
                     </Button>
