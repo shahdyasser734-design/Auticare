@@ -6,7 +6,6 @@ import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
 import { ROUTES } from '../../utils/constants';
 import { useAuth } from '../../context/useAuth';
-import { dashboardService, type DashboardParentData } from '../../services/api/dashboard';
 import { childrenService, type Child } from '../../services/api/children';
 import { treatmentPlansService, type TreatmentPlan } from '../../services/api/treatmentPlans';
 import { bookingService } from '../../services/api/bookings';
@@ -19,7 +18,6 @@ import { Avatar } from '../../components/common/Avatar';
 export const ParentHome = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [dashboardData, setDashboardData] = useState<DashboardParentData | null>(null);
   const [children, setChildren] = useState<Child[]>([]);
   const [plans, setPlans] = useState<TreatmentPlan[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -55,8 +53,7 @@ export const ParentHome = () => {
         return [] as Child[];
       });
       
-      const [db, plansArrays, noteList, notifList, upcoming] = await Promise.all([
-        dashboardService.getParentDashboard().catch(() => null),
+      const [plansArrays, noteList, notifList, upcoming] = await Promise.all([
         Promise.all(childList.map(c => treatmentPlansService.getChildPlans(c.id).catch(() => []))),
         notesService.getMyNotes().catch(() => []),
         notificationService.getNotifications().catch(() => []),
@@ -65,7 +62,6 @@ export const ParentHome = () => {
 
       const planList = plansArrays.flat();
 
-      setDashboardData(db);
       setChildren(childList);
       setPlans(planList);
       setNotes(noteList);
