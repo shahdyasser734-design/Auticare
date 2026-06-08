@@ -58,9 +58,12 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
     setSubmitting(true);
     setError('');
     try {
-      // Format the date to ensure it's in the correct format (YYYY-MM-DD)
-      const formattedDate = date.includes('-') ? date : new Date(date).toISOString().split('T')[0];
-      const formattedTime = time;
+      // Format the date to ensure it's in the correct ISO8601 format for C# DateTime (YYYY-MM-DDT00:00:00Z)
+      const dateString = date.includes('T') ? date : `${date}T00:00:00Z`;
+      const formattedDate = new Date(dateString).toISOString();
+      
+      // Format time to strictly "HH:mm:ss" for C# TimeSpan
+      const formattedTime = time.length === 5 ? `${time}:00` : time;
       const specialistIdValue = Number(
         specialist.id ||
         (specialist as unknown as Record<string, unknown>).doctorId as string ||

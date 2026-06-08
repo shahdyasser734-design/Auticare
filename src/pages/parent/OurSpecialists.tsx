@@ -190,11 +190,19 @@ const OurSpecialists = () => {
       setSubmitting(true);
       setApiError(null);
       try {
+        // Format date and time for C# deserialization
+        const formattedDate = bookingDate 
+          ? new Date(bookingDate.includes('T') ? bookingDate : `${bookingDate}T00:00:00Z`).toISOString() 
+          : new Date().toISOString();
+        const formattedTime = bookingTime 
+          ? (bookingTime.length === 5 ? `${bookingTime}:00` : bookingTime) 
+          : '00:00:00';
+
         const payload: BookingRequest = {
           specialistId: typeof selected.id === 'number' ? selected.id : Number(selected.id),
           childId: childId ? Number(childId) : undefined,
-          bookingDate: bookingDate || '',
-          bookingTime: bookingTime || undefined,
+          bookingDate: formattedDate,
+          bookingTime: formattedTime,
           reason: bookingReason || undefined,
         };
         
