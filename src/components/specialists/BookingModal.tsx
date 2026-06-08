@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '../common/Button';
 import { Modal } from '../common/Modal';
 import { bookingService, type BookingRequest } from '../../services/api/bookings';
-import { childrenService } from '../../services/childrenService';
+import { childrenService } from '../../services/api/childrenService';
 import type { Child, Specialist } from '../../types';
 
 interface BookingModalProps {
@@ -16,24 +16,35 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [reason, setReason] = useState('');
-  const [childId, setChildId] = useState<string | undefined>(undefined);
+  // Pre-populate from localStorage immediately to avoid race condition
+  const [childId, setChildId] = useState<string | undefined>(
+    () => localStorage.getItem('latestChildId') || undefined
+  );
   const [children, setChildren] = useState<Child[]>([]);
+  const [loadingChildren, setLoadingChildren] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const loadChildren = async () => {
+      setLoadingChildren(true);
       try {
-        const fetched = await childrenService.getChildren();
+        const fetched = await childrenService.getMyChildren();
         setChildren(fetched);
+        // Auto-select: prefer localStorage, then first child
         const latest = localStorage.getItem('latestChildId');
-        if (latest) {
+        if (latest && fetched.some(c => c.id === latest)) {
           setChildId(latest);
-        } else if (fetched.length > 0) {
+        } else if (fetched.length > 0 && fetched[0].id) {
           setChildId(fetched[0].id);
         }
       } catch (err) {
         console.warn('Could not load child list for booking:', err);
+        // Fallback to localStorage if API fails
+        const fallbackId = localStorage.getItem('latestChildId');
+        if (fallbackId) setChildId(fallbackId);
+      } finally {
+        setLoadingChildren(false);
       }
     };
     if (open) {
@@ -174,9 +185,14 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
           </div>
         </div>
 
-        {!childId && (
+        {!loadingChildren && !childId && (
           <div className="rounded-2xl border border-red-300 bg-red-50 p-4 text-sm text-red-700 dark:border-red-700 dark:bg-red-900/20 dark:text-red-200">
-            No child is selected. Please add a child before booking a session.
+            No child profile found. Please add a child before booking a session.
+          </div>
+        )}
+        {loadingChildren && (
+          <div className="rounded-2xl border border-stone-200 bg-stone-50 p-3 text-sm text-stone-500 dark:border-slate-700 dark:bg-slate-800/40">
+            Loading child profiles...
           </div>
         )}
 

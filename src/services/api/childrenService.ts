@@ -6,12 +6,24 @@ const normalizeChild = (raw: any): Child => {
   const firstName = raw.firstName || '';
   const lastName = raw.lastName || '';
   const fullName = raw.name || (firstName && lastName ? `${firstName} ${lastName}`.trim() : firstName || lastName || 'Unknown');
+  // Calculate age from DOB if direct age is missing
+  let age = (raw.age ?? raw.ageInYears ?? raw.childAge ?? null) as number | null;
+  if (!age && (raw.dateOfBirth ?? raw.date_of_birth ?? raw.dob)) {
+    const dob = new Date(raw.dateOfBirth ?? raw.date_of_birth ?? raw.dob);
+    if (!isNaN(dob.getTime())) {
+      const now = new Date();
+      age = now.getFullYear() - dob.getFullYear() -
+        (now < new Date(now.getFullYear(), dob.getMonth(), dob.getDate()) ? 1 : 0);
+    }
+  }
+  const genderRaw = (raw.gender ?? raw.sex ?? '') as string;
+  const gender = genderRaw && genderRaw.toLowerCase() !== 'unknown' ? genderRaw : '';
   return {
     id,
     parentId: String(raw.parentId ?? raw.parent_id ?? raw.parent ?? ''),
     name: fullName,
-    age: (raw.age ?? raw.ageInYears ?? raw.childAge ?? 0) as number,
-    gender: (raw.gender ?? raw.sex ?? 'Unknown') as string,
+    age: age as number,
+    gender,
     dateOfBirth: (raw.dateOfBirth ?? raw.date_of_birth ?? raw.dob ?? '') as string,
     profileImage: (raw.profileImage ?? raw.profile_image ?? raw.profile_image_url ?? '') as string,
     medicalHistory: (raw.medicalHistory ?? raw.medical_history ?? '') as string,

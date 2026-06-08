@@ -80,13 +80,10 @@ export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
       {/* Sidebar Content */}
       <aside
         className={clsx(
-          'fixed left-0 top-0 h-screen w-full max-w-xs sm:max-w-sm md:w-72 shadow-2xl overflow-y-auto transition-transform duration-300 z-50 flex flex-col',
-          isDark
-            ? 'bg-slate-950/95 border-white/10'
-            : 'bg-white border-slate-200',
-          'border-r',
+          'fixed left-0 top-0 h-screen w-full max-w-xs sm:max-w-sm md:w-72 shadow-2xl overflow-y-auto transition-transform duration-300 z-50 flex flex-col border-r',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
+        style={{ background: 'var(--surface-strong)', borderColor: 'var(--border)' }}
       >
         <div className="p-6 flex-1 flex flex-col">
           <div className="flex items-center justify-between mb-8">
@@ -111,19 +108,20 @@ export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
           </div>
 
           {/* User Profile */}
-          <div className={`mb-8 p-4 rounded-3xl border transition-colors ${
-            isDark
-              ? 'border-white/10 bg-white/5 backdrop-blur-xl'
-              : 'border-slate-200 bg-slate-50'
-          }`}>
+          <div
+            className={`mb-8 p-4 rounded-3xl border transition-colors ${
+              isDark ? 'border-white/10 bg-white/5 backdrop-blur-xl' : ''
+            }`}
+            style={!isDark ? { background: 'var(--bg-secondary)', borderColor: 'var(--border)' } : {}}
+          >
             <div className="flex items-center gap-3 mb-3">
               <Avatar name={user?.name || ''} size="md" image={user?.profileImage} />
               <div>
-                <p className={`font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{user?.name}</p>
-                <p className={`text-xs capitalize ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{user?.role}</p>
+                <p className={`font-bold ${isDark ? 'text-white' : 'text-stone-900'}`}>{user?.name}</p>
+                <p className={`text-xs capitalize ${isDark ? 'text-slate-400' : 'text-stone-500'}`}>{user?.role}</p>
               </div>
             </div>
-            <p className={`text-sm ${isDark ? 'text-slate-500' : 'text-slate-600'}`}>{t.secureConnection}</p>
+            <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-stone-400'}`}>{t.secureConnection}</p>
           </div>
 
           {/* Navigation Menu */}
@@ -134,25 +132,26 @@ export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
                 to={item.href}
                 onClick={() => setIsOpen(false)}
                 className={clsx(
-                  'flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200',
+                  'flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200 font-medium',
                   isActive(item.href)
                     ? isDark
-                      ? 'bg-primary-700/20 text-white shadow-lg'
-                      : 'bg-orange-100 text-orange-700 shadow-md'
+                      ? 'bg-indigo-600/20 text-indigo-300 shadow-lg'
+                      : 'bg-indigo-50 text-indigo-700 font-bold'
                     : isDark
                     ? 'text-slate-300 hover:bg-white/10 hover:text-white'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                    : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
                 )}
               >
-                <span className="font-medium">{item.label}</span>
+                <span>{item.label}</span>
               </Link>
             ))}
           </nav>
 
           {/* Logout Button */}
-          <div className={`pt-6 border-t mt-auto transition-colors ${
-            isDark ? 'border-white/10' : 'border-slate-200'
-          }`}>
+          <div
+            className={`pt-6 mt-auto ${isDark ? 'border-white/10' : ''}`}
+            style={!isDark ? { borderColor: 'var(--border)', borderTop: '1px solid var(--border)' } : { borderTop: '1px solid rgba(255,255,255,0.1)' }}
+          >
             <button
               onClick={() => {
                 logout();

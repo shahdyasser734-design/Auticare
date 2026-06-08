@@ -12,19 +12,17 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const { isDark } = useTheme();
 
   return (
-    <div className={`flex min-h-screen transition-colors duration-300 ${
-      isDark 
-        ? 'bg-slate-950 text-slate-100' 
-        : 'bg-slate-50 text-slate-900'
-    }`}>
+    <div
+      className={`flex min-h-screen transition-colors duration-300 ${isDark ? 'dark' : ''}`}
+      style={{ background: 'var(--bg)', color: 'var(--text)' }}
+    >
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       <div className="flex-1 w-full flex flex-col min-h-screen">
         <TopNav onMenuClick={() => setIsSidebarOpen(true)} />
-        <main className={`mt-16 p-5 md:p-8 lg:p-10 flex-1 transition-colors duration-300 ${
-          isDark 
-            ? 'bg-slate-950' 
-            : 'bg-white'
-        }`}>
+        <main
+          className="mt-16 p-5 md:p-8 lg:p-10 flex-1 transition-colors duration-300"
+          style={{ background: 'var(--bg)' }}
+        >
           {children}
         </main>
       </div>

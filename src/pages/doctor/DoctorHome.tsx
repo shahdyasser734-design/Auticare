@@ -659,13 +659,12 @@ export const DoctorHome = () => {
                           <Button
                             size="sm"
                             onClick={() => handleJoinZoom(session)}
-                            disabled={joiningZoom === session.id || (!isDoctor && !meetingUrl)}
+                            disabled={joiningZoom === session.id}
                             className={`font-bold rounded-xl cursor-pointer flex items-center gap-1.5 ${
-                              joiningZoom === session.id || (!isDoctor && !meetingUrl)
+                              joiningZoom === session.id
                                 ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
                                 : 'bg-blue-600 hover:bg-blue-700 text-white'
                             }`}
-                            title={!isDoctor && !meetingUrl ? 'No active meeting available' : ''}
                           >
                             {joiningZoom === session.id ? (
                               <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Joining...</>
@@ -706,9 +705,15 @@ export const DoctorHome = () => {
                       <div className="flex justify-between items-start gap-2">
                         <div className="flex-1 min-w-0">
                           <p className="font-bold text-stone-900 dark:text-white text-sm truncate">{c.name}</p>
-                          <p className="text-stone-400 dark:text-slate-500 text-[11px] mt-0.5 capitalize">
-                            {c.age ? `Age: ${c.age} yrs` : ''}{c.gender ? ` · ${c.gender}` : ''}
-                          </p>
+                          {(() => {
+                            const agePart = c.age ? `Age: ${c.age} yrs` : '';
+                            const genderVal = (c as any).gender;
+                            const genderPart = genderVal && genderVal !== 'Unknown' && genderVal !== '' ? genderVal : '';
+                            const info = [agePart, genderPart].filter(Boolean).join(' · ');
+                            return info ? (
+                              <p className="text-stone-400 dark:text-slate-500 text-[11px] mt-0.5 capitalize">{info}</p>
+                            ) : null;
+                          })()}
                           {isDoctor && !!(c as Record<string, unknown>).assignedTherapist && (
                             <p className="text-violet-500 text-[11px] mt-0.5 font-medium">🧑‍🏫 {(c as Record<string, unknown>).assignedTherapist as string}</p>
                           )}

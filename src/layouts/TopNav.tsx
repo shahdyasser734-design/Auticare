@@ -57,11 +57,12 @@ export const TopNav = ({ onMenuClick }: TopNavProps) => {
           <span className="text-sm font-medium">{toastMessage}</span>
         </div>
       )}
-      <header className={`fixed top-0 right-0 left-0 h-16 transition-all duration-300 z-20 ${
-        isDark
-          ? 'bg-slate-950/80 border-slate-800/50 text-slate-100'
-          : 'bg-white/80 border-slate-200 text-slate-900'
-      } backdrop-blur-xl border-b shadow-sm`}>
+      <header
+        className={`fixed top-0 right-0 left-0 h-16 transition-all duration-300 z-20 backdrop-blur-xl border-b shadow-sm ${
+          isDark ? 'bg-slate-950/80 border-slate-800/50 text-slate-100' : 'text-stone-900'
+        }`}
+        style={!isDark ? { background: 'rgba(245, 241, 232, 0.92)', borderColor: 'var(--border)' } : {}}
+      >
       <div className="h-full px-4 md:px-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button 

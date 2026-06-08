@@ -379,7 +379,10 @@ export const ParentHome = () => {
                         <div>
                           <p className="font-bold text-stone-900 dark:text-white text-sm">{c.name}</p>
                           <p className="text-[11px] text-stone-400 dark:text-slate-500 mt-0.5 capitalize font-medium">
-                            Age: {c.age ?? 'N/A'} yrs · {c.gender}
+                            {[
+                              c.age ? `Age: ${c.age} yrs` : null,
+                              c.gender && c.gender !== 'Unknown' ? c.gender : null,
+                            ].filter(Boolean).join(' · ') || 'No details yet'}
                           </p>
                         </div>
                       </div>
