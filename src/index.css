@@ -9,18 +9,19 @@
   color-scheme: light;
   font-family: 'Inter', system-ui, sans-serif;
 
-  /* Light mode palette */
-  --bg: #FDFBF7;
-  --bg-secondary: #F6F4F0;
-  --surface: rgba(255, 255, 255, 0.98);
-  --surface-strong: #FFFFFF;
-  --surface-muted: rgba(250, 248, 245, 0.8);
-  --border: rgba(229, 224, 216, 0.9);
-  --text: #2C241B;
-  --muted: #6b7280;
+  /* Light mode palette – soft warm neutrals */
+  --bg: #FDFCFA;
+  --bg-secondary: #F5F1EA;
+  --surface: rgba(253, 252, 250, 0.98);
+  --surface-strong: #FAFAF7;
+  --surface-muted: rgba(245, 241, 234, 0.85);
+  --border: rgba(226, 220, 210, 0.9);
+  --text: #1E1915;
+  --muted: #64748b;
   --accent: #e07c2e;
   --accent-strong: #c4621a;
-  --shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
+  --shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.07);
+  --shadow-card: 0 2px 12px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(0, 0, 0, 0.04);
 }
 
 .dark {
@@ -251,10 +252,12 @@
 /* ============================================================
    SCROLLBAR
    ============================================================ */
-::-webkit-scrollbar        { width: 8px; height: 8px; }
-::-webkit-scrollbar-track  { background: rgba(15, 23, 42, 0.4); }
-::-webkit-scrollbar-thumb  { background: rgba(56, 189, 248, 0.35); border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(56, 189, 248, 0.55); }
+::-webkit-scrollbar        { width: 6px; height: 6px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: rgba(120, 113, 108, 0.25); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(120, 113, 108, 0.45); }
+.dark ::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.3); }
+.dark ::-webkit-scrollbar-thumb:hover { background: rgba(56, 189, 248, 0.5); }
 
 button {
   @apply outline-none;
