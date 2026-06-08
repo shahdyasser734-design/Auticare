@@ -203,7 +203,7 @@ export const ParentScreening = () => {
   if (error && questions.length === 0) {
     return (
       <ScreeningLayout confirmExit={confirmExit}>
-        <div className="bg-white dark:bg-white/5 backdrop-blur-sm border border-slate-200 dark:border-white/10 p-8 rounded-3xl text-center max-w-md shadow-xl dark:shadow-none">
+        <div className="bg-white dark:standard-card/5 backdrop-blur-sm p-8 text-center max-w-md dark:shadow-none">
           <div className="text-orange-500 text-4xl mb-4">⚠️</div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Oops!</h2>
           <p className="text-slate-600 dark:text-slate-400 mb-6">{error}</p>
@@ -307,7 +307,7 @@ export const ParentScreening = () => {
           </div>
         )}
 
-        <div className="w-full mt-8 flex justify-between items-center bg-white dark:bg-white/5 backdrop-blur-sm p-4 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-none">
+        <div className="w-full mt-8 flex justify-between items-center bg-white dark:standard-card/5 backdrop-blur-sm p-4 dark:shadow-none">
           <Button
             onClick={handlePrevious}
             disabled={currentPage === 1 || submitting}

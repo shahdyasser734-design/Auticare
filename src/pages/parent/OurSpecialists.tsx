@@ -254,7 +254,7 @@ const OurSpecialists = () => {
       </header>
 
       <div className="mb-6 flex items-center gap-4">
-        <div className="rounded-full bg-white p-1 shadow-sm">
+        <div className="rounded-full standard-card p-1">
           <nav className="flex gap-1 bg-slate-50 rounded-full p-1">
             <button
               onClick={() => setActiveTab('doctors')}

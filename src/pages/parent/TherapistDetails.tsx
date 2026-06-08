@@ -199,7 +199,7 @@ export const TherapistDetails = () => {
           {/* Right Column - Details */}
           <div className="space-y-6 lg:col-span-2">
             {/* About */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <div className="rounded-2xl border border-slate-200 standard-card p-6 dark:bg-slate-800">
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">About</h2>
               <p className="mt-4 text-slate-600 dark:text-slate-400">
                 {therapist.about || `${therapist.name} is a compassionate and dedicated behavioral specialist with extensive experience working with children on the autism spectrum. Committed to providing personalized therapeutic interventions that support emotional growth and behavioral development.`}
@@ -207,7 +207,7 @@ export const TherapistDetails = () => {
             </div>
 
             {/* Certifications */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <div className="rounded-2xl border border-slate-200 standard-card p-6 dark:bg-slate-800">
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Certifications & Training</h2>
               <ul className="mt-4 space-y-3">
                 <li className="flex items-start gap-3">
@@ -246,7 +246,7 @@ export const TherapistDetails = () => {
             </div>
 
             {/* Therapeutic Approaches */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <div className="rounded-2xl border border-slate-200 standard-card p-6 dark:bg-slate-800">
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Therapeutic Approaches</h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {['Applied Behavior Analysis', 'Cognitive Behavioral Therapy', 'Social Skills Training', 'Sensory Integration', 'Family-Centered Care', 'Progress Monitoring'].map((approach) => (

@@ -110,7 +110,7 @@ export const PatientCarousel: React.FC<PatientCarouselProps> = ({ patients, isDo
           {canScrollLeft && (
             <button
               onClick={() => scroll('left')}
-              className="pointer-events-auto ml-2 p-2 rounded-full bg-white dark:bg-slate-800 shadow-lg hover:shadow-xl transition-all opacity-0 group-hover:opacity-100"
+              className="pointer-events-auto ml-2 p-2 rounded-full standard-card hover:shadow-xl transition-all opacity-0 group-hover:opacity-100"
               aria-label="Scroll left"
             >
               <ChevronLeft className="w-5 h-5 text-slate-900 dark:text-white" />
@@ -119,7 +119,7 @@ export const PatientCarousel: React.FC<PatientCarouselProps> = ({ patients, isDo
           {canScrollRight && (
             <button
               onClick={() => scroll('right')}
-              className="pointer-events-auto mr-2 ml-auto p-2 rounded-full bg-white dark:bg-slate-800 shadow-lg hover:shadow-xl transition-all opacity-0 group-hover:opacity-100"
+              className="pointer-events-auto mr-2 ml-auto p-2 rounded-full standard-card hover:shadow-xl transition-all opacity-0 group-hover:opacity-100"
               aria-label="Scroll right"
             >
               <ChevronRight className="w-5 h-5 text-slate-900 dark:text-white" />

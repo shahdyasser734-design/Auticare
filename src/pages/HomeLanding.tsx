@@ -300,17 +300,17 @@ export const HomeLanding = () => {
 
               {/* Clean Responsive Grid Hero Visual */}
               <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mt-12 lg:mt-0 relative z-20">
-                <div className="aspect-[4/3] lg:aspect-[4/5] rounded-[2rem] overflow-hidden shadow-xl border border-slate-200/50 dark:border-white/10 group relative transform hover:-translate-y-2 transition-all duration-500 bg-white/5 backdrop-blur-sm p-1.5">
+                <div className="aspect-[4/3] lg:aspect-[4/5] rounded-[2rem] overflow-hidden shadow-xl border border-slate-200/50 dark:border-white/10 group relative transform hover:-translate-y-2 transition-all duration-500 standard-card/5 backdrop-blur-sm p-1.5">
                   <div className="w-full h-full rounded-[1.5rem] overflow-hidden">
                     <img src={therapy1} alt="Mother helping child with crafts" className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105" style={{ imageRendering: 'auto', backfaceVisibility: 'hidden', transform: 'translateZ(0)' }} />
                   </div>
                 </div>
-                <div className="aspect-[4/3] lg:aspect-[4/5] rounded-[2rem] overflow-hidden shadow-xl border border-slate-200/50 dark:border-white/10 group relative transform hover:-translate-y-2 transition-all duration-500 sm:mt-12 bg-white/5 backdrop-blur-sm p-1.5">
+                <div className="aspect-[4/3] lg:aspect-[4/5] rounded-[2rem] overflow-hidden shadow-xl border border-slate-200/50 dark:border-white/10 group relative transform hover:-translate-y-2 transition-all duration-500 sm:mt-12 standard-card/5 backdrop-blur-sm p-1.5">
                   <div className="w-full h-full rounded-[1.5rem] overflow-hidden">
                     <img src={therapy2} alt="Child using tablet" className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105" style={{ imageRendering: 'auto', backfaceVisibility: 'hidden', transform: 'translateZ(0)' }} />
                   </div>
                 </div>
-                <div className="aspect-[4/3] lg:aspect-[4/5] rounded-[2rem] overflow-hidden shadow-xl border border-slate-200/50 dark:border-white/10 group relative transform hover:-translate-y-2 transition-all duration-500 sm:mt-8 lg:mt-24 bg-white/5 backdrop-blur-sm p-1.5 sm:justify-self-center sm:col-span-2 lg:col-span-1 lg:justify-self-auto sm:max-w-md lg:max-w-none w-full">
+                <div className="aspect-[4/3] lg:aspect-[4/5] rounded-[2rem] overflow-hidden shadow-xl border border-slate-200/50 dark:border-white/10 group relative transform hover:-translate-y-2 transition-all duration-500 sm:mt-8 lg:mt-24 standard-card/5 backdrop-blur-sm p-1.5 sm:justify-self-center sm:col-span-2 lg:col-span-1 lg:justify-self-auto sm:max-w-md lg:max-w-none w-full">
                   <div className="w-full h-full rounded-[1.5rem] overflow-hidden">
                     <img src={therapy3} alt="Mother teaching child at desk" className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105" style={{ imageRendering: 'auto', backfaceVisibility: 'hidden', transform: 'translateZ(0)' }} />
                   </div>
@@ -436,7 +436,7 @@ export const HomeLanding = () => {
               {features.map((feature, idx) => (
                 <div
                   key={feature.title}
-                  className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-6 backdrop-blur-xl hover:shadow-xl dark:hover:border-blue-400/50 transition-all duration-300 hover:-translate-y-1"
+                  className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:standard-card/5 p-6 backdrop-blur-xl hover: dark:hover:border-blue-400/50 transition-all duration-300 hover:-translate-y-1"
                   style={{ animationDelay: `${idx * 50}ms` }}
                 >
                   <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-4">
@@ -453,7 +453,7 @@ export const HomeLanding = () => {
         {/* PROGRESS PREVIEW */}
         <section className="py-16 lg:py-24 px-4 sm:px-6 lg:px-8 relative">
           <div className="max-w-7xl mx-auto">
-            <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 backdrop-blur-xl p-8 sm:p-12 shadow-xl dark:shadow-none overflow-hidden relative">
+            <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:standard-card/5 backdrop-blur-xl p-8 sm:p-12 dark:shadow-none overflow-hidden relative">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-50/50 via-transparent to-purple-50/50 dark:from-blue-500/5 dark:to-purple-500/5" />
               <div className="relative z-10 grid lg:grid-cols-2 gap-12 items-center">
                 <div>
@@ -467,21 +467,21 @@ export const HomeLanding = () => {
                     Visual dashboards and clear milestones help families track therapeutic progress. Celebrate every breakthrough, no matter how small.
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="rounded-lg bg-slate-50 dark:bg-white/10 p-4 border border-slate-200 dark:border-white/10 text-center">
+                    <div className="rounded-lg bg-slate-50 dark:standard-card/10 p-4 text-center">
                       <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-300">94%</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Completion Rate</p>
                     </div>
-                    <div className="rounded-lg bg-slate-50 dark:bg-white/10 p-4 border border-slate-200 dark:border-white/10 text-center">
+                    <div className="rounded-lg bg-slate-50 dark:standard-card/10 p-4 text-center">
                       <p className="text-2xl font-bold text-blue-600 dark:text-blue-300">12 wks</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Avg. Improvement</p>
                     </div>
-                    <div className="rounded-lg bg-slate-50 dark:bg-white/10 p-4 border border-slate-200 dark:border-white/10 text-center">
+                    <div className="rounded-lg bg-slate-50 dark:standard-card/10 p-4 text-center">
                       <p className="text-2xl font-bold text-purple-600 dark:text-purple-300">3.2x</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Engagement ↑</p>
                     </div>
                   </div>
                 </div>
-                <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-6 h-80 flex items-center justify-center shadow-inner">
+                <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:standard-card/5 p-6 h-80 flex items-center justify-center -inner">
                   <div className="text-center text-slate-500 dark:text-slate-400">
                     <div className="w-32 h-32 rounded-full border-4 border-blue-500/20 mx-auto mb-4 flex items-center justify-center shadow-lg bg-white dark:bg-navy-900">
                       <div className="text-center">

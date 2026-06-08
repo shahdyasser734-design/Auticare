@@ -27,7 +27,7 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({ stats }) => {
         return (
           <Card
             key={idx}
-            className="relative p-5 border border-stone-200/50 dark:border-white/8 bg-[var(--surface-strong)] dark:bg-slate-800/80 shadow-md hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 rounded-[1.5rem] overflow-hidden group cursor-default"
+            className="relative p-5 border border-stone-200/50 dark:border-white/8 standard-card overflow-hidden hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 group cursor-default"
           >
             {/* Animated gradient blob background */}
             <div className={`absolute -right-8 -bottom-8 w-28 h-28 rounded-full opacity-15 group-hover:opacity-30 group-hover:scale-150 transition-all duration-700 blur-3xl ${baseColor}`} />

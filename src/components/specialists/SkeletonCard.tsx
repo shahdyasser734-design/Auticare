@@ -2,7 +2,7 @@
 
 export const SkeletonCard = () => {
   return (
-    <div className="animate-pulse bg-white rounded-2xl p-4 shadow-sm">
+    <div className="animate-pulse standard-card p-4">
       <div className="flex items-center gap-4">
         <div className="w-16 h-16 rounded-full bg-slate-200" />
         <div className="flex-1">

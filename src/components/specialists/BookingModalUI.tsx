@@ -29,7 +29,7 @@ export const BookingModalUI = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-lg">
+      <div className="standard-card w-full max-w-lg p-6">
         <div className="flex items-start justify-between">
           <div>
             <h3 className="text-lg font-semibold">Book Session</h3>

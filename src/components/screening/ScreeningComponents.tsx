@@ -37,8 +37,7 @@ export const ScreeningProgress = ({ currentPage, totalPages }: ScreeningProgress
       </div>
 
       {/* Outer capsule track */}
-      <div className="relative w-full h-5 rounded-full overflow-hidden
-        bg-slate-200 dark:bg-white/5 border border-slate-300 dark:border-white/10 backdrop-blur-sm shadow-inner shadow-slate-300 dark:shadow-slate-950/60"
+      <div className="relative w-full h-5 rounded-full overflow-hidden bg-slate-200 dark:bg-white/5 border border-slate-300 dark:border-white/10 backdrop-blur-sm shadow-inner shadow-slate-300 dark:shadow-slate-950/60"
       >
         {/* Glass inner track texture */}
         <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
@@ -167,7 +166,7 @@ export const ScreeningQuestion = ({
                 'w-full p-5 rounded-2xl border-2 transition-all duration-300 text-left flex items-center gap-4 group',
                 isSelected
                   ? 'border-orange-600 bg-orange-300 dark:bg-orange-600/30 shadow-lg shadow-orange-500/30 dark:shadow-orange-500/20'
-                  : 'border-slate-300 dark:border-white/15 bg-white dark:bg-slate-800/50 hover:border-orange-600/60 hover:bg-orange-100 dark:hover:bg-slate-700/60'
+                  : 'border-slate-300 dark:border-white/15 standard-card hover:border-orange-600/60 hover:bg-orange-100 dark:hover:bg-slate-700/60'
               )}
             >
               {/* Letter badge */}
@@ -176,7 +175,7 @@ export const ScreeningQuestion = ({
                   'flex-shrink-0 w-9 h-9 rounded-xl border-2 flex items-center justify-center text-sm font-bold transition-all duration-300',
                   isSelected
                     ? 'border-orange-600 bg-orange-600 text-white shadow-md shadow-orange-500/40'
-                    : 'border-slate-400 dark:border-white/25 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 group-hover:border-orange-600/70 group-hover:text-orange-600 dark:group-hover:text-orange-400'
+                    : 'border-slate-400 dark:border-white/25 standard-card text-slate-600 dark:text-slate-300 group-hover:border-orange-600/70 group-hover:text-orange-600 dark:group-hover:text-orange-400'
                 )}
               >
                 {isSelected ? '✓' : letter}

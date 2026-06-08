@@ -98,11 +98,26 @@
    ============================================================ */
 @layer utilities {
   .glass-card {
-    @apply rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl;
+    @apply rounded-[16px] border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl;
   }
 
   .glass-button {
     @apply inline-flex items-center justify-center rounded-full bg-white/10 border border-white/10 px-4 py-2 text-sm font-semibold text-white transition-all duration-300 hover:bg-white/15;
+  }
+
+  /* Global UI Structural Classes */
+  .standard-card {
+    @apply bg-[#FCFAF6] border border-[#D8D0C4] rounded-[16px] shadow-sm;
+  }
+  .dark .standard-card {
+    @apply bg-slate-900 border border-white/10 shadow-lg;
+  }
+
+  .standard-divider {
+    @apply border-t border-[#D8D0C4] w-full;
+  }
+  .dark .standard-divider {
+    @apply border-t border-white/10;
   }
 
   /* Animations */

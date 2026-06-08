@@ -304,7 +304,7 @@ export const Chat = () => {
                     className={`w-full text-left p-3.5 rounded-2xl transition-all duration-200 flex items-center gap-3 border ${
                       isActiveConv
                         ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-500/20'
-                        : 'bg-white dark:bg-slate-900 hover:bg-stone-50 dark:hover:bg-slate-800 border-stone-150 dark:border-white/5 text-stone-800 dark:text-slate-200'
+                        : 'standard-card hover:bg-stone-50 dark:hover:bg-slate-800 border-stone-150  text-stone-800 dark:text-slate-200'
                     }`}
                   >
                     <Avatar name={displayName} image={isSpecialist ? details.avatar : undefined} size="md" />

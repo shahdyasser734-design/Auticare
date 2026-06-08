@@ -144,7 +144,7 @@ export const Settings = () => {
 
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-3xl p-6 max-w-md w-full space-y-6 shadow-2xl">
+          <div className="standard-card p-6 max-w-md w-full space-y-6">
             <div className="text-center space-y-2">
               <span className="text-4xl" role="img" aria-label="warning">⚠️</span>
               <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Delete Account?</h3>

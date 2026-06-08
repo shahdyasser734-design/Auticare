@@ -37,7 +37,7 @@ const normalizeSpecialist = (specialist: Specialist): SpecialistDisplay => {
 };
 
 const SpecialistCard = ({ data, type, onBook }: { data: SpecialistDisplay; type: string; onBook: (specialist: SpecialistDisplay) => void }) => (
-  <Card className="bg-white dark:bg-slate-800 border-none shadow-lg hover:shadow-2xl transition-all duration-300 rounded-3xl overflow-hidden group flex flex-col h-full">
+  <Card className="standard-card border-none hover:shadow-2xl transition-all duration-300 overflow-hidden group flex flex-col h-full">
     <div className="p-6 md:p-8 space-y-6 flex-grow">
       <div className="flex items-center gap-6">
         <div className="w-20 h-20 bg-soft-gray dark:bg-slate-700 rounded-full flex items-center justify-center text-3xl shrink-0 text-navy-500 dark:text-slate-350 overflow-hidden">
@@ -165,7 +165,7 @@ export const BookSpecialist = () => {
 
             {/* Custom Tab Control */}
             <div className="flex flex-col sm:flex-row justify-center gap-3">
-              <div className="bg-white dark:bg-slate-800 p-1.5 rounded-2xl shadow-sm border border-slate-200 dark:border-white/10 inline-flex relative">
+              <div className="standard-card p-1.5 inline-flex relative">
                 <div 
                   className="absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-slate-900 dark:bg-orange-500 rounded-xl transition-all duration-300 ease-out"
                   style={{ left: activeTab === 'doctors' ? '6px' : 'calc(50% + 3px)' }}
@@ -198,7 +198,7 @@ export const BookSpecialist = () => {
               <LoadingSpinner />
             </div>
           ) : filteredSpecialists.length === 0 ? (
-            <div className="text-center py-16 bg-white dark:bg-white/5 rounded-3xl border border-slate-200 dark:border-white/10 shadow-sm">
+            <div className="text-center py-16 standard-card">
               <div className="w-20 h-20 bg-blue-50 dark:bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
                 {activeTab === 'doctors' ? '👨‍⚕️' : '🧑‍🏫'}
               </div>

@@ -31,7 +31,7 @@ interface UpcomingSessionsWidgetProps {
 
 export const UpcomingSessionsWidget = ({ sessions }: UpcomingSessionsWidgetProps) => {
   return (
-    <div className="bg-white rounded-2xl shadow-md p-6">
+    <div className="standard-card p-6">
       <h3 className="text-xl font-bold text-neutral-900 mb-4">Upcoming Sessions</h3>
       <div className="space-y-4">
         {sessions.length === 0 ? (

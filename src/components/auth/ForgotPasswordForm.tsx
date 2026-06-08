@@ -52,7 +52,7 @@ export const ForgotPasswordForm = () => {
   if (submitted) {
     return (
       <div className={`w-full max-w-md transition-colors duration-300 ${
-        isDark ? 'bg-slate-900 rounded-2xl p-8' : 'bg-white rounded-2xl p-8 shadow-lg'
+        isDark ? 'bg-slate-900 rounded-2xl p-8' : 'standard-card p-8 '
       }`}>
         <div className="text-center space-y-4">
           <div className="text-5xl">📧</div>
@@ -78,7 +78,7 @@ export const ForgotPasswordForm = () => {
 
   return (
     <div className={`w-full max-w-md transition-colors duration-300 ${
-      isDark ? 'bg-slate-900 rounded-2xl p-8' : 'bg-white rounded-2xl p-8 shadow-lg'
+      isDark ? 'bg-slate-900 rounded-2xl p-8' : 'standard-card p-8 '
     }`}>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>

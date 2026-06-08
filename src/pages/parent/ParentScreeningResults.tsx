@@ -193,7 +193,7 @@ export const ParentScreeningResults = () => {
     return (
       <MainLayout>
         <div className="max-w-lg mx-auto">
-          <Card className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 shadow-lg rounded-3xl">
+          <Card className="standard-card">
             <div className="text-center py-16 space-y-6 px-8">
               <div className="text-6xl">📋</div>
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -280,7 +280,7 @@ export const ParentScreeningResults = () => {
               </div>
 
               {/* Recommendation */}
-              <div className="bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5">
+              <div className="bg-white/60 dark:standard-card/5 p-5">
                 <p className="text-sm font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
                   Recommendation
                 </p>
@@ -327,19 +327,19 @@ export const ParentScreeningResults = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          <Card className="p-6 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 shadow-sm rounded-3xl">
+          <Card className="p-6 standard-card">
             <p className="text-sm uppercase tracking-[0.24em] text-slate-400 dark:text-slate-500 mb-3">Prediction Class</p>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">{result.predictionClass}</p>
           </Card>
-          <Card className="p-6 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 shadow-sm rounded-3xl">
+          <Card className="p-6 standard-card">
             <p className="text-sm uppercase tracking-[0.24em] text-slate-400 dark:text-slate-500 mb-3">AQ Score</p>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">{result.aqScore || 'N/A'}</p>
           </Card>
-          <Card className="p-6 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 shadow-sm rounded-3xl">
+          <Card className="p-6 standard-card">
             <p className="text-sm uppercase tracking-[0.24em] text-slate-400 dark:text-slate-500 mb-3">Confidence</p>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">{result.confidenceScore}%</p>
           </Card>
-          <Card className="p-6 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 shadow-sm rounded-3xl">
+          <Card className="p-6 standard-card">
             <p className="text-sm uppercase tracking-[0.24em] text-slate-400 dark:text-slate-500 mb-3">Risk Level</p>
             <span className={`inline-flex items-center px-4 py-2 rounded-full font-semibold ${isPositive ? 'bg-red-500/10 text-red-700 dark:bg-red-500/20 dark:text-red-200' : 'bg-green-500/10 text-green-700 dark:bg-green-500/20 dark:text-green-200'}`}>
               {result.riskLevel || 'Unknown'}

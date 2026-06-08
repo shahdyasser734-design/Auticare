@@ -199,7 +199,7 @@ export const DoctorDetails = () => {
           {/* Right Column - Details */}
           <div className="space-y-6 lg:col-span-2">
             {/* About */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <div className="rounded-2xl border border-slate-200 standard-card p-6 dark:bg-slate-800">
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">About</h2>
               <p className="mt-4 text-slate-600 dark:text-slate-400">
                 {doctor.about || `Dr. ${doctor.name} is a highly skilled pediatric neurologist with extensive experience in diagnosing and treating developmental and neurological conditions in children. Dedicated to providing compassionate care and evidence-based treatment.`}
@@ -207,7 +207,7 @@ export const DoctorDetails = () => {
             </div>
 
             {/* Qualifications */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <div className="rounded-2xl border border-slate-200 standard-card p-6 dark:bg-slate-800">
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Qualifications</h2>
               <ul className="mt-4 space-y-3">
                 <li className="flex items-start gap-3">
@@ -246,7 +246,7 @@ export const DoctorDetails = () => {
             </div>
 
             {/* Services Offered */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <div className="rounded-2xl border border-slate-200 standard-card p-6 dark:bg-slate-800">
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Services</h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {['Developmental Assessment', 'Neurological Evaluation', 'Autism Screening', 'Treatment Planning', 'Family Counseling', 'Progress Monitoring'].map((service) => (

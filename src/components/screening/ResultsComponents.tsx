@@ -91,11 +91,11 @@ export const ResultsSummary = ({ result }: { result: ScreeningResult }) => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-              <div className="flex flex-col items-center justify-center p-6 bg-white dark:bg-slate-700/50 rounded-2xl border border-slate-200 dark:border-white/10 shadow-md">
+              <div className="flex flex-col items-center justify-center p-6 standard-card">
                 <div className="text-4xl font-bold text-slate-900 dark:text-white mb-2">{result.confidenceScore}%</div>
                 <div className="text-sm font-medium text-slate-600 dark:text-slate-400">Confidence</div>
               </div>
-              <div className="flex flex-col items-center justify-center p-6 bg-white dark:bg-slate-700/50 rounded-2xl border border-slate-200 dark:border-white/10 shadow-md">
+              <div className="flex flex-col items-center justify-center p-6 standard-card">
                 <div className="text-4xl font-bold text-orange-600 dark:text-orange-400 mb-2">{result.aqScore}</div>
                 <div className="text-sm font-medium text-slate-600 dark:text-slate-400">AQ Score</div>
               </div>
@@ -105,7 +105,7 @@ export const ResultsSummary = ({ result }: { result: ScreeningResult }) => {
       </Card>
 
       {/* Behavioral Categories */}
-      <Card className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 shadow-lg rounded-3xl p-8 md:p-10">
+      <Card className="standard-card p-8 md:p-10">
         <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-8">Behavioral Analysis</h3>
         <div className="grid md:grid-cols-2 gap-8">
           <CategoryBar label="Social Attention" value={result.socialAttention} />

@@ -215,7 +215,7 @@ export const PatientDetail = () => {
           <textarea
             value={newNote}
             onChange={(e) => setNewNote(e.target.value)}
-            className="w-full p-4 border border-slate-350 dark:border-white/10 rounded-2xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none text-sm"
+            className="w-full p-4 border border-slate-350 dark:border-white/10 rounded-2xl standard-card text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none text-sm"
             rows={4}
             placeholder="Add notes about this patient..."
           />

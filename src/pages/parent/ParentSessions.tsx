@@ -349,7 +349,7 @@ export const ParentSessions = () => {
                       setShowSelectorModal(false);
                       setShowBookingModal(true);
                     }}
-                    className="w-full text-left p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 hover:border-orange-500 hover:ring-2 hover:ring-orange-200 dark:hover:border-orange-500 transition-all flex items-center justify-between group cursor-pointer"
+                    className="w-full text-left p-4 rounded-2xl border border-slate-200 dark:border-white/10 standard-card hover:border-orange-500 hover:ring-2 hover:ring-orange-200 dark:hover:border-orange-500 transition-all flex items-center justify-between group cursor-pointer"
                   >
                     <div>
                       <h4 className="font-bold text-slate-950 dark:text-white group-hover:text-orange-500 transition-colors">

@@ -417,7 +417,7 @@ export const DoctorHome = () => {
               <button
                 key={i}
                 onClick={item.action}
-                className={`group text-left p-4 md:p-5 bg-[var(--surface-strong)] dark:bg-slate-800/80 rounded-2xl border border-stone-200/60 dark:border-white/8 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer ${item.hoverBorder}`}
+                className={`group text-left p-4 md:p-5 standard-card hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer ${item.hoverBorder}`}
               >
                 <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-3 shadow-sm transition-transform duration-300 group-hover:scale-110 ${item.iconBg}`}>
                   {item.icon}
@@ -489,7 +489,7 @@ export const DoctorHome = () => {
                   {todaySessions.map((session) => {
                     const meetingUrl = session.zoomUrl || session.joinLink || '';
                     return (
-                      <div key={session.id} className="p-5 bg-white dark:bg-slate-900 border border-emerald-200/50 dark:border-emerald-800/30 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 rounded-2xl">
+                      <div key={session.id} className="p-5 standard-card border border-emerald-200/50 dark:border-emerald-800/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                           <div className="space-y-3 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
@@ -586,7 +586,7 @@ export const DoctorHome = () => {
                           {booking.appointmentDate ? new Date(booking.appointmentDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBD'} at {booking.appointmentTime || 'TBD'}
                         </p>
                         {booking.reason && (
-                          <p className="text-xs text-stone-600 dark:text-slate-400 italic bg-white dark:bg-slate-900/40 px-2.5 py-1.5 rounded-lg border border-stone-100 dark:border-white/5">
+                          <p className="text-xs text-stone-600 dark:text-slate-400 italic standard-card px-2.5 py-1.5">
                             "{booking.reason}"
                           </p>
                         )}
@@ -646,7 +646,7 @@ export const DoctorHome = () => {
                   {confirmedSessions.slice(0, 5).map((session) => {
                     const meetingUrl = session.zoomUrl || session.joinLink || '';
                     return (
-                      <div key={session.id} className="p-4 bg-white dark:bg-slate-900/60 border border-stone-150 dark:border-white/6 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                      <div key={session.id} className="p-4 standard-card hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div className="space-y-2 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="font-bold text-stone-900 dark:text-white text-sm">

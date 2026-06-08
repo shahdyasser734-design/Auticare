@@ -49,7 +49,7 @@ export const NoteCard = ({ note, onUpdate, onDelete }: NoteCardProps) => {
 
   if (isEditing) {
     return (
-      <div className="p-4 bg-white dark:bg-slate-900 rounded-xl border-2 border-primary-500 shadow-sm transition-all relative">
+      <div className="p-4 standard-card border-2 border-primary-500 transition-all relative">
         <textarea
           value={editContent}
           onChange={(e) => setEditContent(e.target.value)}

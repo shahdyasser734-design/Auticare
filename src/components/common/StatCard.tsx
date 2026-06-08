@@ -14,7 +14,7 @@ export const StatCard = ({ label, value, icon, trend, trendValue }: StatCardProp
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-md p-6">
+    <div className="standard-card p-6">
       <div className="flex items-center justify-between mb-4">
         <p className="text-neutral-600 text-sm font-medium">{label}</p>
         {icon && <div className="text-primary-600 text-2xl">{icon}</div>}

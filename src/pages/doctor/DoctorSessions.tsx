@@ -199,7 +199,7 @@ export const DoctorSessions = () => {
               const meetingUrl = session.zoomUrl || session.joinLink || '';
 
               return (
-                <Card key={session.id} className="border border-slate-300 dark:border-white/10 shadow hover:shadow-md transition-shadow rounded-2xl p-6 bg-white dark:bg-slate-900">
+                <Card key={session.id} className="border border-slate-300 dark:border-white/10 shadow hover:shadow-md transition-shadow rounded-2xl p-6 standard-card">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="space-y-3 flex-1">
                       <div className="flex flex-wrap items-center gap-3">
@@ -293,7 +293,7 @@ export const DoctorSessions = () => {
       {/* Cancel Modal */}
       {cancellingId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+          <div className="standard-card max-w-md w-full p-6">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">Cancel Session</h3>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">Please provide a reason for cancelling this session. This will be visible to the parent.</p>
             <textarea

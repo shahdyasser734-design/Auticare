@@ -32,7 +32,7 @@ export const SpecialistCard = ({
     .slice(0, 2);
 
   return (
-    <div className="group rounded-3xl border border-slate-100 dark:border-white/5 bg-white/80 dark:bg-gradient-to-br dark:from-white/5 dark:to-white/[0.02] backdrop-blur-xl p-8 shadow-sm dark:shadow-none hover:shadow-2xl dark:hover:border-white/10 transition-all duration-500 hover:-translate-y-1.5 overflow-hidden relative">
+    <div className="group rounded-3xl border border-slate-100 dark:border-white/5 standard-card/80 dark:bg-gradient-to-br dark:from-white/5 dark:to-white/[0.02] backdrop-blur-xl p-8 dark:shadow-none hover:shadow-2xl dark:hover:border-white/10 transition-all duration-500 hover:-translate-y-1.5 overflow-hidden relative">
       {/* Animated gradient background on hover */}
       <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-[0.03] dark:group-hover:opacity-10 transition-opacity duration-500 from-blue-400 to-purple-500" />
 

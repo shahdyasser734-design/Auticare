@@ -239,7 +239,7 @@ export const ParentHome = () => {
             ].map((stat, idx) => (
               <Card
                 key={idx}
-                className="relative p-5 border border-stone-200/50 dark:border-white/8 bg-[var(--surface-strong)] dark:bg-slate-800/80 shadow-md hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 rounded-[1.5rem] overflow-hidden group cursor-default"
+                className="relative p-5 border border-stone-200/50 dark:border-white/8 standard-card overflow-hidden hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 group cursor-default"
               >
                 <div className={`absolute -right-8 -bottom-8 w-28 h-28 rounded-full opacity-15 group-hover:opacity-30 group-hover:scale-150 transition-all duration-700 blur-3xl ${stat.blobStyle}`} />
                 <div className="relative z-10 flex flex-col gap-3">
@@ -307,7 +307,7 @@ export const ParentHome = () => {
               <button
                 key={idx}
                 onClick={act.action}
-                className={`group text-left p-5 bg-[var(--surface-strong)] dark:bg-slate-800/80 rounded-2xl border border-stone-200/60 dark:border-white/8 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer ${act.hoverBorder} flex flex-col h-full`}
+                className={`group text-left p-5 standard-card hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer ${act.hoverBorder} flex flex-col h-full`}
               >
                 <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-3 shadow-sm transition-transform duration-300 group-hover:scale-110 ${act.iconBg}`}>
                   {act.icon}

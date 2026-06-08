@@ -184,8 +184,8 @@ export const Notifications = () => {
             <div className="rounded-3xl bg-slate-100 dark:bg-slate-800/80 p-4 text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/5">
               <p className="font-semibold text-slate-900 dark:text-white">Summary</p>
               <div className="mt-2 flex flex-wrap gap-3">
-                <span className="rounded-full bg-white dark:bg-slate-900 px-3 py-1 text-sm text-slate-700 dark:text-slate-300 shadow-sm border dark:border-white/5">Total {notifications.length}</span>
-                <span className="rounded-full bg-white dark:bg-slate-900 px-3 py-1 text-sm text-slate-700 dark:text-slate-300 shadow-sm border dark:border-white/5">Unread {unreadCount}</span>
+                <span className="rounded-full standard-card px-3 py-1 text-sm text-slate-700 dark:text-slate-300 border">Total {notifications.length}</span>
+                <span className="rounded-full standard-card px-3 py-1 text-sm text-slate-700 dark:text-slate-300 border">Unread {unreadCount}</span>
               </div>
             </div>
           </Card>
@@ -197,7 +197,7 @@ export const Notifications = () => {
         {loading && notifications.length === 0 ? (
           <div className="space-y-4">
             {[...Array(3)].map((_, index) => (
-              <div key={index} className="animate-pulse rounded-3xl bg-white p-6 shadow-sm">
+              <div key={index} className="animate-pulse rounded-3xl standard-card p-6">
                 <div className="flex items-center gap-4">
                   <div className="h-14 w-14 rounded-3xl bg-neutral-200" />
                   <div className="flex-1 space-y-3 py-2">
