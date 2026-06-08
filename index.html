@@ -7,6 +7,24 @@
     <meta name="description" content="AutiCare is a premium autism support platform connecting families, doctors, and therapists with modern care tools." />
     <meta name="theme-color" content="#020617" />
     <title>AutiCare | Autism Care Platform</title>
+    <script>
+      (function() {
+        try {
+          var stored = localStorage.getItem('theme');
+          var theme = stored;
+          if (!theme || theme === 'system') {
+            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+            document.documentElement.dataset.theme = 'dark';
+          } else {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.dataset.theme = 'light';
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
