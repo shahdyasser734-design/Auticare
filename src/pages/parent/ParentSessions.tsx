@@ -77,40 +77,36 @@ export const ParentSessions = () => {
   }, []);
 
   const [joiningZoom, setJoiningZoom] = useState<string | null>(null);
+  const [zoomManualLink, setZoomManualLink] = useState<string | null>(null);
 
-  const handleJoinZoom = (session: Booking) => {
+  const handleJoinZoom = async (session: Booking) => {
     console.log('[ZOOM] Parent Join Zoom handler clicked.');
-
-    let link = session.zoomUrl || session.joinLink || (session as any).meetingLink;
-    
-    // Open immediately to avoid popup blocker
-    const newWindow = window.open(link || 'about:blank', '_blank');
-    if (!newWindow) {
-      console.warn('[ZOOM] window.open() returned null or was blocked.');
-      setZoomAlert('Popup blocked by browser. Please allow popups for this site.');
-      setTimeout(() => setZoomAlert(null), 4000);
-    } else {
-      console.log('[ZOOM] window.open() executed successfully.');
-    }
-
     setJoiningZoom(session.id);
+    setZoomManualLink(null);
+    setZoomAlert(null);
 
-    getOrCreateSessionMeetingLink(session, false)
-      .then((fetchedLink) => {
-        if (newWindow && newWindow.location.href !== fetchedLink) {
-          newWindow.location.href = fetchedLink;
-        }
-      })
-      .catch((err) => {
-        console.error('[ZOOM] Failed to sync Zoom session:', err);
-        const fallback = session.joinLink || `https://zoom.us/j/${session.id}`;
-        if (newWindow && newWindow.location.href !== fallback) {
-          newWindow.location.href = fallback;
-        }
-      })
-      .finally(() => {
-        setJoiningZoom(null);
-      });
+    try {
+      // 1. Backend must be source of truth
+      const link = await getOrCreateSessionMeetingLink(session, false);
+
+      // 3. ONLY THEN execute window.open
+      const newWindow = window.open(link, '_blank', 'noopener,noreferrer');
+      if (!newWindow) {
+        setZoomAlert('Popup blocked by browser. Please open Zoom manually.');
+        setZoomManualLink(link);
+      }
+    } catch (err: any) {
+      console.error('[ZOOM] Failed to join Zoom session:', err);
+      const fallback = session.joinLink || `https://zoom.us/j/${session.id}`;
+      // Attempt fallback open
+      const newWindow = window.open(fallback, '_blank', 'noopener,noreferrer');
+      if (!newWindow) {
+        setZoomAlert('Popup blocked by browser. Please open Zoom manually.');
+        setZoomManualLink(fallback);
+      }
+    } finally {
+      setJoiningZoom(null);
+    }
   };
 
   return (
@@ -120,7 +116,23 @@ export const ParentSessions = () => {
         {zoomAlert && (
           <div className="fixed top-20 right-6 z-50 p-4 bg-orange-600 text-white rounded-2xl shadow-xl flex items-center gap-2 animate-bounce">
             <span>⚠️</span>
-            <p className="font-bold text-sm">{zoomAlert}</p>
+            <span className="font-semibold text-sm">{zoomAlert}</span>
+          </div>
+        )}
+
+        {/* Manual Zoom Fallback */}
+        {zoomManualLink && (
+          <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 animate-slide-up">
+             <button 
+               onClick={() => {
+                 window.open(zoomManualLink, '_blank', 'noopener,noreferrer');
+                 setZoomManualLink(null);
+                 setZoomAlert(null);
+               }} 
+               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-xl shadow-2xl font-bold flex items-center gap-3"
+             >
+               🎥 Click here to open Zoom manually
+             </button>
           </div>
         )}
 

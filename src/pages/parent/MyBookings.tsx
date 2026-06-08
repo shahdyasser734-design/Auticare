@@ -220,18 +220,19 @@ export const MyBookings = () => {
                         Cancel Session
                       </button>
                       <button
-                        onClick={() => {
-                          const newWindow = window.open('about:blank', '_blank');
-                          getOrCreateSessionMeetingLink(booking, false)
-                            .then(link => {
-                              if (newWindow) newWindow.location.href = link;
-                              else window.location.href = link;
-                            })
-                            .catch(() => {
-                              const fallback = booking.joinLink || `https://zoom.us/j/${booking.id}`;
-                              if (newWindow) newWindow.location.href = fallback;
-                              else window.location.href = fallback;
-                            });
+                        onClick={async () => {
+                          try {
+                            const link = await getOrCreateSessionMeetingLink(booking, false);
+                            const newWindow = window.open(link, '_blank', 'noopener,noreferrer');
+                            if (!newWindow) {
+                               alert('Popup blocked by browser. Redirecting you to Zoom in this tab...');
+                               window.location.href = link;
+                            }
+                          } catch (err) {
+                            const fallback = booking.joinLink || `https://zoom.us/j/${booking.id}`;
+                            const newWindow = window.open(fallback, '_blank', 'noopener,noreferrer');
+                            if (!newWindow) window.location.href = fallback;
+                          }
                         }}
                         className="flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition-colors"
                       >

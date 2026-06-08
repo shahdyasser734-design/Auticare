@@ -171,64 +171,47 @@ export const DoctorHome = () => {
 
   const [joiningZoom, setJoiningZoom] = useState<string | null>(null);
   const [zoomAlert, setZoomAlert] = useState<string | null>(null);
+  const [zoomManualLink, setZoomManualLink] = useState<string | null>(null);
 
-  const handleJoinZoom = (session: Booking) => {
+  const handleJoinZoom = async (session: Booking) => {
     console.log('[ZOOM] Start Session / Join Zoom handler clicked.');
-    
-    let link = session.zoomUrl || session.joinLink || (session as any).meetingLink;
-    let isFallback = false;
-    
-    if (!link || link.trim() === '') {
-       // Generate fallback instantly for specialists
-       const meetingId = Math.floor(1000000000 + Math.random() * 9000000000);
-       link = `https://zoom.us/j/${meetingId}`;
-       isFallback = true;
-    }
-    
-    const newWindow = window.open(link, '_blank');
-    if (!newWindow) {
-      setZoomAlert('Popup blocked by browser. Please allow popups for this site.');
-      setTimeout(() => setZoomAlert(null), 4000);
-    }
-
     setJoiningZoom(session.id);
-    
-    // Background sync
-    getOrCreateSessionMeetingLink(session, isDoctor)
-      .then(async (fetchedLink) => {
-        // If we opened a generated fallback, stick to it so Doctor and Parent use the same room
-        const finalLink = isFallback ? link : fetchedLink;
-        if (!isFallback && newWindow && newWindow.location.href !== finalLink) {
-           newWindow.location.href = finalLink;
-        }
+    setZoomManualLink(null);
+    setZoomAlert(null);
 
-        // Send to parent via chat
-        if (isDoctor && session.parentId) {
-          try {
-            const chat = await chatServiceAPI.startChat([session.parentId]);
-            await chatServiceAPI.sendZoomLink(
-              chat.id,
-              finalLink,
-              session.appointmentDate,
-              session.appointmentTime,
-              session.reason || 'Zoom Session Link'
-            );
-          } catch (chatErr) {
-            console.warn('[ZOOM] Could not automatically send link to parent via chat:', chatErr);
-          }
+    try {
+      // 1. Backend must be source of truth
+      const link = await getOrCreateSessionMeetingLink(session, isDoctor);
+
+      if (isDoctor && session.parentId) {
+        try {
+          const chat = await chatServiceAPI.startChat([session.parentId]);
+          await chatServiceAPI.sendZoomLink(
+            chat.id,
+            link,
+            session.appointmentDate,
+            session.appointmentTime,
+            session.reason || 'Zoom Session Link'
+          );
+        } catch (chatErr) {
+          console.warn('[ZOOM] Could not automatically send link to parent via chat:', chatErr);
         }
-      })
-      .catch((err) => {
-        console.error('[ZOOM] Failed to sync Zoom session:', err);
-        if (isFallback && isDoctor && session.parentId) {
-          chatServiceAPI.startChat([session.parentId]).then(chat => {
-            chatServiceAPI.sendZoomLink(chat.id, link, session.appointmentDate, session.appointmentTime, session.reason || 'Zoom Session Link');
-          }).catch(() => {});
-        }
-      })
-      .finally(() => {
-        setJoiningZoom(null);
-      });
+      }
+
+      // 3. ONLY THEN execute window.open
+      const newWindow = window.open(link, '_blank', 'noopener,noreferrer');
+      if (!newWindow) {
+        setZoomAlert('Popup blocked by browser. Please open Zoom manually.');
+        setZoomManualLink(link);
+      }
+    } catch (err: any) {
+      console.error('[ZOOM] Failed to join Zoom session:', err);
+      const errMsg = err.message || 'No Zoom meeting link available.';
+      setZoomAlert(errMsg);
+      setTimeout(() => setZoomAlert(null), 4000);
+    } finally {
+      setJoiningZoom(null);
+    }
   };
 
   const getGreeting = () => {
@@ -270,7 +253,23 @@ export const DoctorHome = () => {
         {zoomAlert && (
           <div className="fixed top-20 right-6 z-50 p-4 bg-orange-500 text-white rounded-2xl shadow-2xl flex items-center gap-3 animate-slide-up">
             <span className="text-xl">⚠️</span>
-            <p className="font-semibold text-sm">{zoomAlert}</p>
+            <span className="text-sm font-medium">{zoomAlert}</span>
+          </div>
+        )}
+
+        {/* Manual Zoom Fallback */}
+        {zoomManualLink && (
+          <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 animate-slide-up">
+             <button 
+               onClick={() => {
+                 window.open(zoomManualLink, '_blank', 'noopener,noreferrer');
+                 setZoomManualLink(null);
+                 setZoomAlert(null);
+               }} 
+               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-xl shadow-2xl font-bold flex items-center gap-3"
+             >
+               🎥 Click here to open Zoom manually
+             </button>
           </div>
         )}
 
