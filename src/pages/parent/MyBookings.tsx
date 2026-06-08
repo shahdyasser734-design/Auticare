@@ -227,7 +227,7 @@ export const MyBookings = () => {
                               if (newWindow) newWindow.location.href = link;
                               else window.location.href = link;
                             })
-                            .catch(err => {
+                            .catch(() => {
                               const fallback = booking.joinLink || `https://zoom.us/j/${booking.id}`;
                               if (newWindow) newWindow.location.href = fallback;
                               else window.location.href = fallback;
