@@ -241,28 +241,34 @@ export const DoctorSessions = () => {
                       
                       
                       {(session.status === 'confirmed' || session.status === 'scheduled') && activeTab === 'upcoming' && (
-                        <>
-                          <Button size="sm" variant="outline" className="border-red-200 text-red-600 hover:bg-red-50" onClick={() => setCancellingId(session.id)}>
-                            Cancel Session
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => handleJoinZoom(session)}
-                            disabled={joiningZoom === session.id}
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer flex items-center gap-1"
-                          >
-                            {joiningZoom === session.id ? (
-                              <>
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                Connecting...
-                              </>
-                            ) : (
-                              <>
-                                🎥 {isDoctor ? 'Start Session' : 'Join Session'}
-                              </>
-                            )}
-                          </Button>
-                        </>
+                        <Button size="sm" variant="outline" className="border-red-200 text-red-600 hover:bg-red-50" onClick={() => setCancellingId(session.id)}>
+                          Cancel Session
+                        </Button>
+                      )}
+
+                      {(session.status !== 'pending' && session.status !== 'rejected') && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleJoinZoom(session)}
+                          disabled={joiningZoom === session.id || (!isDoctor && !meetingUrl)}
+                          className={`font-bold rounded-lg cursor-pointer flex items-center gap-1 ${
+                            joiningZoom === session.id || (!isDoctor && !meetingUrl)
+                              ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                              : 'bg-blue-600 hover:bg-blue-700 text-white'
+                          }`}
+                          title={!isDoctor && !meetingUrl ? 'No active meeting available' : ''}
+                        >
+                          {joiningZoom === session.id ? (
+                            <>
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              Connecting...
+                            </>
+                          ) : (
+                            <>
+                              🎥 {isDoctor ? 'Start Session' : 'Join Session'}
+                            </>
+                          )}
+                        </Button>
                       )}
                     </div>
                   </div>

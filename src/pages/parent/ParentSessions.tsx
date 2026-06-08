@@ -211,12 +211,17 @@ export const ParentSessions = () => {
                               <Badge variant={session.status === 'confirmed' || session.status === 'scheduled' ? 'success' : 'warning'}>
                                 {session.status}
                               </Badge>
-                              {canJoin && (
+                              {(session.status !== 'pending' && session.status !== 'rejected') && (
                                 <Button 
                                   size="sm" 
                                   onClick={() => handleJoinZoom(session)}
-                                  disabled={joiningZoom === session.id}
-                                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center gap-1 rounded-xl cursor-pointer"
+                                  disabled={joiningZoom === session.id || !meetingUrl}
+                                  className={`font-semibold flex items-center gap-1 rounded-xl cursor-pointer ${
+                                    joiningZoom === session.id || !meetingUrl
+                                      ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                  }`}
+                                  title={!meetingUrl ? 'No active meeting available' : ''}
                                 >
                                   {joiningZoom === session.id ? (
                                     <>
@@ -248,35 +253,62 @@ export const ParentSessions = () => {
                     .filter(s => s.status === 'completed')
                     // deduplicate by id
                     .filter((value, index, self) => self.findIndex(t => t.id === value.id) === index)
-                    .map((session) => (
-                      <Card key={session.id} className="border border-slate-200 dark:border-white/10 rounded-2xl p-5 bg-slate-50/50">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                          <div className="space-y-2 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="font-bold text-lg text-slate-900 dark:text-white block">
-                                {session.reason || (session.specialistType === 'doctor' ? 'Clinical Consultation' : 'Therapy Session')}
-                              </span>
-                            </div>
+                    .map((session) => {
+                      const meetingUrl = session.zoomUrl || session.joinLink || '';
+                      return (
+                        <Card key={session.id} className="border border-slate-200 dark:border-white/10 rounded-2xl p-5 bg-slate-50/50">
+                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="space-y-2 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="font-bold text-lg text-slate-900 dark:text-white block">
+                                  {session.reason || (session.specialistType === 'doctor' ? 'Clinical Consultation' : 'Therapy Session')}
+                                </span>
+                              </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-400">
-                              <p><strong>Child Name:</strong> {session.childName || 'Not Provided'}</p>
-                              <p><strong>Parent Name:</strong> {session.parentName || 'Not Provided'}</p>
-                              {session.specialistType === 'doctor' ? (
-                                <p><strong>Doctor Name:</strong> {session.doctorName || 'Not Assigned'}</p>
-                              ) : (
-                                <p><strong>Therapist Name:</strong> {session.therapistName || 'Not Assigned'}</p>
-                              )}
-                            </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-400">
+                                <p><strong>Child Name:</strong> {session.childName || 'Not Provided'}</p>
+                                <p><strong>Parent Name:</strong> {session.parentName || 'Not Provided'}</p>
+                                {session.specialistType === 'doctor' ? (
+                                  <p><strong>Doctor Name:</strong> {session.doctorName || 'Not Assigned'}</p>
+                                ) : (
+                                  <p><strong>Therapist Name:</strong> {session.therapistName || 'Not Assigned'}</p>
+                                )}
+                              </div>
 
-                            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                              <strong>Date & Time:</strong> {session.appointmentDate || 'TBD'} at {session.appointmentTime || 'TBD'}
-                            </p>
-                            {session.notes && <p className="text-sm text-slate-550 dark:text-slate-450 mt-2 bg-slate-100/50 p-3 rounded-xl">Session Summary: {session.notes}</p>}
+                              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                                <strong>Date & Time:</strong> {session.appointmentDate || 'TBD'} at {session.appointmentTime || 'TBD'}
+                              </p>
+                              {session.notes && <p className="text-sm text-slate-550 dark:text-slate-450 mt-2 bg-slate-100/50 p-3 rounded-xl">Session Summary: {session.notes}</p>}
+                            </div>
+                            <div className="flex items-center gap-3 shrink-0">
+                              <Badge>Completed</Badge>
+                              <Button 
+                                size="sm" 
+                                onClick={() => handleJoinZoom(session)}
+                                disabled={joiningZoom === session.id || !meetingUrl}
+                                className={`font-semibold flex items-center gap-1 rounded-xl cursor-pointer ${
+                                  joiningZoom === session.id || !meetingUrl
+                                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                }`}
+                                title={!meetingUrl ? 'No active meeting available' : ''}
+                              >
+                                {joiningZoom === session.id ? (
+                                  <>
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    Connecting...
+                                  </>
+                                ) : (
+                                  <>
+                                    🎥 Join Session
+                                  </>
+                                )}
+                              </Button>
+                            </div>
                           </div>
-                          <Badge>Completed</Badge>
-                        </div>
-                      </Card>
-                    ))}
+                        </Card>
+                      );
+                    })}
                 </div>
               </div>
             )}

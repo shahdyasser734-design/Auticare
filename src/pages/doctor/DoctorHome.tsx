@@ -421,8 +421,13 @@ export const DoctorHome = () => {
                           <Button
                             size="sm"
                             onClick={() => handleJoinZoom(session)}
-                            disabled={joiningZoom === session.id}
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer flex items-center gap-1"
+                            disabled={joiningZoom === session.id || (!isDoctor && !meetingUrl)}
+                            className={`font-bold rounded-lg cursor-pointer flex items-center gap-1 ${
+                              joiningZoom === session.id || (!isDoctor && !meetingUrl)
+                                ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                            }`}
+                            title={!isDoctor && !meetingUrl ? 'No active meeting available' : ''}
                           >
                             {joiningZoom === session.id ? (
                               <>
@@ -547,8 +552,13 @@ export const DoctorHome = () => {
                           <Button
                             size="sm"
                             onClick={() => handleJoinZoom(session)}
-                            disabled={joiningZoom === session.id}
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer flex items-center gap-1"
+                            disabled={joiningZoom === session.id || (!isDoctor && !meetingUrl)}
+                            className={`font-bold rounded-lg cursor-pointer flex items-center gap-1 ${
+                              joiningZoom === session.id || (!isDoctor && !meetingUrl)
+                                ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                            }`}
+                            title={!isDoctor && !meetingUrl ? 'No active meeting available' : ''}
                           >
                             {joiningZoom === session.id ? (
                               <>
