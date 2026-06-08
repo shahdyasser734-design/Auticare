@@ -1,205 +1,52 @@
 import apiClient from '../apiClient';
 import type { Booking } from '../../types';
-import { mockState, createBookingNotification } from './mockState';
 import { normalizeBooking } from './bookings';
-
-const mergeBookings = (backend: Booking[] = []) => {
-  const local = mockState.getBookings().map(normalizeBooking);
-  const uniqueLocal = local.filter((item) => !backend.some((backendBooking) => backendBooking.id === item.id));
-  return [...backend, ...uniqueLocal].sort((a, b) => new Date(b.dateTime ?? b.createdAt).getTime() - new Date(a.dateTime ?? a.createdAt).getTime());
-};
-
-// Helper to create notification on booking status change
-const triggerNotificationOnStatusChange = async (booking: Booking, status: Booking['status']) => {
-  try {
-    const specialistName = booking.specialistName || 'Ahmed';
-    let notificationMessage = '';
-    
-    const isTherapist = booking.specialistType === 'therapist';
-    const rolePrefix = isTherapist ? 'Speech Therapist' : 'Dr.';
-    
-    if (status === 'confirmed' || status === 'approved') {
-      notificationMessage = `${rolePrefix} ${specialistName} approved your booking request.`;
-      if (isTherapist) {
-        notificationMessage = `Speech Therapist ${specialistName} accepted your session request.`;
-      }
-    } else if (status === 'cancelled') {
-      notificationMessage = `${rolePrefix} ${specialistName} rejected your booking request.`;
-    }
-    
-    if (notificationMessage && booking.parentId) {
-      console.log(`[NOTIFICATION] Booking ${booking.id} status changed to ${status}`);
-      console.log(`[NOTIFICATION] Message for parent ${booking.parentId}: ${notificationMessage}`);
-      mockState.addNotification({
-        id: `mock-notification-${Date.now()}`,
-        userId: booking.parentId,
-        type: 'booking',
-        title: status === 'cancelled' ? 'Booking rejected' : 'Booking approved',
-        message: notificationMessage,
-        relatedId: booking.id,
-        isRead: false,
-        createdAt: new Date().toISOString(),
-      });
-    }
-  } catch (err) {
-    console.warn('[NOTIFICATION] Failed to trigger notification:', err);
-  }
-};
 
 export const bookingsService = {
   createBooking: async (
     data: Partial<Booking> & { preferredDate?: string; preferredTime?: string; specialistType?: 'doctor' | 'therapist'; specialistId?: string | number }
   ): Promise<Booking> => {
-    try {
-      console.log('[BOOKING] Creating booking with data:', data);
-      const response = await apiClient.post<Booking>('/bookings', data);
-      const booking = normalizeBooking(response.data);
-      mockState.addBooking(booking);
-      console.log('[BOOKING] Successfully created booking:', booking);
-      
-      // Add notification for booking request received
-      mockState.addNotification(createBookingNotification(booking));
-
-      return booking;
-    } catch (err) {
-      console.warn('[BOOKING] API booking creation failed, using mock:', err);
-      const booking = mockState.getBookings().find((item) => item.id === data.id);
-      if (booking) {
-        console.log('[BOOKING] Found existing mock booking:', booking);
-        return normalizeBooking(booking);
-      }
-      const newBooking: Booking = normalizeBooking({
-        id: `mock-booking-${Date.now()}`,
-        parentId: data.parentId ?? 'user-123',
-        childId: data.childId ?? 'child-1',
-        specialistId: String(data.specialistId ?? 'specialist-1'),
-        specialistType: data.specialistType ?? 'doctor',
-        status: 'pending',
-        appointmentDate: data.preferredDate ?? new Date().toISOString().split('T')[0],
-        appointmentTime: data.preferredTime ?? '10:00',
-        duration: 60,
-        notes: data.notes || data.reason || 'Session request pending.',
-        dateTime: data.dateTime ?? `${data.preferredDate ?? new Date().toISOString().split('T')[0]}T${data.preferredTime ?? '10:00'}`,
-        specialistName: data.specialistType === 'therapist' ? 'Sarah' : 'Ahmed',
-        joinLink: '',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
-      mockState.addBooking(newBooking);
-      console.log('[BOOKING] Created new mock booking:', newBooking);
-
-      // Add notification for mock booking request received
-      mockState.addNotification(createBookingNotification(newBooking));
-
-      return newBooking;
-    }
+    console.log('[BOOKING] Creating booking with data:', data);
+    const response = await apiClient.post<Booking>('/bookings', data);
+    const booking = normalizeBooking(response.data);
+    console.log('[BOOKING] Successfully created booking:', booking);
+    return booking;
   },
 
   getBooking: async (id: string): Promise<Booking> => {
-    try {
-      const response = await apiClient.get<Booking>(`/bookings/${id}`);
-      console.log('[BOOKING] Fetched booking:', response.data);
-      return normalizeBooking(response.data);
-    } catch {
-      const booking = mockState.getBookings().find((item) => item.id === id);
-      if (!booking) throw new Error('Booking not found');
-      console.log('[BOOKING] Retrieved mock booking:', booking);
-      return normalizeBooking(booking);
-    }
+    const response = await apiClient.get<Booking>(`/bookings/${id}`);
+    console.log('[BOOKING] Fetched booking:', response.data);
+    return normalizeBooking(response.data);
   },
 
   getMyBookings: async (): Promise<Booking[]> => {
-    try {
-      console.log('[BOOKING] Fetching my bookings from API...');
-      const response = await apiClient.get<Booking[]>('/bookings/my-bookings');
-      console.log('[BOOKING] Fetched my bookings from API:', response.data.length, 'items');
-      return mergeBookings(response.data.map(normalizeBooking));
-    } catch (err) {
-      console.warn('[BOOKING] Failed to fetch my bookings from API:', err);
-      return mockState.getBookings().map(normalizeBooking);
-    }
+    console.log('[BOOKING] Fetching my bookings from API...');
+    const response = await apiClient.get<Booking[]>('/bookings/my-bookings');
+    console.log('[BOOKING] Fetched my bookings from API:', response.data.length, 'items');
+    return response.data.map(normalizeBooking).sort((a, b) => new Date(b.dateTime ?? b.createdAt).getTime() - new Date(a.dateTime ?? a.createdAt).getTime());
   },
 
   getUpcomingBookings: async (): Promise<Booking[]> => {
-    try {
-      console.log('[BOOKING] Fetching upcoming bookings from API...');
-      const response = await apiClient.get<Booking[]>('/bookings/upcoming');
-      console.log('[BOOKING] Fetched upcoming bookings from API:', response.data.length, 'items');
-      return mergeBookings(response.data.map(normalizeBooking));
-    } catch (err) {
-      console.warn('[BOOKING] Failed to fetch upcoming bookings from API:', err);
-      const mockBookings = mockState.getBookings().map(normalizeBooking).filter((booking) => booking.status !== 'cancelled');
-      console.log('[BOOKING] Using mock bookings:', mockBookings.length, 'items');
-      return mockBookings;
-    }
+    console.log('[BOOKING] Fetching upcoming bookings from API...');
+    const response = await apiClient.get<Booking[]>('/bookings/upcoming');
+    console.log('[BOOKING] Fetched upcoming bookings from API:', response.data.length, 'items');
+    return response.data.map(normalizeBooking).sort((a, b) => new Date(b.dateTime ?? b.createdAt).getTime() - new Date(a.dateTime ?? a.createdAt).getTime());
   },
 
   updateBookingStatus: async (
     id: string,
     status: Booking['status']
   ): Promise<Booking> => {
-    try {
-      console.log(`[BOOKING] Updating booking ${id} status to ${status}`);
-      const response = await apiClient.patch<Booking>(`/bookings/${id}/status`, { status });
-      const booking = normalizeBooking(response.data);
-      mockState.addBooking(booking);
-      
-      if (status === 'confirmed' || status === 'approved') {
-        try {
-          const tId = booking.treatmentId || (booking as any).TreatmentId;
-          const cleanIntId = (idVal: any): number => {
-            if (typeof idVal === 'number') return idVal;
-            if (!idVal) return 1;
-            const cleaned = String(idVal).replace(/\D/g, '');
-            const parsed = parseInt(cleaned, 10);
-            return isNaN(parsed) || parsed <= 0 ? 1 : parsed;
-          };
-          
-          await apiClient.post('/sessions', {
-            treatmentId: cleanIntId(tId),
-            parentId: cleanIntId(booking.parentId),
-            specialistId: cleanIntId(booking.specialistId),
-            sessionDate: new Date(booking.appointmentDate || booking.dateTime || Date.now()).toISOString(),
-            duration: booking.duration || 60,
-            meetingLink: booking.joinLink || `https://zoom.us/j/${booking.id}`,
-            sessionNotes: booking.notes || booking.reason || 'Session scheduled'
-          });
-          console.log('[BOOKING] Session created on backend successfully.');
-        } catch (sessErr) {
-          console.warn('[BOOKING] Failed to create backend session during approval:', sessErr);
-        }
-      }
-
-      // Trigger notification for booking status changes
-      await triggerNotificationOnStatusChange(booking, status);
-      console.log('[BOOKING] Status updated successfully:', booking);
-      return booking;
-    } catch (err) {
-      console.warn('[BOOKING] API status update failed, using mock:', err);
-      const bookings = mockState.updateBookingStatus(id, status);
-      const booking = bookings.find((item) => item.id === id);
-      if (!booking) throw new Error('Booking not found', { cause: err });
-      
-      const normalized = normalizeBooking(booking);
-      // Also trigger notification in mock mode
-      await triggerNotificationOnStatusChange(normalized, status);
-      console.log('[BOOKING] Status updated in mock state:', normalized);
-      return normalized;
-    }
+    console.log(`[BOOKING] Updating booking ${id} status to ${status}`);
+    const response = await apiClient.patch<Booking>(`/bookings/${id}/status`, { status });
+    const booking = normalizeBooking(response.data);
+    console.log('[BOOKING] Status updated successfully:', booking);
+    return booking;
   },
 
   cancelBooking: async (id: string, reason?: string): Promise<Booking> => {
-    try {
-      const response = await apiClient.patch<Booking>(`/bookings/${id}/cancel`, { reason });
-      const booking = normalizeBooking(response.data);
-      mockState.addBooking(booking);
-      return booking;
-    } catch {
-      const bookings = mockState.updateBookingStatus(id, 'cancelled');
-      const booking = bookings.find((item) => item.id === id);
-      if (!booking) throw new Error('Booking not found');
-      return normalizeBooking(booking);
-    }
+    const response = await apiClient.patch<Booking>(`/bookings/${id}/cancel`, { reason });
+    return normalizeBooking(response.data);
   },
 
   approveBooking: async (id: string): Promise<Booking> => {

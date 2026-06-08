@@ -1,5 +1,4 @@
 import apiClient from '../apiClient';
-import { mockState } from './mockState';
 
 export interface Notification {
   id: string;
@@ -18,13 +17,9 @@ export const notificationService = {
   getNotifications: async (): Promise<Notification[]> => {
     try {
       const response = await apiClient.get<Notification[]>('/notifications');
-      const data = response.data || [];
-      if (data.length === 0) {
-        return mockState.getNotifications();
-      }
-      return data;
+      return response.data || [];
     } catch {
-      return mockState.getNotifications();
+      return [];
     }
   },
 

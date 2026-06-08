@@ -6,7 +6,7 @@ import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
 import { Input } from '../../components/common/Input';
 import { useAuth } from '../../context/useAuth';
-import { childrenService } from '../../services/api/childrenService';
+import { bookingsService } from '../../services/api/bookingsService';
 import { treatmentPlansService } from '../../services/api/treatmentPlansService';
 import { specialistsService } from '../../services/api/specialistsService';
 import { FileUpload } from '../../components/common/FileUpload';
@@ -14,7 +14,7 @@ import { fileUploadService } from '../../services/api/fileUploadService';
 import { Activity, Plus, Trash2, CheckCircle2, User, FileText, BarChart3, Edit, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import type { Child, TreatmentPlan as TreatmentPlanType, Specialist } from '../../types';
 import { cleanIntId } from '../../utils/zoomHelper';
-import { mockState } from '../../services/api/mockState';
+
 
 export const TreatmentPlan = () => {
   const { childId } = useParams<{ childId: string }>();
@@ -56,9 +56,21 @@ export const TreatmentPlan = () => {
     if (!childId) return;
     try {
       setLoading(true);
-      // 1. Fetch child profile
-      const childData = await childrenService.getChild(childId);
-      setChild(childData);
+      // 1. Fetch child profile from bookings
+      const bookings = await bookingsService.getMyBookings();
+      const booking = bookings.find(b => String(b.childId) === childId);
+      if (booking) {
+        setChild({
+          id: booking.childId,
+          name: booking.childName || 'Patient',
+          parentId: booking.parentId || '',
+          parentName: booking.parentName || 'Parent',
+          age: null,
+          gender: 'Unknown',
+          dateOfBirth: '',
+          status: 'active'
+        } as any);
+      }
 
       // 2. Fetch treatment plans for child
       const plans = await treatmentPlansService.getChildPlans(childId);
@@ -160,49 +172,7 @@ export const TreatmentPlan = () => {
         });
       }
 
-      // Role-specific notifications creation
-      try {
-        let docName = user?.name || specialist?.name || 'Specialist';
-        if (docName.toLowerCase().startsWith('dr. ')) {
-          docName = docName.substring(4);
-        } else if (docName.toLowerCase().startsWith('dr.')) {
-          docName = docName.substring(3);
-        }
-        const formattedDocName = `Dr. ${docName.trim()}`;
-        const childName = child?.name || 'Child';
-        
-        // 1. Parent notification
-        const parentNotif = {
-          id: `notif-tp-parent-${Date.now()}`,
-          userId: child?.parentId || 'parent-123',
-          type: 'treatment-plan' as const,
-          title: 'Treatment Plan Published',
-          message: `${formattedDocName} created a Treatment Plan for ${childName}`,
-          content: `${formattedDocName} created a Treatment Plan for ${childName}`,
-          isRead: false,
-          createdAt: new Date().toISOString()
-        };
-        
-        // 2. Therapist notification
-        const therapistNotifs = (assignedTherapists.length ? assignedTherapists : ['Sarah Jenkins (Speech Therapist)']).map((_, idx) => {
-          return {
-            id: `notif-tp-therapist-${Date.now()}-${idx}`,
-            userId: 'therapist-1',
-            type: 'treatment-plan' as const,
-            title: 'New Assignment',
-            message: `New Treatment Plan assigned for ${childName}`,
-            content: `New Treatment Plan assigned for ${childName}`,
-            isRead: false,
-            createdAt: new Date().toISOString()
-          };
-        });
-        
-        mockState.addNotification(parentNotif as any);
-        therapistNotifs.forEach(notif => mockState.addNotification(notif as any));
-        console.log('Appended mock notifications successfully using mockState.');
-      } catch (notifErr) {
-        console.warn('Could not store mock notifications:', notifErr);
-      }
+      // Wait for backend notifications (removed frontend mockState generation)
 
       // Refresh plan, child and dashboard data immediately
       await loadPlanData();

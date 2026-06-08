@@ -1,6 +1,5 @@
 import apiClient from '../apiClient';
 import type { Booking as BookingType } from '../../types';
-import { mockState, buildMockBooking } from './mockState';
 
 export type Booking = BookingType;
 
@@ -32,42 +31,25 @@ export interface BookingRequest {
 
 export const normalizeBooking = (b: any): Booking => {
   if (!b) return b;
-  
   const idVal = b.id || b.bookingId || b.BookingId || '';
   const idStr = String(idVal);
-  
-  // Normalize date and time
   const appointmentDate = b.appointmentDate || (b.bookingDate ? b.bookingDate.split('T')[0] : b.preferredDate || '');
   const appointmentTime = b.appointmentTime || b.bookingTime || b.preferredTime || '';
   const dateTime = b.dateTime || b.bookingDate || `${appointmentDate}T${appointmentTime}`;
-  
-  // Status mapping: convert status to lowercase for frontend logic
   let status = b.status || 'pending';
-  if (typeof status === 'string') {
-    status = status.toLowerCase();
-  }
-  if (status === 'approved') {
-    status = 'confirmed'; // Standardize approved to confirmed as expected by some components
-  }
-  
-  // Generate deterministic unique Zoom meeting URL so all participants use the same URL, unless already provided by backend
-  const joinLink = b.meetingLink || b.joinLink || b.meeting_link || b.join_link || (idStr ? `https://zoom.us/j/${idStr}` : '');
-
-  // Handle names
+  if (typeof status === 'string') status = status.toLowerCase();
+  if (status === 'approved') status = 'confirmed'; 
+  const joinLink = b.meetingLink || b.joinLink || b.meeting_link || b.join_link || '';
   const specName = b.specialistName || b.SpecialistName || '';
   const specType = b.specialistType || b.SpecialistType || 'doctor';
-  
   let doctorName = 'Dr. Ahmed';
   let therapistName = 'Therapist Sarah';
-  
   if (specType === 'doctor') {
     doctorName = specName ? `Dr. ${specName.replace(/^Dr\.\s+/i, '')}` : 'Dr. Ahmed';
   } else if (specType === 'therapist') {
     therapistName = specName ? `Therapist ${specName.replace(/^Therapist\s+/i, '')}` : 'Therapist Sarah';
   }
-
   const treatmentId = b.treatmentId || b.TreatmentId || '';
-
   return {
     id: idStr,
     parentId: String(b.parentId || b.ParentId || ''),
@@ -96,118 +78,32 @@ export const normalizeBooking = (b: any): Booking => {
   };
 };
 
-const mergeBookings = (backend: Booking[] = []) => {
-  const local = mockState.getBookings().map(normalizeBooking);
-  const uniqueLocal = local.filter((item) => !backend.some((backendBooking) => backendBooking.id === item.id));
-  return [...backend, ...uniqueLocal].sort((a, b) => (new Date(b.dateTime ?? b.createdAt).getTime() - new Date(a.dateTime ?? a.createdAt).getTime()));
-};
-
 export const bookingService = {
   createBooking: async (data: BookingRequest): Promise<Booking> => {
-    try {
-      const response = await apiClient.post<Booking>('/bookings', data);
-      const booking = normalizeBooking(response.data);
-      mockState.addBooking(booking);
-      return booking;
-    } catch (err) {
-      console.warn('[BOOKING] API createBooking failed, using fallback:', err);
-      const booking = normalizeBooking(buildMockBooking(data));
-      mockState.addBooking(booking);
-      return booking;
-    }
+    const response = await apiClient.post<Booking>('/bookings', data);
+    return normalizeBooking(response.data);
   },
-
   getBooking: async (id: string): Promise<Booking> => {
-    try {
-      const response = await apiClient.get<Booking>(`/bookings/${id}`);
-      return normalizeBooking(response.data);
-    } catch {
-      const booking = mockState.getBookings().find((item) => item.id === id);
-      if (!booking) throw new Error('Booking not found');
-      return normalizeBooking(booking);
-    }
+    const response = await apiClient.get<Booking>(`/bookings/${id}`);
+    return normalizeBooking(response.data);
   },
-
   updateBooking: async (id: string, data: Partial<Booking>): Promise<Booking> => {
-    try {
-      const response = await apiClient.put<Booking>(`/bookings/${id}`, data);
-      const booking = normalizeBooking(response.data);
-      mockState.addBooking(booking);
-      return booking;
-    } catch {
-      const bookings = mockState.getBookings().map((item) =>
-        item.id === id ? { ...item, ...data, updatedAt: new Date().toISOString() } : item
-      );
-      const booking = bookings.find((item) => item.id === id);
-      if (!booking) throw new Error('Booking not found');
-      return normalizeBooking(booking);
-    }
+    const response = await apiClient.put<Booking>(`/bookings/${id}`, data);
+    return normalizeBooking(response.data);
   },
-
   deleteBooking: async (id: string): Promise<void> => {
-    try {
-      await apiClient.delete(`/bookings/${id}`);
-    } catch {
-      // no-op in mock mode
-    }
+    await apiClient.delete(`/bookings/${id}`);
   },
-
   getMyBookings: async (): Promise<Booking[]> => {
-    try {
-      const response = await apiClient.get<Booking[]>('/bookings/my-bookings');
-      return mergeBookings(response.data.map(normalizeBooking));
-    } catch {
-      return mockState.getBookings().map(normalizeBooking);
-    }
+    const response = await apiClient.get<Booking[]>('/bookings/my-bookings');
+    return response.data.map(normalizeBooking).sort((a, b) => new Date(b.dateTime ?? b.createdAt).getTime() - new Date(a.dateTime ?? a.createdAt).getTime());
   },
-
   getUpcomingBookings: async (): Promise<Booking[]> => {
-    try {
-      const response = await apiClient.get<Booking[]>('/bookings/upcoming');
-      return mergeBookings(response.data.map(normalizeBooking));
-    } catch {
-      return mockState.getBookings().map(normalizeBooking).filter((booking) => booking.status !== 'cancelled');
-    }
+    const response = await apiClient.get<Booking[]>('/bookings/upcoming');
+    return response.data.map(normalizeBooking).sort((a, b) => new Date(b.dateTime ?? b.createdAt).getTime() - new Date(a.dateTime ?? a.createdAt).getTime());
   },
-
   updateBookingStatus: async (id: string, status: Booking['status']): Promise<Booking> => {
-    try {
-      const response = await apiClient.patch<Booking>(`/bookings/${id}/status`, { status });
-      const booking = normalizeBooking(response.data);
-      mockState.addBooking(booking);
-      
-      if (status === 'confirmed' || status === 'approved') {
-        try {
-          const tId = booking.treatmentId || (booking as any).TreatmentId;
-          const cleanIntId = (idVal: any): number => {
-            if (typeof idVal === 'number') return idVal;
-            if (!idVal) return 1;
-            const cleaned = String(idVal).replace(/\D/g, '');
-            const parsed = parseInt(cleaned, 10);
-            return isNaN(parsed) || parsed <= 0 ? 1 : parsed;
-          };
-          
-          await apiClient.post('/sessions', {
-            treatmentId: cleanIntId(tId),
-            parentId: cleanIntId(booking.parentId),
-            specialistId: cleanIntId(booking.specialistId),
-            sessionDate: new Date(booking.appointmentDate || booking.dateTime || Date.now()).toISOString(),
-            duration: booking.duration || 60,
-            meetingLink: booking.joinLink || `https://zoom.us/j/${booking.id}`,
-            sessionNotes: booking.notes || booking.reason || 'Session scheduled'
-          });
-          console.log('[BOOKING] Session created on backend successfully.');
-        } catch (sessErr) {
-          console.warn('[BOOKING] Failed to create backend session during approval:', sessErr);
-        }
-      }
-
-      return booking;
-    } catch (err) {
-      const bookings = mockState.updateBookingStatus(id, status);
-      const booking = bookings.find((item) => item.id === id);
-      if (!booking) throw new Error('Booking not found', { cause: err });
-      return normalizeBooking(booking);
-    }
+    const response = await apiClient.patch<Booking>(`/bookings/${id}/status`, { status });
+    return normalizeBooking(response.data);
   },
 };

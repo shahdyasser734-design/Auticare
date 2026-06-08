@@ -76,21 +76,21 @@ export const treatmentPlansService = {
       const response = await apiClient.get<TreatmentPlan[]>('/treatment-plans/my-plans');
       return (response.data || []).map(normalizeTreatmentPlan);
     } catch (err) {
-      console.warn('Backend /treatment-plans/my-plans returned error, using fallback:', err);
+      console.warn('Backend /treatment-plans/my-plans returned error, using fallback to bookings:', err);
       try {
-        const dashboard = await apiClient.get<any>('/dashboard/specialist');
-        const patientsList = dashboard.data?.patients || dashboard.data?.assignedChildren || [];
-        if (patientsList.length > 0) {
-          const plansPromises = patientsList.map((p: any) => 
-            apiClient.get<TreatmentPlan[]>(`/treatment-plans/child/${p.id || p.childId}`)
+        const bookings = await apiClient.get<any[]>('/bookings/my-bookings');
+        const uniqueChildIds = [...new Set((bookings.data || []).map((b: any) => b.childId).filter(Boolean))];
+        if (uniqueChildIds.length > 0) {
+          const plansPromises = uniqueChildIds.map((cId: any) => 
+            apiClient.get<TreatmentPlan[]>(`/treatment-plans/child/${cId}`)
               .then(res => res.data || [])
               .catch(() => [])
           );
           const plansArrays = await Promise.all(plansPromises);
           return plansArrays.flat().map(normalizeTreatmentPlan);
         }
-      } catch (dashErr) {
-        console.warn('Dashboard fallback failed:', dashErr);
+      } catch (bookingErr) {
+        console.warn('Bookings fallback failed:', bookingErr);
       }
       return [];
     }

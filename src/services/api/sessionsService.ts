@@ -3,7 +3,7 @@ import type { TherapySession } from '../../types';
 
 export const sessionsService = {
   // Create a new session
-  createSession: async (data: Partial<TherapySession>): Promise<TherapySession> => {
+  createSession: async (data: any): Promise<TherapySession> => {
     const response = await apiClient.post<TherapySession>('/sessions', data);
     return response.data;
   },
@@ -15,7 +15,7 @@ export const sessionsService = {
   },
 
   // Update session
-  updateSession: async (id: string, data: Partial<TherapySession>): Promise<TherapySession> => {
+  updateSession: async (id: string, data: any): Promise<TherapySession> => {
     const response = await apiClient.put<TherapySession>(`/sessions/${id}`, data);
     return response.data;
   },
@@ -34,23 +34,18 @@ export const sessionsService = {
     return response.data;
   },
 
-  // Cancel session
-  cancelSession: async (id: string, reason?: string): Promise<TherapySession> => {
-    const response = await apiClient.patch<TherapySession>(`/sessions/${id}/cancel`, {
-      reason,
-    });
-    return response.data;
-  },
-
-  // Mark session as completed
+  // Mark session as completed (mapped to PUT /api/sessions/{id} per requirements)
   completeSession: async (
     id: string,
     notes?: string,
-    recording?: string
+    activityNotes?: string,
+    report?: string
   ): Promise<TherapySession> => {
-    const response = await apiClient.patch<TherapySession>(`/sessions/${id}/complete`, {
-      notes,
-      recordingUrl: recording,
+    const response = await apiClient.put<TherapySession>(`/sessions/${id}`, {
+      sessionNotes: notes || '',
+      activityNotes: activityNotes || '',
+      report: report || '',
+      status: 'Completed'
     });
     return response.data;
   },

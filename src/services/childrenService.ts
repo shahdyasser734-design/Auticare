@@ -1,6 +1,5 @@
 import apiClient from './apiClient';
 import type { Child } from '../types';
-import { mockState } from './api/mockState';
 export type { Child } from '../types';
 
 const normalizeChild = (raw: Record<string, unknown>): Child => {
@@ -26,69 +25,31 @@ export const childrenService = {
   getChildren: async (): Promise<Child[]> => {
     try {
       const response = await apiClient.get<Record<string, unknown>[]>('/children');
-      const data = response.data.map(normalizeChild);
-      return data.length > 0 ? data : mockState.getChildren();
+      return response.data.map(normalizeChild);
     } catch (error) {
-      console.warn('Children API unavailable, using mock children.', error);
-      return mockState.getChildren();
+      console.warn('Children API unavailable.', error);
+      return [];
     }
   },
 
   getChild: async (id: string): Promise<Child> => {
-    try {
-      const response = await apiClient.get<Record<string, unknown>>(`/children/${id}`);
-      return normalizeChild(response.data);
-    } catch (error) {
-      const child = mockState.getChildren().find((item) => item.id === id);
-      if (!child) throw error;
-      return child;
-    }
+    const response = await apiClient.get<Record<string, unknown>>(`/children/${id}`);
+    return normalizeChild(response.data);
   },
 
   createChild: async (
     data: Omit<Child, 'id' | 'createdAt' | 'parentId'> & { firstName?: string; lastName?: string }
   ): Promise<Child> => {
-    try {
-      const response = await apiClient.post<Record<string, unknown>>('/children', data);
-      const child = normalizeChild(response.data);
-      mockState.addChild(child);
-      return child;
-    } catch {
-      const child: Child = {
-        id: `mock-child-${Date.now()}`,
-        parentId: 'parent-123',
-        name: `${data.name ?? `${data.firstName ?? 'Child'} ${data.lastName ?? ''}`.trim()}`.trim(),
-        age: data.age ?? 0,
-        gender: data.gender,
-        dateOfBirth: data.dateOfBirth ?? '',
-        profileImage: data.profileImage,
-        medicalHistory: data.medicalHistory,
-        createdAt: new Date().toISOString(),
-      };
-      mockState.addChild(child);
-      return child;
-    }
+    const response = await apiClient.post<Record<string, unknown>>('/children', data);
+    return normalizeChild(response.data);
   },
 
   updateChild: async (id: string, data: Partial<Child>): Promise<Child> => {
-    try {
-      const response = await apiClient.put<Record<string, unknown>>(`/children/${id}`, data);
-      const child = normalizeChild(response.data);
-      mockState.updateChild(id, data);
-      return child;
-    } catch (error) {
-      const children = mockState.updateChild(id, data);
-      const child = children.find((item) => item.id === id);
-      if (!child) throw error;
-      return child;
-    }
+    const response = await apiClient.put<Record<string, unknown>>(`/children/${id}`, data);
+    return normalizeChild(response.data);
   },
 
   deleteChild: async (id: string): Promise<void> => {
-    try {
-      await apiClient.delete(`/children/${id}`);
-    } catch {
-      // no-op in mock mode
-    }
+    await apiClient.delete(`/children/${id}`);
   },
 };

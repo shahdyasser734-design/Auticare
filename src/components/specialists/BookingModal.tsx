@@ -3,7 +3,6 @@ import { Button } from '../common/Button';
 import { Modal } from '../common/Modal';
 import { bookingService, type BookingRequest } from '../../services/api/bookings';
 import { childrenService } from '../../services/childrenService';
-import { mockState, createBookingNotification } from '../../services/api/mockState';
 import { treatmentPlansService } from '../../services/api/treatmentPlans';
 import type { Child, Specialist } from '../../types';
 
@@ -112,9 +111,7 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
         treatmentId: treatmentPlanIdVal,
         TreatmentId: treatmentPlanIdVal,
       };
-      const booking = await bookingService.createBooking(payload);
-      const notification = createBookingNotification(booking);
-      mockState.addNotification(notification);
+      await bookingService.createBooking(payload);
       onBooked();
     } catch (err) {
       console.error('Booking failed', err);

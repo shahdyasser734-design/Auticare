@@ -4,7 +4,11 @@ import type { ClinicalNote } from '../../types';
 export const notesService = {
   // Create a new note
   createNote: async (data: Partial<ClinicalNote>): Promise<ClinicalNote> => {
-    const response = await apiClient.post<ClinicalNote>('/notes', data);
+    const payload = {
+      ...data,
+      childId: typeof data.childId === 'string' ? parseInt(data.childId, 10) : data.childId
+    };
+    const response = await apiClient.post<ClinicalNote>('/notes', payload);
     return response.data;
   },
 
