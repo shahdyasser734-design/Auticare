@@ -190,7 +190,7 @@ export interface Booking {
   childId: string;
   specialistId: string;
   specialistType: 'doctor' | 'therapist';
-  status: 'pending' | 'approved' | 'completed' | 'cancelled' | 'scheduled' | 'confirmed';
+  status: 'pending' | 'approved' | 'completed' | 'cancelled' | 'scheduled' | 'confirmed' | 'rejected';
   appointmentDate: string;
   appointmentTime: string;
   duration: number;

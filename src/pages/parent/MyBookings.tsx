@@ -14,7 +14,7 @@ export const MyBookings = () => {
   const handleCancelSession = async () => {
     if (!cancellingId || !cancelReason.trim()) return;
     try {
-      await bookingService.cancelBooking(cancellingId, cancelReason, 'parent');
+      await bookingService.cancelBooking(cancellingId, cancelReason);
       setCancellingId(null);
       setCancelReason('');
       await refreshBookings();

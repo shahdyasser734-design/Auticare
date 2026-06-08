@@ -45,7 +45,7 @@ export const Chat = () => {
 
   const fetchChildren = async () => {
     try {
-      const list = await childrenService.getChildren();
+      const list = await childrenService.getMyChildren();
       setChildrenList(list);
     } catch (err) {
       console.warn('Failed to load patient profiles:', err);
