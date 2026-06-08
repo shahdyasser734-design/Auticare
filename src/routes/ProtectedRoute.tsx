@@ -26,7 +26,7 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
   const isParent = user?.role === 'parent';
   const isExemptPath =
     location.pathname === ROUTES.PARENT_HOME ||
-    location.pathname.startsWith(ROUTES.PARENT_HOME + '/') === false ||
+    location.pathname.startsWith(ROUTES.PARENT_HOME + '/') ||
     SCREENING_EXEMPT_PATHS.some(
       (path) => location.pathname === path || location.pathname.startsWith(path + '?')
     );

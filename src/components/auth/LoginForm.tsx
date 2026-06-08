@@ -8,7 +8,7 @@ import { useAuth } from '../../context/useAuth';
 import { validateEmail } from '../../utils/validation';
 import { ROUTES } from '../../utils/constants';
 import { useTheme } from '../../context/useTheme';
-import apiClient from '../../services/apiClient';
+
 
 export const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -46,22 +46,8 @@ export const LoginForm = () => {
         const normalizedRole = role.toLowerCase();
         
         if (normalizedRole === 'parent') {
-          // Check whether this parent already has children registered.
-          // If they do, send them straight to the dashboard so they don't
-          // repeat the onboarding flow every time they log in.
-          try {
-            const res = await apiClient.get<unknown[]>('/children');
-            const children = Array.isArray(res.data) ? res.data : [];
-            if (children.length > 0) {
-              navigate(ROUTES.PARENT_HOME, { replace: true });
-            } else {
-              navigate(ROUTES.PARENT_ADD_CHILD, { replace: true });
-            }
-          } catch {
-            // Network failure: fall back to Add Child — the API guard inside
-            // AddChild will handle edge cases gracefully.
-            navigate(ROUTES.PARENT_ADD_CHILD, { replace: true });
-          }
+          // ProtectedRoute handles the global redirect to ADD_CHILD if they don't have children!
+          navigate(ROUTES.PARENT_HOME, { replace: true });
         } else if (normalizedRole === 'doctor' || normalizedRole === 'specialist') {
           navigate(ROUTES.DOCTOR_HOME, { replace: true });
         } else if (normalizedRole === 'therapist') {

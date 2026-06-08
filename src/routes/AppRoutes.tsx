@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
+import { useAuth } from '../context/useAuth';
 import { ROUTES, ROLES } from '../utils/constants';
 
 // Auth Pages
@@ -40,6 +41,17 @@ import { Unauthorized } from '../pages/auth/Unauthorized';
 import { HomeLanding } from '../pages/HomeLanding';
 
 export const AppRoutes = () => {
+  const { loading, childrenLoaded, isAuthenticated, user } = useAuth() as any;
+
+  // Global Hydration Gate: Do not allow ANY routing decisions until fully synced
+  if (loading) {
+    return <Loading />;
+  }
+
+  if (isAuthenticated && user?.role === 'parent' && !childrenLoaded) {
+    return <Loading />;
+  }
+
   return (
     <Router>
       <Routes>

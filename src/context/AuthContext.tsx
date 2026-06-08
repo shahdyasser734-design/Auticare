@@ -279,7 +279,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const rawData: AuthResponse = await authService.login(email, password);
       
-      // Set token temporarily so apiClient can use it to fetch profile
+      // Set token temporarily so apiClient can use it to fetch profile and children
       const tempToken = rawData.token || (rawData as any).accessToken;
       if (tempToken) {
         localStorage.setItem('token', tempToken);
@@ -303,6 +303,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
           const kids = await childrenService.getMyChildren();
           setParentChildren(kids);
+          
+          if (kids && kids.length > 0 && kids[0].id) {
+            localStorage.setItem('latestChildId', kids[0].id);
+            localStorage.setItem('latestChildName', kids[0].name || '');
+          }
         } catch (e) {
           console.warn('[AuthContext] Failed to fetch children on login:', e);
         }
