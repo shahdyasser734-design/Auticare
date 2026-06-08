@@ -7,9 +7,11 @@ import { Select } from '../../components/common/Select';
 import { childrenService, type Child } from '../../services/api/children';
 import { fileUploadService } from '../../services/api/fileUploadService';
 import { ROUTES } from '../../utils/constants';
+import { useAuth } from '../../context/useAuth';
 
 export const AddChild = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -51,7 +53,7 @@ export const AddChild = () => {
     setError('');
     try {
       const payload: Omit<Child, 'id'> & { firstName?: string; lastName?: string } = {
-        parentId: 'parent-123',
+        parentId: user?.id || '',
         name: `${form.firstName.trim()} ${form.lastName.trim()}`,
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),

@@ -105,7 +105,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const updatedUser: User = {
           id: String(rawUser.id ?? rawUser.userId ?? ''),
           email,
-          name: String(rawUser.name ?? ''),
+          name: String(rawUser.name ?? rawUser.fullName ?? (rawUser.firstName ? `${rawUser.firstName} ${rawUser.lastName ?? ''}`.trim() : '')),
           role: String(rawUser.role ?? 'parent').toLowerCase() as UserRole,
           phone,
           nationalId,
@@ -200,7 +200,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const user: User = {
       id: String(rawUser.id ?? data.userId ?? ''),
       email,
-      name: String(rawUser.name ?? data.fullName ?? ''),
+      name: String(rawUser.name ?? data.fullName ?? rawUser.fullName ?? (rawUser.firstName ? `${rawUser.firstName} ${rawUser.lastName ?? ''}`.trim() : '')),
       role: String(rawUser.role ?? 'parent').toLowerCase() as UserRole,
       phone,
       nationalId,
