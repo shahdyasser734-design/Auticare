@@ -3,6 +3,22 @@ import type { ChatMessage, ChatConversation } from '../../types';
 
 export type { ChatMessage, ChatConversation };
 
+const normalizeMessage = (raw: any): ChatMessage => {
+  if (!raw) return raw;
+  return {
+    ...raw,
+    id: String(raw.id || raw.messageId || ''),
+    chatId: String(raw.chatId || ''),
+    senderId: String(raw.senderId || raw.senderUserId || ''),
+    senderName: raw.senderName || '',
+    senderRole: raw.senderRole || raw.senderType || '',
+    content: raw.content || '',
+    messageType: raw.messageType || 'text',
+    timestamp: raw.timestamp || raw.timeStamp || new Date().toISOString(),
+    isRead: !!raw.isRead,
+  } as ChatMessage;
+};
+
 export const chatServiceAPI = {
   startChat: async (participantIds: string[]): Promise<ChatConversation> => {
     const response = await apiClient.post<ChatConversation>('/chat/start', {
@@ -18,8 +34,9 @@ export const chatServiceAPI = {
 
   getMessages: async (chatId: string, limit?: number): Promise<ChatMessage[]> => {
     const params = limit ? { limit } : {};
-    const response = await apiClient.get<ChatMessage[]>(`/chat/${chatId}/messages`, { params });
-    return response.data ?? [];
+    const response = await apiClient.get<any[]>(`/chat/${chatId}/messages`, { params });
+    const data = response.data ?? [];
+    return data.map(normalizeMessage);
   },
 
   sendMessage: async (
@@ -27,12 +44,13 @@ export const chatServiceAPI = {
     content: string,
     messageType: 'text' | 'file' = 'text'
   ): Promise<ChatMessage> => {
-    const response = await apiClient.post<ChatMessage>('/chat/send', {
-      chatId: parseInt(chatId, 10),
+    const numericChatId = typeof chatId === 'number' ? chatId : parseInt(String(chatId).replace(/\D/g, ''), 10);
+    const response = await apiClient.post<any>('/chat/send', {
+      chatId: numericChatId || parseInt(chatId as string, 10),
       content,
       messageType,
     });
-    return response.data;
+    return normalizeMessage(response.data);
   },
 
   sendZoomLink: async (
@@ -42,14 +60,15 @@ export const chatServiceAPI = {
     confirmedTime?: string, 
     note?: string
   ): Promise<ChatMessage> => {
-    const response = await apiClient.post<ChatMessage>('/chat/send-zoom-link', {
-      chatId: parseInt(chatId, 10),
+    const numericChatId = typeof chatId === 'number' ? chatId : parseInt(String(chatId).replace(/\D/g, ''), 10);
+    const response = await apiClient.post<any>('/chat/send-zoom-link', {
+      chatId: numericChatId || parseInt(chatId as string, 10),
       zoomLink,
       confirmedDate: confirmedDate || new Date().toISOString().split('T')[0],
       confirmedTime: confirmedTime || new Date().toISOString().split('T')[1].substring(0, 5),
       note: note || 'Zoom Session Link'
     });
-    return response.data;
+    return normalizeMessage(response.data);
   },
 
   markAsRead: async (messageId: string): Promise<void> => {

@@ -41,6 +41,7 @@ export const Chat = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const [sendingZoom, setSendingZoom] = useState(false);
 
   const [childrenList, setChildrenList] = useState<Child[]>([]);
@@ -114,6 +115,7 @@ export const Chat = () => {
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation?.id) return;
     setSending(true);
+    setSendError(null);
     try {
       const msg = await chatServiceAPI.sendMessage(
         selectedConversation.id,
@@ -128,8 +130,9 @@ export const Chat = () => {
           )
         );
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to send message:', err);
+      setSendError(err?.response?.data?.message || err?.message || 'Failed to send message. Please try again.');
     } finally {
       setSending(false);
     }
@@ -277,8 +280,22 @@ export const Chat = () => {
               filteredConversations.map((conv) => {
                 const isActiveConv = selectedConversation?.id === conv.id;
                 const details = getChatDetails(conv);
-                const displayName = isSpecialist ? details.childName : getChatName(conv);
-                const displaySubtitle = isSpecialist ? `Parent: ${details.parentName}` : getChatSpecialty(conv);
+                const chatName = getChatName(conv);
+                
+                let displayName = '';
+                let displaySubtitle = '';
+                
+                if (isSpecialist) {
+                  // Doctor/Therapist View
+                  displayName = details.parentName;
+                  displaySubtitle = details.childName && details.childName !== `${details.parentName}'s Child` 
+                    ? `Child: ${details.childName}` 
+                    : 'Parent';
+                } else {
+                  // Parent View
+                  displayName = chatName;
+                  displaySubtitle = getChatSpecialty(conv);
+                }
 
                 return (
                   <button
@@ -328,16 +345,19 @@ export const Chat = () => {
                 <div className="flex items-center justify-between pb-4 border-b border-stone-200/60 dark:border-white/8 mb-4 shrink-0">
                   <div className="flex items-center gap-3">
                     <Avatar
-                      name={isSpecialist ? getChatDetails(selectedConversation).childName : getChatName(selectedConversation)}
+                      name={isSpecialist ? getChatDetails(selectedConversation).parentName : getChatName(selectedConversation)}
                       image={isSpecialist ? getChatDetails(selectedConversation).avatar : undefined}
                       size="lg"
                     />
                     <div>
                       <h3 className="font-black text-base text-stone-900 dark:text-white">
-                        {isSpecialist ? getChatDetails(selectedConversation).childName : getChatName(selectedConversation)}
+                        {isSpecialist ? getChatDetails(selectedConversation).parentName : getChatName(selectedConversation)}
                       </h3>
                       <p className="text-xs text-stone-500 dark:text-slate-400 font-medium">
-                        {isSpecialist ? `Parent: ${getChatDetails(selectedConversation).parentName}` : getChatSpecialty(selectedConversation)}
+                        {isSpecialist 
+                          ? (getChatDetails(selectedConversation).childName && getChatDetails(selectedConversation).childName !== `${getChatDetails(selectedConversation).parentName}'s Child` ? `Child: ${getChatDetails(selectedConversation).childName}` : 'Parent')
+                          : getChatSpecialty(selectedConversation)
+                        }
                       </p>
                     </div>
                   </div>
@@ -428,6 +448,16 @@ export const Chat = () => {
                   <div ref={messagesEndRef} />
                 </div>
 
+                {/* Message Input Error */}
+                {sendError && (
+                  <div className="px-4 py-2 mb-2 bg-red-50 text-red-600 border border-red-200 rounded-xl text-xs font-medium flex items-center justify-between shrink-0">
+                    <span>{sendError}</span>
+                    <button onClick={() => setSendError(null)} className="text-red-400 hover:text-red-700">
+                      &times;
+                    </button>
+                  </div>
+                )}
+                
                 {/* Message Input */}
                 <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-stone-200/60 dark:border-white/8 shrink-0">
                   <Input
