@@ -62,13 +62,11 @@ export const SpecialistCardUI = ({
             <div className="flex-1 min-w-0">
               <div className="text-sm font-bold text-slate-900">{specialist.name}</div>
               <div className="text-xs font-medium text-slate-600">{specialist.specialty}</div>
-              {specialist.years > 0 && (
-                <div className="text-xs text-slate-500 mt-1">
-                  <span className="inline-block px-2 py-1 bg-slate-100 rounded text-xs">
-                    {specialist.years}+ yrs exp
-                  </span>
-                </div>
-              )}
+              <div className="text-xs text-slate-500 mt-1">
+                <span className="inline-block px-2 py-1 bg-slate-100 rounded text-xs">
+                  {specialist.years > 0 ? `${specialist.years}+ yrs exp` : 'New Specialist'}
+                </span>
+              </div>
             </div>
 
             <div className={`px-2 py-1 text-xs rounded-full font-medium whitespace-nowrap ${availColor}`}>
@@ -76,30 +74,26 @@ export const SpecialistCardUI = ({
             </div>
           </div>
 
-          {(specialist.rating > 0 || specialist.cases > 0) && (
-            <div className="mt-3 flex items-center gap-2 flex-wrap">
-              {specialist.rating > 0 && (
-                <div className="flex items-center gap-1">
-                  <div className="flex items-center text-amber-500 gap-0.5">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <svg key={i} className={`w-3.5 h-3.5 ${i < Math.round(specialist.rating) ? 'fill-current' : 'opacity-25'}`} viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M10 15l-5.878 3.09 1.123-6.545L.49 6.91l6.561-.954L10 0l2.949 5.956 6.561.954-4.755 4.635 1.123 6.545z" />
-                      </svg>
-                    ))}
-                  </div>
-                  <span className="text-xs font-semibold text-slate-700">{specialist.rating.toFixed(1)}</span>
-                </div>
-              )}
-              
-              {specialist.cases > 0 && (
-                <div className="text-xs text-slate-600 font-medium">
-                  <span className="inline-block px-2 py-0.5 bg-slate-100 rounded">
-                    {specialist.cases}+ cases
-                  </span>
-                </div>
-              )}
+          <div className="mt-3 flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1">
+              <div className="flex items-center text-amber-500 gap-0.5">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <svg key={i} className={`w-3.5 h-3.5 ${i < Math.round(specialist.rating) ? 'fill-current' : 'opacity-25'}`} viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 15l-5.878 3.09 1.123-6.545L.49 6.91l6.561-.954L10 0l2.949 5.956 6.561.954-4.755 4.635 1.123 6.545z" />
+                  </svg>
+                ))}
+              </div>
+              <span className="text-xs font-semibold text-slate-700">
+                {specialist.rating > 0 ? specialist.rating.toFixed(1) : <span className="font-normal text-slate-500">No rating yet</span>}
+              </span>
             </div>
-          )}
+            
+            <div className="text-xs text-slate-600 font-medium">
+              <span className="inline-block px-2 py-0.5 bg-slate-100 rounded">
+                {specialist.cases > 0 ? `${specialist.cases}+ reviews` : 'No reviews yet'}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 

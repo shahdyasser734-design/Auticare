@@ -121,7 +121,7 @@ const OurSpecialists = () => {
     name: a.name,
     specialty: a.specialization || 'General',
     type: a.type || 'doctor', // Use the API's type field
-    years: a.yearsOfExperience || 0,
+    years: (a.yearsExperience || a.yearsOfExperience) || 0,
     rating: a.rating || 0,
     cases: a.reviewCount || 0,
     availability: 'online',

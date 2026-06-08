@@ -58,11 +58,17 @@ export const SpecialistCard = ({
         <div className="flex items-center gap-4 mb-5 pb-5 border-b border-slate-100 dark:border-white/5">
           <div className="flex items-center gap-1.5">
             <Star size={16} className="fill-amber-400 text-amber-400" />
-            <span className="text-sm font-semibold text-slate-900 dark:text-white">{rating.toFixed(1)}</span>
-            <span className="text-xs text-slate-500">({reviewCount})</span>
+            <span className="text-sm font-semibold text-slate-900 dark:text-white">
+              {rating > 0 ? rating.toFixed(1) : <span className="text-xs font-normal text-slate-500">No rating yet</span>}
+            </span>
+            {reviewCount > 0 && <span className="text-xs text-slate-500">({reviewCount})</span>}
           </div>
           <div className="text-xs text-slate-600 dark:text-slate-400">
-            <span className="font-semibold text-slate-800 dark:text-slate-300">{experience}</span> years exp.
+            {experience > 0 ? (
+              <><span className="font-semibold text-slate-800 dark:text-slate-300">{experience}</span> years exp.</>
+            ) : (
+              <span className="text-sm font-normal text-slate-500">New Specialist</span>
+            )}
           </div>
         </div>
 

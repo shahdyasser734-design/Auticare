@@ -134,6 +134,7 @@ export interface Specialist {
   type: 'doctor' | 'therapist';
   specialization: string;
   yearsOfExperience: number;
+  yearsExperience?: number; // Backend field
   rating: number;
   reviewCount: number;
   availableSlots: AvailableSlot[];

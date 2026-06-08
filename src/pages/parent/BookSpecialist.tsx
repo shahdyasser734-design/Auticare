@@ -20,11 +20,11 @@ interface SpecialistDisplay extends Specialist {
 }
 
 const normalizeSpecialist = (specialist: Specialist): SpecialistDisplay => {
-  const experience = specialist.yearsOfExperience && specialist.yearsOfExperience > 0 ? specialist.yearsOfExperience : 5 + Math.floor(Math.random() * 11);
-  const rating = specialist.rating && specialist.rating > 0 ? Number(specialist.rating.toFixed(1)) : Number((4.2 + Math.random() * 0.8).toFixed(1));
-  const reviews = specialist.reviewCount && specialist.reviewCount > 0 ? specialist.reviewCount : 20 + Math.floor(Math.random() * 120);
-  const cases = 50 + Math.floor(Math.random() * 250);
-  const availability = Math.random() > 0.4 ? 'Available now' : 'Next available in 2 days';
+  const experience = (specialist.yearsExperience || specialist.yearsOfExperience) || 0;
+  const rating = specialist.rating || 0;
+  const reviews = specialist.reviewCount || 0;
+  const cases = 0; // The API does not return active cases
+  const availability = 'Contact for availability'; // Placeholder since API does not return this
 
   return {
     ...specialist,
@@ -54,7 +54,9 @@ const SpecialistCard = ({ data, type, onBook }: { data: SpecialistDisplay; type:
           <p className="text-sm font-semibold text-navy-500 dark:text-slate-400">{data.specialization}</p>
           <div className="flex items-center gap-1 mt-1">
             <span className="text-yellow-400">★</span>
-            <span className="text-sm font-bold text-navy-800 dark:text-slate-200">{data.rating}</span>
+            <span className="text-sm font-bold text-navy-800 dark:text-slate-200">
+              {data.rating > 0 ? data.rating : <span className="text-xs font-normal text-slate-500">No rating yet</span>}
+            </span>
           </div>
         </div>
       </div>
@@ -62,15 +64,21 @@ const SpecialistCard = ({ data, type, onBook }: { data: SpecialistDisplay; type:
       <div className="grid grid-cols-2 gap-4 bg-soft-bg dark:bg-slate-900/50 p-4 rounded-2xl mt-auto">
         <div>
           <p className="text-xs text-navy-400 dark:text-slate-500 mb-1">Experience</p>
-          <p className="font-bold text-navy-900 dark:text-white">{data.yearsOfExperience} yrs</p>
+          <p className="font-bold text-navy-900 dark:text-white">
+            {data.yearsOfExperience > 0 ? `${data.yearsOfExperience} yrs` : <span className="text-sm font-normal text-slate-500">New Specialist</span>}
+          </p>
         </div>
         <div>
           <p className="text-xs text-navy-400 dark:text-slate-500 mb-1">Reviews</p>
-          <p className="font-bold text-navy-900 dark:text-white">{data.reviewCount}</p>
+          <p className="font-bold text-navy-900 dark:text-white">
+            {data.reviewCount > 0 ? data.reviewCount : <span className="text-sm font-normal text-slate-500">No reviews yet</span>}
+          </p>
         </div>
         <div>
           <p className="text-xs text-navy-400 dark:text-slate-500 mb-1">Active Cases</p>
-          <p className="font-bold text-navy-900 dark:text-white">{data.treatedCases}+</p>
+          <p className="font-bold text-navy-900 dark:text-white">
+            {data.treatedCases > 0 ? `${data.treatedCases}+` : <span className="text-sm font-normal text-slate-500">-</span>}
+          </p>
         </div>
         <div>
           <p className="text-xs text-navy-400 dark:text-slate-500 mb-1">Status</p>
