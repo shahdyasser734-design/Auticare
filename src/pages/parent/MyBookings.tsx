@@ -1,11 +1,28 @@
 import { useEffect, useState } from 'react';
 import { MainLayout } from '../../layouts/MainLayout';
 import { useBookings } from '../../context/BookingsContext';
+import { getOrCreateSessionMeetingLink } from '../../utils/zoomHelper';
+import { bookingService } from '../../services/api/bookings';
+import { Loader2 } from 'lucide-react';
 
 export const MyBookings = () => {
   const { myBookings: bookings, loading, refreshBookings } = useBookings();
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'upcoming' | 'completed'>('upcoming');
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
+
+  const handleCancelSession = async () => {
+    if (!cancellingId || !cancelReason.trim()) return;
+    try {
+      await bookingService.cancelBooking(cancellingId, cancelReason, 'parent');
+      setCancellingId(null);
+      setCancelReason('');
+      await refreshBookings();
+    } catch (err) {
+      console.error('Error cancelling session:', err);
+    }
+  };
 
   useEffect(() => {
     const loadBookings = async () => {
@@ -25,15 +42,16 @@ export const MyBookings = () => {
     return timeB - timeA;
   });
 
-  // Upcoming: anything that is NOT completed
+  // Upcoming: anything that is NOT completed or cancelled
   const upcomingBookings = sortedBookings.filter((b) => {
     const s = (b.status ?? '').toLowerCase();
-    return s !== 'completed';
+    return s !== 'completed' && s !== 'cancelled';
   });
 
-  // Completed: only bookings explicitly marked completed
+  // Completed: bookings explicitly marked completed or cancelled
   const completedBookings = sortedBookings.filter((b) => {
-    return (b.status ?? '').toLowerCase() === 'completed';
+    const s = (b.status ?? '').toLowerCase();
+    return s === 'completed' || s === 'cancelled';
   });
 
   const displayBookings = activeTab === 'upcoming' ? upcomingBookings : completedBookings;
@@ -151,7 +169,6 @@ export const MyBookings = () => {
             {displayBookings.map((booking) => {
               const status = (booking.status ?? '').toLowerCase();
               const canJoin = activeTab === 'upcoming' && (status === 'scheduled' || status === 'confirmed' || status === 'approved');
-              const zoomLink = booking.joinLink || 'https://zoom.us/j/9876543210';
               return (
                 <div
                   key={booking.id}
@@ -196,9 +213,22 @@ export const MyBookings = () => {
                     </div>
                   </div>
                   {canJoin && (
-                    <div className="border-t border-slate-100 dark:border-slate-700 px-6 py-3 flex justify-end">
+                    <div className="border-t border-slate-100 dark:border-slate-700 px-6 py-3 flex justify-end gap-3">
                       <button
-                        onClick={() => window.open(zoomLink, '_blank')}
+                        onClick={() => setCancellingId(booking.id)}
+                        className="rounded-xl border border-red-200 bg-transparent hover:bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 transition-colors"
+                      >
+                        Cancel Session
+                      </button>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const link = await getOrCreateSessionMeetingLink(booking, false);
+                            window.open(link, '_blank');
+                          } catch (err) {
+                            window.open(booking.joinLink || `https://zoom.us/j/${booking.id}`, '_blank');
+                          }
+                        }}
                         className="flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition-colors"
                       >
                         🎥 Join Zoom Meeting
@@ -211,6 +241,38 @@ export const MyBookings = () => {
           </div>
         )}
       </div>
+
+      {/* Cancel Modal */}
+      {cancellingId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">Cancel Session</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">Please provide a reason for cancelling this session. This will be shared with the specialist.</p>
+            <textarea
+              className="w-full p-3 border border-slate-300 dark:border-slate-700 rounded-xl mb-4 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+              rows={3}
+              placeholder="Reason for cancellation..."
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+            />
+            <div className="flex gap-3 justify-end">
+              <button 
+                className="px-4 py-2 rounded-lg font-semibold border border-slate-300 hover:bg-slate-50 text-slate-700"
+                onClick={() => { setCancellingId(null); setCancelReason(''); }}
+              >
+                Keep Session
+              </button>
+              <button 
+                className="px-4 py-2 rounded-lg font-semibold bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
+                onClick={handleCancelSession}
+                disabled={!cancelReason.trim()}
+              >
+                Confirm Cancellation
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 };

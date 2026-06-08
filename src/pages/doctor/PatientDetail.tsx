@@ -9,6 +9,7 @@ import { bookingService } from '../../services/api/bookings';
 import { dashboardService } from '../../services/api/dashboard';
 import { screeningService } from '../../services/api/screening';
 import { notesService, type Note } from '../../services/api/notes';
+import { NoteCard } from '../../components/notes/NoteCard';
 import { treatmentPlansService, type TreatmentPlan } from '../../services/api/treatmentPlans';
 import type { ScreeningResult } from '../../types';
 
@@ -96,7 +97,6 @@ export const PatientDetail = () => {
   if (!patient) return <MainLayout><div className="text-center py-12">Patient not found</div></MainLayout>;
 
   const patientName = patient.name || 'Patient';
-  const patientDOB = patient.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString() : 'N/A';
 
   return (
     <MainLayout>
@@ -105,8 +105,11 @@ export const PatientDetail = () => {
           <Avatar name={patientName} size="xl" />
           <div>
             <h1 className="text-4xl font-bold text-slate-900 dark:text-white">{patientName}</h1>
-            <p className="text-slate-700 dark:text-slate-300">Age: {patient.age ?? 'N/A'} • Gender: {patient.gender}</p>
-            <p className="text-slate-750 dark:text-slate-400">DOB: {patientDOB}</p>
+            <p className="text-slate-700 dark:text-slate-300">
+              {patient.age ? `Age: ${patient.age}` : 'Age: Not Provided'}
+              {' • '}
+              {patient.gender && patient.gender.toLowerCase() !== 'unknown' ? `Gender: ${patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1).toLowerCase()}` : 'Gender: Not Provided'}
+            </p>
           </div>
         </div>
 
@@ -194,10 +197,12 @@ export const PatientDetail = () => {
                 <p className="text-slate-500 dark:text-slate-400">No notes yet</p>
               ) : (
                 notes.map((note) => (
-                  <div key={note.id} className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-lg border border-slate-100 dark:border-white/5">
-                    <p className="text-sm text-slate-900 dark:text-slate-100">{note.content}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">{new Date(note.createdAt).toLocaleString()}</p>
-                  </div>
+                  <NoteCard
+                    key={note.id}
+                    note={note}
+                    onUpdate={(updated) => setNotes(notes.map(n => n.id === updated.id ? updated : n))}
+                    onDelete={(deletedId) => setNotes(notes.filter(n => n.id !== deletedId))}
+                  />
                 ))
               )}
             </div>

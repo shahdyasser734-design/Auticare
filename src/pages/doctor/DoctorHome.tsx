@@ -10,6 +10,9 @@ import { useAuth } from '../../context/useAuth';
 import { dashboardService, type DashboardSpecialistData, type PatientCard } from '../../services/api/dashboard';
 import { bookingService, type Booking } from '../../services/api/bookings';
 import { notificationService, type Notification } from '../../services/api/notifications';
+import { chatServiceAPI } from '../../services/api/chatService';
+import { notesService, type Note } from '../../services/api/notes';
+import { NoteCard } from '../../components/notes/NoteCard';
 import type { Child } from '../../services/api/children';
 import { getOrCreateSessionMeetingLink, cleanIntId } from '../../utils/zoomHelper';
 
@@ -36,6 +39,7 @@ export const DoctorHome = () => {
   const [sessions, setSessions] = useState<Booking[]>([]);
   const [children, setChildren] = useState<Child[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [myNotes, setMyNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,7 +49,7 @@ export const DoctorHome = () => {
       setError(null);
       console.log(`[DASHBOARD] Fetching specialist dashboard data for ${user?.role}:`, user?.id);
 
-      const [dashData, bookingData, childList, notifData] = await Promise.all([
+      const [dashData, bookingData, childList, notifData, notesData] = await Promise.all([
         dashboardService.getSpecialistDashboard().catch((err) => {
           console.warn('[DASHBOARD] Failed to fetch specialist dashboard:', err);
           return null;
@@ -62,20 +66,24 @@ export const DoctorHome = () => {
           console.warn('[DASHBOARD] Failed to fetch notifications:', err);
           return [];
         }),
+        notesService.getMyNotes().catch((err) => {
+          console.warn('[DASHBOARD] Failed to fetch notes:', err);
+          return [];
+        }),
       ]);
 
       // Extract patients exclusively from booking relationships
       const uniqueChildren = new Map();
       
       // Filter out pending or cancelled bookings when determining "Assigned Cases"
-      const assignedBookings = childList.filter((b: Booking) => 
-        b.status === 'scheduled' || b.status === 'confirmed' || b.status === 'approved'
+      const assignedBookings = (childList || []).filter((b: Booking) => 
+        b && (b.status === 'scheduled' || b.status === 'confirmed' || b.status === 'approved')
       );
 
       const patientCards = dashData?.patientCards || [];
 
       assignedBookings.forEach((b: Booking) => {
-        if (b.childId && !uniqueChildren.has(b.childId)) {
+        if (b && b.childId && !uniqueChildren.has(b.childId)) {
           const card = patientCards.find((c: any) => c.childName === b.childName || c.name === b.childName);
           uniqueChildren.set(b.childId, {
             id: b.childId,
@@ -97,6 +105,7 @@ export const DoctorHome = () => {
       setSessions(bookingData);
       setChildren(extractedPatients as any[]);
       setNotifications(notifData.slice(0, 5));
+      setMyNotes(notesData || []);
 
       console.log(
         `[DASHBOARD] Dashboard ready - ${extractedPatients.length} patients, ${bookingData.length} bookings, ${notifData.length} notifications`
@@ -128,9 +137,9 @@ export const DoctorHome = () => {
     }
   };
 
-  const pendingBookings = sessions.filter((s) => s.status === 'pending');
-  const confirmedSessions = sessions.filter((s) => s.status === 'confirmed' || s.status === 'scheduled');
-  const todaySessions = confirmedSessions.filter((s) => isToday(s.appointmentDate) || isToday(s.dateTime));
+  const pendingBookings = (sessions || []).filter((s) => s && s.status === 'pending');
+  const confirmedSessions = (sessions || []).filter((s) => s && (s.status === 'confirmed' || s.status === 'scheduled'));
+  const todaySessions = confirmedSessions.filter((s) => s && (isToday(s.appointmentDate) || isToday(s.dateTime)));
 
   // Build stats from API data
   const stats = isDoctor ? createDoctorStats(dashboardData) : createTherapistStats(dashboardData);
@@ -149,7 +158,25 @@ export const DoctorHome = () => {
     const newWindow = window.open('', '_blank');
     try {
       const link = await getOrCreateSessionMeetingLink(session, isDoctor);
-      if (newWindow) newWindow.location.href = link;
+      
+      if (isDoctor && session.parentId) {
+        try {
+          const chat = await chatServiceAPI.startChat([session.parentId]);
+          await chatServiceAPI.sendZoomLink(
+            chat.id, 
+            link, 
+            session.appointmentDate, 
+            session.appointmentTime,
+            session.reason || 'Zoom Session Link'
+          );
+        } catch (chatErr) {
+          console.warn('[ZOOM] Could not automatically send link to parent via chat:', chatErr);
+        }
+      }
+
+      if (newWindow) {
+        newWindow.location.href = link;
+      }
     } catch (err: any) {
       console.error('Failed to join Zoom session:', err);
       if (newWindow) newWindow.close();
@@ -330,12 +357,12 @@ export const DoctorHome = () => {
                             </Badge>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm text-slate-700 dark:text-slate-300 bg-green-50/50 dark:bg-green-900/10 p-4 rounded-xl border border-green-200 dark:border-green-900/20">
-                            <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Child Name:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.childName || 'Emma Johnson'}</span></p>
-                            <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Parent Name:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.parentName || 'Sarah Johnson'}</span></p>
+                            <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Child Name:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.childName || 'Not Provided'}</span></p>
+                            <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Parent Name:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.parentName || 'Not Provided'}</span></p>
                             {isDoctor ? (
-                              <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Assigned Therapist:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.therapistName || 'Therapist Sarah'}</span></p>
+                              <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Assigned Therapist:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.therapistName || 'Not Assigned'}</span></p>
                             ) : (
-                              <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Doctor Name:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.doctorName || 'Dr. Ahmed'}</span></p>
+                              <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Assigned Doctor:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.doctorName || 'Not Assigned'}</span></p>
                             )}
                           </div>
                           <div className="mt-3 bg-white dark:bg-transparent rounded-lg">
@@ -462,12 +489,12 @@ export const DoctorHome = () => {
                             </Badge>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Child Name:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.childName || 'Emma Johnson'}</span></p>
-                            <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Parent Name:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.parentName || 'Sarah Johnson'}</span></p>
+                            <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Child Name:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.childName || 'Not Provided'}</span></p>
+                            <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Parent Name:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.parentName || 'Not Provided'}</span></p>
                             {isDoctor ? (
-                              <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Assigned Therapist:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.therapistName || 'Therapist Sarah'}</span></p>
+                              <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Assigned Therapist:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.therapistName || 'Not Assigned'}</span></p>
                             ) : (
-                              <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Doctor Name:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.doctorName || 'Dr. Ahmed'}</span></p>
+                              <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Assigned Doctor:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.doctorName || 'Not Assigned'}</span></p>
                             )}
                           </div>
                           <div className="mt-3 bg-white dark:bg-transparent rounded-lg">
@@ -620,6 +647,29 @@ export const DoctorHome = () => {
                 >
                   <Bell size={14} className="mr-1.5" /> All Notifications
                 </Button>
+              </div>
+              </div>
+            </Card>
+
+            {/* My Recent Notes */}
+            <Card className="border border-slate-200 dark:border-white/10 shadow-md rounded-3xl p-6">
+              <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+                <ClipboardList className="text-blue-500" size={18} /> My Recent Notes
+              </h3>
+
+              <div className="space-y-3">
+                {myNotes.length === 0 ? (
+                  <p className="text-slate-500 text-xs py-4 text-center">No notes found.</p>
+                ) : (
+                  myNotes.slice(0, 5).map((note) => (
+                    <NoteCard
+                      key={note.id}
+                      note={note}
+                      onUpdate={(updated) => setMyNotes(myNotes.map(n => n.id === updated.id ? updated : n))}
+                      onDelete={(deletedId) => setMyNotes(myNotes.filter(n => n.id !== deletedId))}
+                    />
+                  ))
+                )}
               </div>
             </Card>
           </div>

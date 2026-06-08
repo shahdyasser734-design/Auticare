@@ -4,6 +4,7 @@ import { MainLayout } from '../../layouts/MainLayout';
 import { treatmentPlansService } from '../../services/api/treatmentPlansService';
 import { sessionsService } from '../../services/api/sessionsService';
 import { notesService } from '../../services/api/notesService';
+import { NoteCard } from '../../components/notes/NoteCard';
 import type { TreatmentPlan, TherapySession, ClinicalNote } from '../../types';
 import { Calendar, Target, CheckCircle, MessageSquare } from 'lucide-react';
 
@@ -196,18 +197,12 @@ export const TreatmentPlanDetail = () => {
               <p className="text-center text-gray-600 dark:text-gray-400 py-8">No notes yet</p>
             ) : (
               notes.map((note) => (
-                <div key={note.id} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
-                  <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-bold text-gray-900 dark:text-white">{note.title}</h4>
-                    <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
-                      {note.category}
-                    </span>
-                  </div>
-                  <p className="text-gray-700 dark:text-gray-300">{note.content}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                    {new Date(note.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
+                <NoteCard
+                  key={note.id}
+                  note={note}
+                  onUpdate={(updated) => setNotes(notes.map(n => n.id === updated.id ? updated : n))}
+                  onDelete={(deletedId) => setNotes(notes.filter(n => n.id !== deletedId))}
+                />
               ))
             )}
           </div>

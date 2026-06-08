@@ -23,7 +23,7 @@ export const normalizeTreatmentPlan = (p: any): any => {
   }
 
   let descriptionVal = p.description || '';
-  let notesVal = p.notes || '';
+  const notesVal = p.notes || '';
   if (!descriptionVal && p.notes) {
     descriptionVal = p.notes;
   }

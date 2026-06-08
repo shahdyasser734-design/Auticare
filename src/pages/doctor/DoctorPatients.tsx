@@ -122,8 +122,12 @@ export const DoctorPatients = () => {
                       <Avatar name={patientName} size="lg" />
                       <div>
                         <h3 className="font-bold text-slate-900 dark:text-white">{patientName}</h3>
-                        <p className="text-sm text-slate-650 dark:text-slate-400">Age: {patient.age ?? 'N/A'}</p>
-                        <p className="text-sm text-slate-650 dark:text-slate-400 capitalize">{patient.gender}</p>
+                        <p className="text-sm text-slate-650 dark:text-slate-400">
+                          {patient.age ? `Age: ${patient.age}` : 'Age: Not Provided'}
+                        </p>
+                        <p className="text-sm text-slate-650 dark:text-slate-400 capitalize">
+                          {patient.gender && patient.gender.toLowerCase() !== 'unknown' ? patient.gender : 'Not Provided'}
+                        </p>
                       </div>
                     </div>
 

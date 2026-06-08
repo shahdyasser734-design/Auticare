@@ -78,11 +78,17 @@ export const bookingService = {
   },
   getMyBookings: async (): Promise<Booking[]> => {
     const response = await apiClient.get<Booking[]>('/bookings/my-bookings');
-    return response.data.map(normalizeBooking).sort((a, b) => new Date(b.dateTime ?? b.createdAt).getTime() - new Date(a.dateTime ?? a.createdAt).getTime());
+    return (response.data || [])
+      .filter(Boolean)
+      .map(normalizeBooking)
+      .sort((a, b) => new Date(b.dateTime ?? b.createdAt).getTime() - new Date(a.dateTime ?? a.createdAt).getTime());
   },
   getUpcomingBookings: async (): Promise<Booking[]> => {
     const response = await apiClient.get<Booking[]>('/bookings/upcoming');
-    return response.data.map(normalizeBooking).sort((a, b) => new Date(b.dateTime ?? b.createdAt).getTime() - new Date(a.dateTime ?? a.createdAt).getTime());
+    return (response.data || [])
+      .filter(Boolean)
+      .map(normalizeBooking)
+      .sort((a, b) => new Date(b.dateTime ?? b.createdAt).getTime() - new Date(a.dateTime ?? a.createdAt).getTime());
   },
   updateBookingStatus: async (id: string, status: Booking['status']): Promise<Booking> => {
     let backendStatus = status as string;
@@ -95,6 +101,15 @@ export const bookingService = {
       backendStatus = backendStatus.charAt(0).toUpperCase() + backendStatus.slice(1);
     }
     const response = await apiClient.patch<Booking>(`/bookings/${id}/status`, { status: backendStatus });
+    return normalizeBooking(response.data);
+  },
+  cancelBooking: async (id: string, reason: string, cancelledBy: 'doctor' | 'parent' | 'therapist'): Promise<Booking> => {
+    // Send cancellation reason and who cancelled it, as well as setting status to Cancelled
+    const response = await apiClient.patch<Booking>(`/bookings/${id}/status`, { 
+      status: 'Cancelled',
+      cancellationReason: reason,
+      cancelledBy: cancelledBy
+    });
     return normalizeBooking(response.data);
   },
 };

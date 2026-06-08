@@ -63,7 +63,7 @@ export const ParentSessions = () => {
           }
         });
         
-        let connected = allSpecs.filter(spec => connectedIds.has(String(spec.id)));
+        const connected = allSpecs.filter(spec => connectedIds.has(String(spec.id)));
         
         setConnectedSpecialists(connected);
         if (connected.length > 0) {
