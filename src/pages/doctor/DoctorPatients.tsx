@@ -6,6 +6,7 @@ import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Avatar } from '../../components/common/Avatar';
 import { bookingService } from '../../services/api/bookings';
+import { dashboardService } from '../../services/api/dashboard';
 import type { Child } from '../../services/api/children';
 
 export const DoctorPatients = () => {
@@ -17,18 +18,23 @@ export const DoctorPatients = () => {
   const fetchPatients = async () => {
     try {
       setLoading(true);
-      const bookings = await bookingService.getMyBookings();
+      const [bookings, dashData] = await Promise.all([
+        bookingService.getMyBookings(),
+        dashboardService.getSpecialistDashboard().catch(() => null)
+      ]);
       const uniqueChildren = new Map();
+      const patientCards = dashData?.patientCards || [];
       
       bookings.forEach(b => {
         if (b.childId && !uniqueChildren.has(b.childId)) {
+          const card = patientCards.find((c: any) => c.childName === b.childName || c.name === b.childName);
           uniqueChildren.set(b.childId, {
             id: b.childId,
             name: b.childName || 'Unknown Patient',
-            age: null,
-            gender: 'Unknown',
+            age: card?.age ?? card?.childAge ?? card?.ageInYears ?? null,
+            gender: card?.gender ?? card?.childGender ?? card?.sex ?? 'Unknown',
             parentId: b.parentId || '',
-            dateOfBirth: '',
+            dateOfBirth: card?.dateOfBirth ?? card?.date_of_birth ?? card?.dob ?? card?.childDob ?? '',
             status: 'active',
           });
         }
@@ -53,18 +59,23 @@ export const DoctorPatients = () => {
     setSearchQuery(query);
     if (query.length >= 2) {
       try {
-        const bookings = await bookingService.getMyBookings();
+        const [bookings, dashData] = await Promise.all([
+          bookingService.getMyBookings(),
+          dashboardService.getSpecialistDashboard().catch(() => null)
+        ]);
         const uniqueChildren = new Map();
+        const patientCards = dashData?.patientCards || [];
         
         bookings.forEach(b => {
           if (b.childId && !uniqueChildren.has(b.childId)) {
+            const card = patientCards.find((c: any) => c.childName === b.childName || c.name === b.childName);
             uniqueChildren.set(b.childId, {
               id: b.childId,
               name: b.childName || 'Unknown Patient',
-              age: null,
-              gender: 'Unknown',
+              age: card?.age ?? card?.childAge ?? card?.ageInYears ?? null,
+              gender: card?.gender ?? card?.childGender ?? card?.sex ?? 'Unknown',
               parentId: b.parentId || '',
-              dateOfBirth: '',
+              dateOfBirth: card?.dateOfBirth ?? card?.date_of_birth ?? card?.dob ?? card?.childDob ?? '',
               status: 'active',
             });
           }

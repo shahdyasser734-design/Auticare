@@ -85,7 +85,16 @@ export const bookingService = {
     return response.data.map(normalizeBooking).sort((a, b) => new Date(b.dateTime ?? b.createdAt).getTime() - new Date(a.dateTime ?? a.createdAt).getTime());
   },
   updateBookingStatus: async (id: string, status: Booking['status']): Promise<Booking> => {
-    const response = await apiClient.patch<Booking>(`/bookings/${id}/status`, { status });
+    let backendStatus = status as string;
+    if (backendStatus === 'confirmed') backendStatus = 'Confirmed';
+    else if (backendStatus === 'cancelled') backendStatus = 'Cancelled';
+    else if (backendStatus === 'pending') backendStatus = 'Pending';
+    else if (backendStatus === 'completed') backendStatus = 'Completed';
+    else if (backendStatus === 'rejected') backendStatus = 'Rejected';
+    else if (backendStatus && backendStatus.length > 0) {
+      backendStatus = backendStatus.charAt(0).toUpperCase() + backendStatus.slice(1);
+    }
+    const response = await apiClient.patch<Booking>(`/bookings/${id}/status`, { status: backendStatus });
     return normalizeBooking(response.data);
   },
 };

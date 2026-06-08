@@ -72,13 +72,16 @@ export const DoctorHome = () => {
         b.status === 'scheduled' || b.status === 'confirmed' || b.status === 'approved'
       );
 
+      const patientCards = dashData?.patientCards || [];
+
       assignedBookings.forEach((b: Booking) => {
         if (b.childId && !uniqueChildren.has(b.childId)) {
+          const card = patientCards.find((c: any) => c.childName === b.childName || c.name === b.childName);
           uniqueChildren.set(b.childId, {
             id: b.childId,
             name: b.childName || 'Unknown Patient',
-            age: null,
-            gender: 'Unknown',
+            age: card?.age ?? card?.childAge ?? card?.ageInYears ?? null,
+            gender: card?.gender ?? card?.childGender ?? card?.sex ?? 'Unknown',
             status: 'active',
             assignedDoctor: isDoctor ? user?.name : (b.specialistName || 'Not Assigned'),
             assignedTherapist: !isDoctor ? user?.name : 'Not Assigned',

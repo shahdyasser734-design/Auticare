@@ -79,6 +79,7 @@ export interface DashboardSpecialistData {
   sessions?: Array<Record<string, unknown>>;
   assignedChildren?: AssignedChild[];
   patients?: PatientCard[];
+  patientCards?: any[];
 }
 
 const mockSpecialistDashboard: DashboardSpecialistData = {
