@@ -222,7 +222,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       const rawData: AuthResponse = await authService.login(email, password);
-      const data = normalizeAuthResponse(rawData);
+      
+      // Set token temporarily so apiClient can use it to fetch profile
+      const tempToken = rawData.token || (rawData as any).accessToken;
+      if (tempToken) {
+        localStorage.setItem('token', tempToken);
+      }
+
+      // Merge rawData with profile data if available
+      let profileData = rawData.user ?? rawData;
+      try {
+        const profileRes = await apiClient.get<Record<string, unknown>>('/profile');
+        if (profileRes.data && Object.keys(profileRes.data).length > 0) {
+          profileData = { ...profileData, ...profileRes.data };
+        }
+      } catch (err) {
+        console.warn('[AuthContext] Failed to fetch profile immediately after login:', err);
+      }
+
+      const mergedData = { token: tempToken, user: profileData };
+      const data = normalizeAuthResponse(mergedData as unknown as AuthResponse);
+
       localStorage.setItem('token', data.token);
       localStorage.setItem('role', data.user.role);
       localStorage.setItem('user', JSON.stringify(data.user));
@@ -244,7 +264,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       const rawData: AuthResponse = await authService.signup(payload);
-      const data = normalizeAuthResponse(rawData);
+      
+      const tempToken = rawData.token || (rawData as any).accessToken;
+      if (tempToken) {
+        localStorage.setItem('token', tempToken);
+      }
+
+      let profileData = { ...payload, ...(rawData.user ?? rawData) };
+      try {
+        if (tempToken) {
+          const profileRes = await apiClient.get<Record<string, unknown>>('/profile');
+          if (profileRes.data && Object.keys(profileRes.data).length > 0) {
+            profileData = { ...profileData, ...profileRes.data };
+          }
+        }
+      } catch (err) {
+        console.warn('[AuthContext] Failed to fetch profile immediately after signup:', err);
+      }
+
+      const mergedData = { token: tempToken, user: profileData };
+      const data = normalizeAuthResponse(mergedData as unknown as AuthResponse);
       
       if (payload.phone) {
         data.user.phone = String(payload.phone);

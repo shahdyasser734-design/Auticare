@@ -26,28 +26,33 @@ apiClient.interceptors.request.use(
 
 // Response interceptor to handle errors
 const getApiErrorMessage = (error: AxiosError): string => {
-  const responseData = error.response?.data as Record<string, unknown> | undefined;
+  const responseData = error.response?.data;
 
-  if (responseData) {
-    if (typeof responseData.message === 'string') {
-      return responseData.message;
+  if (typeof responseData === 'string') {
+    return responseData;
+  }
+
+  if (responseData && typeof responseData === 'object') {
+    const dataObj = responseData as Record<string, unknown>;
+    if (typeof dataObj.message === 'string') {
+      return dataObj.message;
     }
-    if (typeof responseData.error === 'string') {
-      return responseData.error;
+    if (typeof dataObj.error === 'string') {
+      return dataObj.error;
     }
-    if (typeof responseData.errors === 'string') {
-      return responseData.errors;
+    if (typeof dataObj.errors === 'string') {
+      return dataObj.errors;
     }
-    if (typeof responseData.errors === 'object' && responseData.errors !== null) {
+    if (typeof dataObj.errors === 'object' && dataObj.errors !== null) {
       // Handle ASP.NET Core validation errors where 'errors' is an object of arrays
-      const errorsObj = responseData.errors as Record<string, string[]>;
+      const errorsObj = dataObj.errors as Record<string, string[]>;
       const firstKey = Object.keys(errorsObj)[0];
       if (firstKey && Array.isArray(errorsObj[firstKey]) && errorsObj[firstKey].length > 0) {
         return errorsObj[firstKey][0];
       }
     }
-    if (typeof responseData.title === 'string') {
-      return responseData.title;
+    if (typeof dataObj.title === 'string') {
+      return dataObj.title;
     }
   }
 
