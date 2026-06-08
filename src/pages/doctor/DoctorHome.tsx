@@ -648,7 +648,6 @@ export const DoctorHome = () => {
                   <Bell size={14} className="mr-1.5" /> All Notifications
                 </Button>
               </div>
-              </div>
             </Card>
 
             {/* My Recent Notes */}
