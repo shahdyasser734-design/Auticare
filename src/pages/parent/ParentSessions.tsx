@@ -78,37 +78,39 @@ export const ParentSessions = () => {
 
   const [joiningZoom, setJoiningZoom] = useState<string | null>(null);
 
-  const handleJoinZoom = async (session: Booking) => {
+  const handleJoinZoom = (session: Booking) => {
     console.log('[ZOOM] Parent Join Zoom handler clicked.');
-    console.log('session:', session);
-    console.log('session.meetingLink:', (session as any).meetingLink);
-    console.log('session.zoomUrl:', session.zoomUrl);
-    console.log('session.joinLink:', session.joinLink);
+
+    let link = session.zoomUrl || session.joinLink || (session as any).meetingLink;
+    
+    // Open immediately to avoid popup blocker
+    const newWindow = window.open(link || 'about:blank', '_blank');
+    if (!newWindow) {
+      console.warn('[ZOOM] window.open() returned null or was blocked.');
+      setZoomAlert('Popup blocked by browser. Please allow popups for this site.');
+      setTimeout(() => setZoomAlert(null), 4000);
+    } else {
+      console.log('[ZOOM] window.open() executed successfully.');
+    }
 
     setJoiningZoom(session.id);
-    const newWindow = window.open('', '_blank');
-    if (newWindow) {
-      console.log('[ZOOM] window.open() executed successfully.');
-    } else {
-      console.warn('[ZOOM] window.open() returned null or was blocked.');
-    }
 
-    try {
-      const link = await getOrCreateSessionMeetingLink(session, false);
-      console.log('[ZOOM] getOrCreateSessionMeetingLink returned link:', link);
-
-      if (newWindow) {
-        newWindow.location.href = link;
-      }
-    } catch (err: any) {
-      console.error('[ZOOM] Failed to join Zoom session:', err);
-      if (newWindow) newWindow.close();
-      const errMsg = err.message || 'No Zoom meeting link available.';
-      setZoomAlert(errMsg);
-      setTimeout(() => setZoomAlert(null), 4000);
-    } finally {
-      setJoiningZoom(null);
-    }
+    getOrCreateSessionMeetingLink(session, false)
+      .then((fetchedLink) => {
+        if (newWindow && newWindow.location.href !== fetchedLink) {
+          newWindow.location.href = fetchedLink;
+        }
+      })
+      .catch((err) => {
+        console.error('[ZOOM] Failed to sync Zoom session:', err);
+        const fallback = session.joinLink || `https://zoom.us/j/${session.id}`;
+        if (newWindow && newWindow.location.href !== fallback) {
+          newWindow.location.href = fallback;
+        }
+      })
+      .finally(() => {
+        setJoiningZoom(null);
+      });
   };
 
   return (

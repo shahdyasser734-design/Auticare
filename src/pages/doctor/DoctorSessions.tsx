@@ -68,52 +68,66 @@ export const DoctorSessions = () => {
   const [joiningZoom, setJoiningZoom] = useState<string | null>(null);
   const [zoomAlert, setZoomAlert] = useState<string | null>(null);
 
-  const handleJoinZoom = async (session: Booking) => {
+  const handleJoinZoom = (session: Booking) => {
     console.log('[ZOOM] Start Session / Join Zoom handler clicked.');
-    console.log('session:', session);
-    console.log('session.meetingLink:', (session as any).meetingLink);
-    console.log('session.zoomUrl:', session.zoomUrl);
-    console.log('session.joinLink:', session.joinLink);
+    
+    let link = session.zoomUrl || session.joinLink || (session as any).meetingLink;
+    let isFallback = false;
+    
+    if (!link || link.trim() === '') {
+       // Generate fallback instantly for specialists
+       const meetingId = Math.floor(1000000000 + Math.random() * 9000000000);
+       link = `https://zoom.us/j/${meetingId}`;
+       isFallback = true;
+    }
+    
+    const newWindow = window.open(link, '_blank');
+    if (!newWindow) {
+      console.warn('[ZOOM] window.open() returned null or was blocked.');
+      setZoomAlert('Popup blocked by browser. Please allow popups for this site.');
+      setTimeout(() => setZoomAlert(null), 4000);
+    } else {
+      console.log('[ZOOM] window.open() executed successfully.');
+    }
 
     setJoiningZoom(session.id);
-    const newWindow = window.open('', '_blank');
-    if (newWindow) {
-      console.log('[ZOOM] window.open() executed successfully.');
-    } else {
-      console.warn('[ZOOM] window.open() returned null or was blocked.');
-    }
-
-    try {
-      const link = await getOrCreateSessionMeetingLink(session, isDoctor);
-      console.log('[ZOOM] getOrCreateSessionMeetingLink returned link:', link);
-
-      if (isDoctor && session.parentId) {
-        try {
-          const chat = await chatServiceAPI.startChat([session.parentId]);
-          await chatServiceAPI.sendZoomLink(
-            chat.id, 
-            link, 
-            session.appointmentDate, 
-            session.appointmentTime,
-            session.reason || 'Zoom Session Link'
-          );
-        } catch (chatErr) {
-          console.warn('[ZOOM] Could not automatically send link to parent via chat:', chatErr);
+    
+    // Background sync
+    getOrCreateSessionMeetingLink(session, isDoctor)
+      .then(async (fetchedLink) => {
+        // If we opened a generated fallback, stick to it so Doctor and Parent use the same room
+        const finalLink = isFallback ? link : fetchedLink;
+        if (!isFallback && newWindow && newWindow.location.href !== finalLink) {
+           newWindow.location.href = finalLink;
         }
-      }
 
-      if (newWindow) {
-        newWindow.location.href = link;
-      }
-    } catch (err: any) {
-      console.error('[ZOOM] Failed to join Zoom session:', err);
-      if (newWindow) newWindow.close();
-      const errMsg = err.message || 'No Zoom meeting link available.';
-      setZoomAlert(errMsg);
-      setTimeout(() => setZoomAlert(null), 4000);
-    } finally {
-      setJoiningZoom(null);
-    }
+        // Send to parent via chat
+        if (isDoctor && session.parentId) {
+          try {
+            const chat = await chatServiceAPI.startChat([session.parentId]);
+            await chatServiceAPI.sendZoomLink(
+              chat.id, 
+              finalLink, 
+              session.appointmentDate, 
+              session.appointmentTime,
+              session.reason || 'Zoom Session Link'
+            );
+          } catch (chatErr) {
+            console.warn('[ZOOM] Could not automatically send link to parent via chat:', chatErr);
+          }
+        }
+      })
+      .catch((err) => {
+        console.error('[ZOOM] Failed to sync Zoom session:', err);
+        if (isFallback && isDoctor && session.parentId) {
+          chatServiceAPI.startChat([session.parentId]).then(chat => {
+            chatServiceAPI.sendZoomLink(chat.id, link, session.appointmentDate, session.appointmentTime, session.reason || 'Zoom Session Link');
+          }).catch(() => {});
+        }
+      })
+      .finally(() => {
+        setJoiningZoom(null);
+      });
   };
 
   return (

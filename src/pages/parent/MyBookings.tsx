@@ -220,13 +220,18 @@ export const MyBookings = () => {
                         Cancel Session
                       </button>
                       <button
-                        onClick={async () => {
-                          try {
-                            const link = await getOrCreateSessionMeetingLink(booking, false);
-                            window.open(link, '_blank');
-                          } catch (err) {
-                            window.open(booking.joinLink || `https://zoom.us/j/${booking.id}`, '_blank');
-                          }
+                        onClick={() => {
+                          const newWindow = window.open('about:blank', '_blank');
+                          getOrCreateSessionMeetingLink(booking, false)
+                            .then(link => {
+                              if (newWindow) newWindow.location.href = link;
+                              else window.location.href = link;
+                            })
+                            .catch(err => {
+                              const fallback = booking.joinLink || `https://zoom.us/j/${booking.id}`;
+                              if (newWindow) newWindow.location.href = fallback;
+                              else window.location.href = fallback;
+                            });
                         }}
                         className="flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition-colors"
                       >
