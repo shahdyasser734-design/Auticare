@@ -3,7 +3,6 @@ import { MainLayout } from '../../layouts/MainLayout';
 import { useBookings } from '../../context/BookingsContext';
 import { getOrCreateSessionMeetingLink } from '../../utils/zoomHelper';
 import { bookingService } from '../../services/api/bookings';
-import { Loader2 } from 'lucide-react';
 
 export const MyBookings = () => {
   const { myBookings: bookings, loading, refreshBookings } = useBookings();

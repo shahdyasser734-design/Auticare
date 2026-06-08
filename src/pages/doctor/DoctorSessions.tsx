@@ -161,7 +161,6 @@ export const DoctorSessions = () => {
 
             return displaySessions.map((session) => {
               const meetingUrl = session.zoomUrl || session.joinLink || (session.id ? `https://zoom.us/j/${cleanIntId(session.id)}` : '');
-              const canJoin = activeTab === 'upcoming' && (session.status === 'confirmed' || session.status === 'scheduled');
 
               return (
                 <Card key={session.id} className="border border-slate-300 dark:border-white/10 shadow hover:shadow-md transition-shadow rounded-2xl p-6 bg-white dark:bg-slate-900">

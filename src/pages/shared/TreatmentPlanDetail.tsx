@@ -12,7 +12,7 @@ export const TreatmentPlanDetail = () => {
   const { planId } = useParams<{ planId: string }>();
   const [plan, setPlan] = useState<TreatmentPlan | null>(null);
   const [sessions, setSessions] = useState<TherapySession[]>([]);
-  const [notes, setNotes] = useState<ClinicalNote[]>([]);
+  const [notes, setNotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'sessions' | 'notes'>('overview');
 

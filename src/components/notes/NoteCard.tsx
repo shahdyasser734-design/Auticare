@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from '../common/Button';
 import { notesService, type Note } from '../../services/api/notes';
 import { Pencil, Trash2, X, Check, Loader2 } from 'lucide-react';
@@ -12,7 +12,6 @@ interface NoteCardProps {
 
 export const NoteCard = ({ note, onUpdate, onDelete }: NoteCardProps) => {
   const { user } = useAuth();
-  const isOwner = user?.id === note.createdBy || true; // Fallback to true if IDs mismatch for testing, but ideally validate it strictly. We will use role logic if needed, but the user requested: "Validate permissions so only the owner (doctor/therapist) can edit or delete their notes". We'll assume the backend checks it as well, and frontend checks user.id. 
 
   // For real implementation:
   const canModify = (user?.role === 'doctor' || user?.role === 'therapist') && (user?.id === note.createdBy);
