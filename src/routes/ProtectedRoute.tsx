@@ -3,7 +3,7 @@ import { useAuth } from '../context/useAuth';
 import { LoadingPage } from '../components/common/Loading';
 import { ROUTES } from '../utils/constants';
 import { useState, useEffect } from 'react';
-import { childrenService } from '../services/api/childrenService';
+
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -18,7 +18,7 @@ const SCREENING_EXEMPT_PATHS = [
 ];
 
 export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
-  const { isAuthenticated, loading, user } = useAuth();
+  const { isAuthenticated, loading, user, childrenLoaded, parentChildren } = useAuth() as any; // Using any for childrenLoaded/parentChildren compatibility
   const location = useLocation();
   const [checkingEvidence, setCheckingEvidence] = useState(true);
   const [hasEvidence, setHasEvidence] = useState(false);
@@ -32,12 +32,17 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
     );
 
   useEffect(() => {
-    if (!isParent || isExemptPath || loading || !isAuthenticated) {
+    // DO NOT proceed until both auth AND children are loaded if parent
+    if (loading || (!childrenLoaded && isParent && isAuthenticated && !isExemptPath)) {
+      return;
+    }
+
+    if (!isParent || isExemptPath || !isAuthenticated) {
       setCheckingEvidence(false);
       return;
     }
 
-    const checkEvidence = async () => {
+    const checkEvidence = () => {
       const screeningKey = user ? `screeningComplete_${user.id}` : null;
       const screeningCompleted = screeningKey
         ? localStorage.getItem(screeningKey) === 'true'
@@ -54,25 +59,19 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
         return;
       }
 
-      // If no local evidence, try fetching from server (which checks bookings as fallback)
-      try {
-        const children = await childrenService.getMyChildren();
-        if (children && children.length > 0) {
-          setHasEvidence(true);
-        } else {
-          setHasEvidence(false);
-        }
-      } catch (err) {
+      // Check global context instead of making an API call
+      if (parentChildren && parentChildren.length > 0) {
+        setHasEvidence(true);
+      } else {
         setHasEvidence(false);
-      } finally {
-        setCheckingEvidence(false);
       }
+      setCheckingEvidence(false);
     };
 
-    void checkEvidence();
-  }, [isParent, isExemptPath, loading, isAuthenticated, user]);
+    checkEvidence();
+  }, [isParent, isExemptPath, loading, isAuthenticated, user, childrenLoaded, parentChildren]);
 
-  if (loading || checkingEvidence) {
+  if (loading || (!childrenLoaded && isParent && isAuthenticated && !isExemptPath) || checkingEvidence) {
     return <LoadingPage />;
   }
 
@@ -93,4 +92,3 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
 
   return <>{children}</>;
 };
-

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type { AuthContextType, User, AuthResponse, UserRole } from '../types';
 import { authService } from '../services/authService';
 import apiClient from '../services/apiClient';
+import { childrenService } from '../services/api/childrenService';
 
 const getErrorMessage = (error: unknown, fallback = 'An error occurred') => {
   if (error instanceof Error) return error.message;
@@ -21,7 +22,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return null;
     }
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [childrenLoaded, setChildrenLoaded] = useState(false);
+  const [parentChildren, setParentChildren] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return localStorage.getItem('isAuthenticated') === 'true';
@@ -45,13 +48,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!token) {
         setIsAuthenticated(false);
         setUser(null);
+        setChildrenLoaded(false);
+        setParentChildren([]);
+        setError(null);
+        setLoading(false);
         return;
       }
+      
+      setLoading(true);
       
       try {
         const response = await apiClient.get<Record<string, unknown>>('/profile');
         const rawUser = response.data;
         const email = String(rawUser.email ?? '');
+        const role = String(rawUser.role ?? localStorage.getItem('role') ?? 'parent').toLowerCase();
+
+        if (role === 'parent') {
+          try {
+            const kids = await childrenService.getMyChildren();
+            setParentChildren(kids);
+          } catch (e) {
+            console.warn('[AuthContext] Failed to fetch children:', e);
+          }
+        }
+        setChildrenLoaded(true);
+
         const phone = String(
           rawUser.phone ??
           rawUser.phoneNumber ??
@@ -119,7 +140,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           id: String(rawUser.id ?? rawUser.userId ?? ''),
           email,
           name: String(rawUser.name ?? rawUser.fullName ?? (rawUser.firstName ? `${rawUser.firstName} ${rawUser.lastName ?? ''}`.trim() : '')),
-          role: String(rawUser.role ?? localStorage.getItem('role') ?? 'parent').toLowerCase() as UserRole,
+          role: role as UserRole,
           phone,
           nationalId,
           profileImage,
@@ -151,6 +172,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
           } catch {}
         }
+      } finally {
+        setChildrenLoaded(true);
+        setLoading(false);
       }
     };
 
@@ -274,6 +298,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       const mergedData = { token: tempToken, user: profileData };
       const data = normalizeAuthResponse(mergedData as unknown as AuthResponse);
+
+      if (data.user.role === 'parent') {
+        try {
+          const kids = await childrenService.getMyChildren();
+          setParentChildren(kids);
+        } catch (e) {
+          console.warn('[AuthContext] Failed to fetch children on login:', e);
+        }
+      }
+      setChildrenLoaded(true);
 
       localStorage.setItem('token', data.token);
       localStorage.setItem('role', data.user.role);
@@ -445,6 +479,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const value: AuthContextType = {
     user,
     loading,
+    childrenLoaded,
+    parentChildren,
     error,
     isAuthenticated,
     login,
