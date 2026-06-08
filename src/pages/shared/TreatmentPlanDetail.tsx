@@ -5,7 +5,7 @@ import { treatmentPlansService } from '../../services/api/treatmentPlansService'
 import { sessionsService } from '../../services/api/sessionsService';
 import { notesService } from '../../services/api/notesService';
 import { NoteCard } from '../../components/notes/NoteCard';
-import type { TreatmentPlan, TherapySession, ClinicalNote } from '../../types';
+import type { TreatmentPlan, TherapySession } from '../../types';
 import { Calendar, Target, CheckCircle, MessageSquare } from 'lucide-react';
 
 export const TreatmentPlanDetail = () => {
