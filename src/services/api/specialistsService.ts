@@ -61,7 +61,7 @@ export const normalizeSpecialist = (raw: Record<string, unknown>): Specialist =>
 export const specialistsService = {
   // Get all specialists (with optional type filter)
   getSpecialists: async (type?: 'doctor' | 'therapist'): Promise<Specialist[]> => {
-    const response = await apiClient.get<unknown>('/specialists');
+    const response = await apiClient.get<unknown>('/specialists?PageSize=100');
     const data = response.data;
     const list = Array.isArray(data) ? data : 
                  Array.isArray((data as Record<string, unknown>)?.data) ? ((data as Record<string, unknown>).data as Record<string, unknown>[]) : 

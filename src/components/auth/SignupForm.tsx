@@ -26,6 +26,7 @@ export const SignupForm = () => {
     licenseNumber: '',
     yearsOfExperience: '',
     qualification: '',
+    bio: '',
   });
   const [files, setFiles] = useState<Record<string, File | null>>({
     certificateFile: null,
@@ -97,6 +98,10 @@ export const SignupForm = () => {
         newErrors.qualification = 'Qualification/Degree is required';
       }
       
+      if (!formData.bio) {
+        newErrors.bio = 'Professional bio is required';
+      }
+      
       if (!files.certificateFile) {
         newErrors.certificateFile = 'Professional certificate is required';
       }
@@ -124,10 +129,12 @@ export const SignupForm = () => {
 
       if (formData.role === ROLES.DOCTOR || formData.role === ROLES.THERAPIST) {
         payload.yearsOfExperience = parseInt(formData.yearsOfExperience);
+        payload.yearsExperience = parseInt(formData.yearsOfExperience);
         payload.qualification = formData.qualification;
         payload.specialization = formData.specialization;
         payload.licenseNumber = formData.licenseNumber;
         payload.nationalId = formData.nationalId;
+        payload.bio = formData.bio;
         
         // Include file information
         if (files.certificateFile) {
@@ -301,6 +308,16 @@ export const SignupForm = () => {
               value={formData.licenseNumber}
               onChange={(e) => handleChange('licenseNumber', e.target.value)}
               fullWidth
+            />
+
+            <Input
+              label="Professional Bio"
+              placeholder="Tell us about your experience..."
+              value={formData.bio}
+              onChange={(e) => handleChange('bio', e.target.value)}
+              error={errors.bio}
+              fullWidth
+              required
             />
 
             <FileUpload
