@@ -5,6 +5,7 @@ import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Avatar } from '../../components/common/Avatar';
 import { childrenService, type Child } from '../../services/api/children';
+import { bookingService } from '../../services/api/bookings';
 import { screeningService } from '../../services/api/screening';
 import { notesService, type Note } from '../../services/api/notes';
 import { treatmentPlansService, type TreatmentPlan } from '../../services/api/treatmentPlans';
@@ -25,12 +26,35 @@ export const PatientDetail = () => {
     const fetchPatientData = async () => {
       if (!id) return;
       try {
-        const [childData, resultsData, notesData, plansData] = await Promise.all([
-          childrenService.getChild(id),
+        let childData;
+        try {
+          childData = await childrenService.getChild(id);
+        } catch (childErr) {
+          console.warn('Could not fetch child profile directly (possibly 403), falling back to bookings search.', childErr);
+          // Fallback: search my bookings to extract basic child info
+          const myBookings = await bookingService.getMyBookings();
+          const booking = myBookings.find(b => String(b.childId) === String(id));
+          if (booking) {
+            childData = {
+              id: booking.childId?.toString() || id,
+              name: booking.childName || 'Unknown Patient',
+              age: null,
+              gender: 'Unknown',
+              status: 'active',
+              parentId: booking.parentId || '',
+              parentName: booking.parentName || 'Parent',
+            } as unknown as Child;
+          } else {
+            throw new Error('Patient not found in active bookings.');
+          }
+        }
+
+        const [resultsData, notesData, plansData] = await Promise.all([
           screeningService.getResults(id).catch(() => []),
           notesService.getChildNotes(id).catch(() => []),
           treatmentPlansService.getChildPlans(id).catch(() => []),
         ]);
+        
         setPatient(childData);
         setScreeningResults(Array.isArray(resultsData) ? resultsData : [resultsData]);
         setNotes(notesData);

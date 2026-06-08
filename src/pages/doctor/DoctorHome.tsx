@@ -66,7 +66,13 @@ export const DoctorHome = () => {
 
       // Extract patients exclusively from booking relationships
       const uniqueChildren = new Map();
-      childList.forEach((b: Booking) => {
+      
+      // Filter out pending or cancelled bookings when determining "Assigned Cases"
+      const assignedBookings = childList.filter((b: Booking) => 
+        b.status === 'scheduled' || b.status === 'confirmed' || b.status === 'approved'
+      );
+
+      assignedBookings.forEach((b: Booking) => {
         if (b.childId && !uniqueChildren.has(b.childId)) {
           uniqueChildren.set(b.childId, {
             id: b.childId,
@@ -74,8 +80,8 @@ export const DoctorHome = () => {
             age: null,
             gender: 'Unknown',
             status: 'active',
-            assignedDoctor: isDoctor ? user?.name : b.specialistName,
-            assignedTherapist: !isDoctor ? user?.name : b.specialistName,
+            assignedDoctor: isDoctor ? user?.name : (b.specialistName || 'Not Assigned'),
+            assignedTherapist: !isDoctor ? user?.name : 'Not Assigned',
             parentId: b.parentId || '',
             parentName: b.parentName || 'Parent'
           });
@@ -106,12 +112,14 @@ export const DoctorHome = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleUpdateStatus = async (id: string, newStatus: Booking['status']) => {
+  const handleUpdateStatus = async (e: React.MouseEvent, id: string, newStatus: Booking['status']) => {
+    e.preventDefault();
+    e.stopPropagation();
     try {
       console.log(`[DASHBOARD] Updating booking ${id} to status: ${newStatus}`);
       await bookingService.updateBookingStatus(id, newStatus);
       console.log(`[DASHBOARD] Successfully updated booking ${id}`);
-      void fetchSpecialistData();
+      await fetchSpecialistData(); // Await the fetch to ensure UI updates before resolving
     } catch (err) {
       console.error(`[DASHBOARD] Error updating booking ${id}:`, err);
     }
@@ -406,7 +414,7 @@ export const DoctorHome = () => {
                         <div className="flex gap-2 shrink-0">
                           <Button
                             size="sm"
-                            onClick={() => handleUpdateStatus(booking.id, 'confirmed')}
+                            onClick={(e) => handleUpdateStatus(e, booking.id, 'confirmed')}
                             className="bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg cursor-pointer"
                           >
                             Approve
@@ -414,7 +422,7 @@ export const DoctorHome = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleUpdateStatus(booking.id, 'cancelled')}
+                            onClick={(e) => handleUpdateStatus(e, booking.id, 'cancelled')}
                             className="rounded-lg cursor-pointer"
                           >
                             Reject

@@ -276,7 +276,7 @@ export const PatientCarousel: React.FC<PatientCarouselProps> = ({ patients, isDo
                       className="flex-1 text-xs cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
-                        // Navigate to treatment plan
+                        navigate(`/treatment-plan/${patient.id}`);
                       }}
                     >
                       <TrendingUp className="w-3 h-3 mr-1" /> Plan
@@ -287,7 +287,7 @@ export const PatientCarousel: React.FC<PatientCarouselProps> = ({ patients, isDo
                       className="flex-1 text-xs cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
-                        // Navigate to chat
+                        navigate('/chat');
                       }}
                     >
                       💬 Chat
@@ -301,7 +301,7 @@ export const PatientCarousel: React.FC<PatientCarouselProps> = ({ patients, isDo
                       className="flex-1 text-xs cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
-                        // Navigate to sessions
+                        navigate(`/${isDoctor ? 'doctor' : 'therapist'}/sessions`);
                       }}
                     >
                       <Calendar className="w-3 h-3 mr-1" /> Sessions
@@ -312,7 +312,7 @@ export const PatientCarousel: React.FC<PatientCarouselProps> = ({ patients, isDo
                       className="flex-1 text-xs cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
-                        // Navigate to notes
+                        navigate(`/${isDoctor ? 'doctor' : 'therapist'}/patients/${patient.id}`);
                       }}
                     >
                       <FileText className="w-3 h-3 mr-1" /> Notes
