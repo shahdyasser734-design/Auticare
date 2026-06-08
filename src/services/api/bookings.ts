@@ -37,9 +37,9 @@ export const normalizeBooking = (b: any): Booking => {
   return {
     id: idStr,
     parentId: String(b.parentId || b.ParentId || ''),
-    parentName: b.parentName || b.ParentName || 'Sarah Johnson',
+    parentName: b.parentName || b.ParentName || '',
     childId: String(b.childId || b.ChildId || ''),
-    childName: b.childName || b.ChildName || 'Emma Johnson',
+    childName: b.childName || b.ChildName || '',
     specialistId: String(b.specialistId || b.SpecialistId || ''),
     specialistName: specName,
     specialistType: specType,

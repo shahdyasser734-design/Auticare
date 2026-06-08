@@ -157,6 +157,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     void init();
   }, []);
 
+  useEffect(() => {
+    const handleUnauthorized = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const url = customEvent.detail?.url || '';
+      
+      // If it's a login or register endpoint, ignore
+      if (url.includes('/auth/login') || url.includes('/auth/register')) return;
+      
+      // If the profile endpoint returns 401, the session is truly invalid
+      if (url.includes('/profile')) {
+        console.warn('[AuthContext] Session expired or invalid during profile sync. Logging out.');
+        logout();
+      }
+    };
+    
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+  }, []);
+
   const normalizeAuthResponse = (data: AuthResponse) => {
     const rawUser = (data.user ?? data) as any;
     const email = String(rawUser.email ?? '');

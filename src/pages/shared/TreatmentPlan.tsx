@@ -186,7 +186,16 @@ export const TreatmentPlan = () => {
           }
         }
         
-        // Strategy 3: Last resort - use 1 (this will likely fail validation, but logs will show why)
+        // Strategy 3: Fallback to the authenticated user's ID
+        if (!finalSpecialistId && user?.id) {
+          const specIdFromUser = parseInt(user.id, 10);
+          if (!isNaN(specIdFromUser) && specIdFromUser > 0) {
+            finalSpecialistId = specIdFromUser;
+            console.log('[TREATMENT PLAN] Got specialist ID from user.id:', finalSpecialistId);
+          }
+        }
+        
+        // Strategy 4: Last resort - use 1 (this will likely fail validation, but logs will show why)
         if (!finalSpecialistId) {
           finalSpecialistId = 1;
           console.warn('[TREATMENT PLAN] Could not resolve real specialist ID. Using fallback ID=1. This may cause API errors.');

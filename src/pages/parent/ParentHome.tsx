@@ -9,6 +9,7 @@ import { useAuth } from '../../context/useAuth';
 import { dashboardService, type DashboardParentData } from '../../services/api/dashboard';
 import { childrenService, type Child } from '../../services/api/children';
 import { treatmentPlansService, type TreatmentPlan } from '../../services/api/treatmentPlans';
+import { bookingService } from '../../services/api/bookings';
 import { notesService, type Note } from '../../services/api/notes';
 import { notificationService, type Notification } from '../../services/api/notifications';
 import { formatDateTime } from '../../utils/dateUtils';
@@ -23,6 +24,7 @@ export const ParentHome = () => {
   const [plans, setPlans] = useState<TreatmentPlan[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [upcomingSessions, setUpcomingSessions] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const fetchDashboard = async () => {
@@ -53,11 +55,12 @@ export const ParentHome = () => {
         return [] as Child[];
       });
       
-      const [db, plansArrays, noteList, notifList] = await Promise.all([
+      const [db, plansArrays, noteList, notifList, upcoming] = await Promise.all([
         dashboardService.getParentDashboard().catch(() => null),
         Promise.all(childList.map(c => treatmentPlansService.getChildPlans(c.id).catch(() => []))),
         notesService.getMyNotes().catch(() => []),
         notificationService.getNotifications().catch(() => []),
+        bookingService.getUpcomingBookings().catch(() => []),
       ]);
 
       const planList = plansArrays.flat();
@@ -67,6 +70,7 @@ export const ParentHome = () => {
       setPlans(planList);
       setNotes(noteList);
       setNotifications(notifList.slice(0, 4)); // Show recent 4 notifications
+      setUpcomingSessions(upcoming.length);
     } catch (err) {
       console.error('Error fetching parent dashboard:', err);
     } finally {
@@ -121,7 +125,7 @@ export const ParentHome = () => {
           {[
             { label: 'Registered Children', value: children.length, icon: '👶', color: 'bg-blue-50 text-blue-600 dark:bg-blue-950/20' },
             { label: 'Active Care Plans', value: plans.length, icon: '📋', color: 'bg-green-50 text-green-600 dark:bg-green-950/20' },
-            { label: 'Consultations', value: dashboardData?.upcomingSessions ?? 0, icon: '👨‍⚕️', color: 'bg-orange-50 text-orange-600 dark:bg-orange-950/20' },
+            { label: 'Consultations', value: upcomingSessions, icon: '👨‍⚕️', color: 'bg-orange-50 text-orange-600 dark:bg-orange-950/20' },
             { label: 'Unread Alerts', value: notifications.filter(n => !n.isRead).length, icon: '🔔', color: 'bg-red-50 text-red-600 dark:bg-red-950/20' },
           ].map((stat, idx) => (
             <Card key={idx} className="p-5 border border-slate-200 dark:border-white/10 shadow-sm flex items-center justify-between gap-4">

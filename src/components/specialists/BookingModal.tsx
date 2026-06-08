@@ -50,8 +50,8 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
       setError('Please enter a reason for the appointment.');
       return;
     }
-    if (!childId) {
-      setError('Please add a child before booking a session.');
+    if (!childId || childId === '0' || isNaN(Number(childId))) {
+      setError('Please add or select a valid child profile before booking a session.');
       return;
     }
 
@@ -74,8 +74,8 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
         throw new Error('Specialist identifier could not be determined.');
       }
 
-      if (!childId) {
-        setError('Please select a child profile for this booking.');
+      if (!childId || childId === '0' || isNaN(Number(childId))) {
+        setError('Please select a valid child profile for this booking.');
         setSubmitting(false);
         return;
       }

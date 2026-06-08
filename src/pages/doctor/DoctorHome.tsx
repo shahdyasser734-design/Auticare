@@ -143,8 +143,18 @@ export const DoctorHome = () => {
   const confirmedSessions = (sessions || []).filter((s) => s && (s.status === 'confirmed' || s.status === 'scheduled'));
   const todaySessions = confirmedSessions.filter((s) => s && (isToday(s.appointmentDate) || isToday(s.dateTime)));
 
-  // Build stats from API data
-  const stats = isDoctor ? createDoctorStats(dashboardData) : createTherapistStats(dashboardData);
+  // Build stats from computed live API data
+  const computedDashboardData: DashboardSpecialistData = {
+    ...dashboardData,
+    patientCount: children.length,
+    activeCases: children.length,
+    todaySessions: todaySessions.length,
+    upcomingSessions: confirmedSessions.length,
+    pendingRequests: pendingBookings.length,
+    completedSessions: (sessions || []).filter((s) => s && s.status === 'completed').length,
+  };
+
+  const stats = isDoctor ? createDoctorStats(computedDashboardData) : createTherapistStats(computedDashboardData);
 
   // Display children directly from the extracted bookings
   const displayChildren = children.map((c) => ({ ...c, status: 'active' as const }));
@@ -422,8 +432,8 @@ export const DoctorHome = () => {
               </Card>
             )}
 
-            {/* Pending Booking Approvals (Doctor only) */}
-            {isDoctor && (
+            {/* Pending Booking Approvals (All Specialists) */}
+            {(isDoctor || !isDoctor) && (
               <Card className="border border-slate-200 dark:border-white/10 shadow-md rounded-3xl p-6">
                 <h3 className="font-bold text-xl text-slate-900 dark:text-white mb-6 flex items-center gap-2">
                   <span>⏳</span> Pending Booking Requests ({pendingBookings.length})
