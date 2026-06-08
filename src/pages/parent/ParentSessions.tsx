@@ -176,7 +176,6 @@ export const ParentSessions = () => {
                   {upcomingSessions
                     .filter(s => s.status !== 'completed')
                     .map((session) => {
-                      const canJoin = session.status === 'scheduled' || session.status === 'confirmed';
                       const meetingUrl = session.zoomUrl || session.joinLink || '';
                       return (
                         <Card key={session.id} className="border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-md transition rounded-2xl p-5">

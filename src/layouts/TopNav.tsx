@@ -172,5 +172,6 @@ export const TopNav = ({ onMenuClick }: TopNavProps) => {
         </div>
       </div>
     </header>
+    </>
   );
 };
