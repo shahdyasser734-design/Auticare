@@ -82,17 +82,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const specialization = String(
           rawUser.specialization ??
           rawUser.specialty ??
+          (rawUser as any).specialist?.specialization ??
+          (rawUser as any).doctor?.specialization ??
+          (rawUser as any).therapist?.specialization ??
           (email ? localStorage.getItem(`auticare.user.specialization.${email}`) : '') ??
           ''
         );
-        const yearsOfExperience = (rawUser.yearsOfExperience as any) ?? (email ? (localStorage.getItem(`auticare.user.yearsOfExperience.${email}`) || undefined) : undefined);
+        const yearsOfExperience = (rawUser.yearsOfExperience as any) ?? 
+          (rawUser as any).specialist?.yearsOfExperience ??
+          (rawUser as any).doctor?.yearsOfExperience ??
+          (rawUser as any).therapist?.yearsOfExperience ??
+          (email ? (localStorage.getItem(`auticare.user.yearsOfExperience.${email}`) || undefined) : undefined);
         const licenseNumber = String(
           rawUser.licenseNumber ??
+          (rawUser as any).specialist?.licenseNumber ??
+          (rawUser as any).doctor?.licenseNumber ??
+          (rawUser as any).therapist?.licenseNumber ??
           (email ? localStorage.getItem(`auticare.user.licenseNumber.${email}`) : '') ??
           ''
         );
         const bio = String(
           rawUser.bio ??
+          (rawUser as any).specialist?.bio ??
+          (rawUser as any).doctor?.bio ??
+          (rawUser as any).therapist?.bio ??
           (email ? localStorage.getItem(`auticare.user.bio.${email}`) : '') ??
           ''
         );

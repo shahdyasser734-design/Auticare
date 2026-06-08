@@ -25,9 +25,20 @@ export const childrenService = {
   getChildren: async (): Promise<Child[]> => {
     try {
       const response = await apiClient.get<Record<string, unknown>[]>('/children');
-      return response.data.map(normalizeChild);
-    } catch (error) {
-      console.warn('Children API unavailable.', error);
+      const data = response.data;
+      const list = Array.isArray(data) ? data : 
+                   Array.isArray((data as any)?.data) ? (data as any).data : 
+                   Array.isArray((data as any)?.children) ? (data as any).children : [];
+      return list.map(normalizeChild);
+    } catch (error: any) {
+      const status = error?.response?.status;
+      if (status === 403) {
+        console.warn('[CHILDREN] GET /api/children returned 403 Forbidden. The logged-in user may not have access to list all children. This is expected for non-admin roles. Returning empty array.');
+      } else if (status === 401) {
+        console.warn('[CHILDREN] GET /api/children returned 401 Unauthorized. Token may be missing or expired.');
+      } else {
+        console.warn('[CHILDREN] Children API unavailable:', error?.message || error);
+      }
       return [];
     }
   },

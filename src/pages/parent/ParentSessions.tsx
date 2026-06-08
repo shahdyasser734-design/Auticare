@@ -11,7 +11,7 @@ import { BookingModal } from '../../components/specialists/BookingModal';
 import type { Booking } from '../../types';
 import type { Specialist } from '../../types';
 import { Loader2 } from 'lucide-react';
-import { getOrCreateSessionMeetingLink, cleanIntId } from '../../utils/zoomHelper';
+import { getOrCreateSessionMeetingLink } from '../../utils/zoomHelper';
 
 
 export const ParentSessions = () => {
@@ -79,15 +79,33 @@ export const ParentSessions = () => {
   const [joiningZoom, setJoiningZoom] = useState<string | null>(null);
 
   const handleJoinZoom = async (session: Booking) => {
+    console.log('[ZOOM] Parent Join Zoom handler clicked.');
+    console.log('session:', session);
+    console.log('session.meetingLink:', (session as any).meetingLink);
+    console.log('session.zoomUrl:', session.zoomUrl);
+    console.log('session.joinLink:', session.joinLink);
+
     setJoiningZoom(session.id);
+    const newWindow = window.open('', '_blank');
+    if (newWindow) {
+      console.log('[ZOOM] window.open() executed successfully.');
+    } else {
+      console.warn('[ZOOM] window.open() returned null or was blocked.');
+    }
+
     try {
       const link = await getOrCreateSessionMeetingLink(session, false);
-      window.open(link, '_blank');
-    } catch (err) {
-      console.error('Failed to join Zoom session:', err);
-      setZoomAlert('Error establishing Zoom link. Opening fallback room.');
+      console.log('[ZOOM] getOrCreateSessionMeetingLink returned link:', link);
+
+      if (newWindow) {
+        newWindow.location.href = link;
+      }
+    } catch (err: any) {
+      console.error('[ZOOM] Failed to join Zoom session:', err);
+      if (newWindow) newWindow.close();
+      const errMsg = err.message || 'No Zoom meeting link available.';
+      setZoomAlert(errMsg);
       setTimeout(() => setZoomAlert(null), 4000);
-      window.open(session.joinLink || `https://zoom.us/j/${session.id}`, '_blank');
     } finally {
       setJoiningZoom(null);
     }
@@ -159,7 +177,7 @@ export const ParentSessions = () => {
                     .filter(s => s.status !== 'completed')
                     .map((session) => {
                       const canJoin = session.status === 'scheduled' || session.status === 'confirmed';
-                      const meetingUrl = session.zoomUrl || session.joinLink || (session.id ? `https://zoom.us/j/${cleanIntId(session.id)}` : '');
+                      const meetingUrl = session.zoomUrl || session.joinLink || '';
                       return (
                         <Card key={session.id} className="border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-md transition rounded-2xl p-5">
                           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -174,10 +192,13 @@ export const ParentSessions = () => {
                               </div>
                               
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-400">
-                                <p><strong>Child Name:</strong> {session.childName || 'Emma Johnson'}</p>
-                                <p><strong>Parent Name:</strong> {session.parentName || 'Sarah Johnson'}</p>
-                                <p><strong>Doctor Name:</strong> {session.doctorName || 'Dr. Ahmed'}</p>
-                                <p><strong>Therapist Name:</strong> {session.therapistName || 'Therapist Sarah'}</p>
+                                <p><strong>Child Name:</strong> {session.childName || 'Not Provided'}</p>
+                                <p><strong>Parent Name:</strong> {session.parentName || 'Not Provided'}</p>
+                                {session.specialistType === 'doctor' ? (
+                                  <p><strong>Doctor Name:</strong> {session.doctorName || 'Not Assigned'}</p>
+                                ) : (
+                                  <p><strong>Therapist Name:</strong> {session.therapistName || 'Not Assigned'}</p>
+                                )}
                               </div>
 
                               <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
@@ -191,29 +212,23 @@ export const ParentSessions = () => {
                                 {session.status}
                               </Badge>
                               {canJoin && (
-                                meetingUrl ? (
-                                  <Button 
-                                    size="sm" 
-                                    onClick={() => handleJoinZoom(session)}
-                                    disabled={joiningZoom === session.id}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center gap-1 rounded-xl cursor-pointer"
-                                  >
-                                    {joiningZoom === session.id ? (
-                                      <>
-                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                        Connecting...
-                                      </>
-                                    ) : (
-                                      <>
-                                        🎥 Join Session
-                                      </>
-                                    )}
-                                  </Button>
-                                ) : (
-                                  <span className="text-xs text-red-500 font-semibold bg-red-50 dark:bg-red-950/20 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/30">
-                                    No Zoom meeting link available.
-                                  </span>
-                                )
+                                <Button 
+                                  size="sm" 
+                                  onClick={() => handleJoinZoom(session)}
+                                  disabled={joiningZoom === session.id}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center gap-1 rounded-xl cursor-pointer"
+                                >
+                                  {joiningZoom === session.id ? (
+                                    <>
+                                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                      Connecting...
+                                    </>
+                                  ) : (
+                                    <>
+                                      🎥 Join Session
+                                    </>
+                                  )}
+                                </Button>
                               )}
                             </div>
                           </div>
@@ -244,10 +259,13 @@ export const ParentSessions = () => {
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-400">
-                              <p><strong>Child Name:</strong> {session.childName || 'Emma Johnson'}</p>
-                              <p><strong>Parent Name:</strong> {session.parentName || 'Sarah Johnson'}</p>
-                              <p><strong>Doctor Name:</strong> {session.doctorName || 'Dr. Ahmed'}</p>
-                              <p><strong>Therapist Name:</strong> {session.therapistName || 'Therapist Sarah'}</p>
+                              <p><strong>Child Name:</strong> {session.childName || 'Not Provided'}</p>
+                              <p><strong>Parent Name:</strong> {session.parentName || 'Not Provided'}</p>
+                              {session.specialistType === 'doctor' ? (
+                                <p><strong>Doctor Name:</strong> {session.doctorName || 'Not Assigned'}</p>
+                              ) : (
+                                <p><strong>Therapist Name:</strong> {session.therapistName || 'Not Assigned'}</p>
+                              )}
                             </div>
 
                             <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">

@@ -13,10 +13,20 @@ export const getOrCreateSessionMeetingLink = async (
   session: Booking,
   isDoctor: boolean
 ): Promise<string> => {
-  const tId = session.treatmentId || (session as any).TreatmentId;
+  // 1. If zoomLink or joinLink exists directly on the booking session -> return it directly
+  if (session.zoomUrl && session.zoomUrl.trim() !== '') {
+    return session.zoomUrl;
+  }
+  if (session.joinLink && session.joinLink.trim() !== '') {
+    return session.joinLink;
+  }
+  if ((session as any).meetingLink && (session as any).meetingLink.trim() !== '') {
+    return (session as any).meetingLink;
+  }
 
-  // If there's no treatment plan ID, try to search for the child's active plan
-  let finalTreatmentId = tId;
+  // 2. If NOT -> attempt to get or create from Treatment Sessions API
+  let finalTreatmentId = session.treatmentId || (session as any).TreatmentId;
+
   if (!finalTreatmentId && session.childId) {
     try {
       const childIdNum = cleanIntId(session.childId);
@@ -38,20 +48,17 @@ export const getOrCreateSessionMeetingLink = async (
       const res = await apiClient.get<any[]>(`/sessions/treatment/${treatmentIdNum}`);
       const sessions = Array.isArray(res.data) ? res.data : [];
       
-      // Look for a session with a valid meetingLink
-      const matchedSession = sessions.find(
-        (s) => s.meetingLink || s.joinLink
-      );
+      const matchedSession = sessions.find((s) => s.meetingLink || s.joinLink || s.zoomUrl);
       
       if (matchedSession) {
-        const link = matchedSession.meetingLink || matchedSession.joinLink;
+        const link = matchedSession.meetingLink || matchedSession.joinLink || matchedSession.zoomUrl;
         if (link && link.trim() !== '') {
           console.log('[ZOOM] Found active backend session link:', link);
           return link;
         }
       }
       
-      // If no session exists on the backend and current user is a Doctor/specialist, create one
+      // Generate/create then open
       if (isDoctor) {
         try {
           console.log('[ZOOM] No active session found. Registering new session on backend...');
@@ -63,7 +70,7 @@ export const getOrCreateSessionMeetingLink = async (
             duration: session.duration || 60,
             sessionNotes: session.notes || session.reason || 'Session scheduled'
           });
-          const newLink = createRes.data?.meetingLink || createRes.data?.joinLink;
+          const newLink = createRes.data?.meetingLink || createRes.data?.joinLink || createRes.data?.zoomUrl;
           if (newLink) {
             console.log('[ZOOM] Backend session created successfully:', newLink);
             return newLink;
@@ -77,9 +84,7 @@ export const getOrCreateSessionMeetingLink = async (
     }
   }
 
-  if (session.joinLink) {
-    return session.joinLink;
-  }
-  
+  // 3. If still missing -> show error
   throw new Error('No Zoom meeting link available.');
 };
+

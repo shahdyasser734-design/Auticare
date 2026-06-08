@@ -28,7 +28,30 @@ export const ParentHome = () => {
   const fetchDashboard = async () => {
     try {
       setLoading(true);
-      const childList = await childrenService.getChildren().catch(() => []);
+      // Try to get children using the improved service that falls back to localStorage
+      const childList = await childrenService.getMyChildren().catch(() => {
+        // If even the improved service fails, try loading from localStorage 
+        const latestId = localStorage.getItem('latestChildId');
+        const latestName = localStorage.getItem('latestChildName');
+        if (latestId && latestName) {
+          console.log('[PARENT_HOME] Using localStorage fallback child:', latestId);
+          return [{
+            id: latestId,
+            name: latestName,
+            parentId: '',
+            age: 0,
+            gender: 'Unknown',
+            dateOfBirth: '',
+            profileImage: '',
+            medicalHistory: '',
+            familyAutismHistory: false,
+            jaundiceHistory: false,
+            notes: '',
+            createdAt: new Date().toISOString(),
+          }] as Child[];
+        }
+        return [] as Child[];
+      });
       
       const [db, plansArrays, noteList, notifList] = await Promise.all([
         dashboardService.getParentDashboard().catch(() => null),
@@ -55,6 +78,7 @@ export const ParentHome = () => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchDashboard();
   }, []);
+
 
   const handleStartScreening = () => {
     const latestChildId = localStorage.getItem('latestChildId') || (children.length > 0 ? children[0].id : null);
@@ -152,8 +176,18 @@ export const ParentHome = () => {
 
               {children.length === 0 ? (
                 <div className="text-center py-10">
-                  <p className="text-slate-500 text-sm mb-4">No children added yet.</p>
-                  <Button size="sm" onClick={() => navigate(ROUTES.PARENT_ADD_CHILD)}>Add First Child</Button>
+                  {localStorage.getItem('latestChildId') ? (
+                    <>
+                      <p className="text-slate-500 text-sm mb-2">⚠️ Could not load child data from server.</p>
+                      <p className="text-slate-400 text-xs mb-4">Child ID: {localStorage.getItem('latestChildId')} · {localStorage.getItem('latestChildName') || 'Registered'}</p>
+                      <Button size="sm" onClick={() => window.location.reload()}>Retry Loading</Button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-slate-500 text-sm mb-4">No children added yet.</p>
+                      <Button size="sm" onClick={() => navigate(ROUTES.PARENT_ADD_CHILD)}>Add First Child</Button>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2">

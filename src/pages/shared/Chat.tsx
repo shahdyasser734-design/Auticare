@@ -139,8 +139,8 @@ export const Chat = () => {
     const parentName = parentId ? (chat.participantNames[parentId] || 'Parent') : 'Parent';
     const child = childrenList.find((c) => c.parentId === parentId);
     return {
-      parentName: parentName === 'You' ? 'Sarah Johnson' : parentName,
-      childName: child ? child.name : 'Samira Ali',
+      parentName: parentName,
+      childName: child ? child.name : `${parentName}'s Child`,
       avatar: child ? child.profileImage : undefined,
       status: child ? 'Active' : 'Pending',
     };

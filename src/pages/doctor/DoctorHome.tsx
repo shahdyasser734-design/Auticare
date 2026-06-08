@@ -14,7 +14,7 @@ import { chatServiceAPI } from '../../services/api/chatService';
 import { notesService, type Note } from '../../services/api/notes';
 import { NoteCard } from '../../components/notes/NoteCard';
 import type { Child } from '../../services/api/children';
-import { getOrCreateSessionMeetingLink, cleanIntId } from '../../utils/zoomHelper';
+import { getOrCreateSessionMeetingLink } from '../../utils/zoomHelper';
 
 import { Loader2, Calendar, Users, Bell, ClipboardList, ArrowRight, Activity } from 'lucide-react';
 
@@ -132,8 +132,10 @@ export const DoctorHome = () => {
       await bookingService.updateBookingStatus(id, newStatus);
       console.log(`[DASHBOARD] Successfully updated booking ${id}`);
       await fetchSpecialistData(); // Await the fetch to ensure UI updates before resolving
-    } catch (err) {
+    } catch (err: any) {
       console.error(`[DASHBOARD] Error updating booking ${id}:`, err);
+      const errMsg = err?.response?.data?.title || err?.response?.data?.detail || err.message || 'Failed to update booking status.';
+      setError(`Status Update Failed: ${errMsg}`);
     }
   };
 
@@ -154,11 +156,24 @@ export const DoctorHome = () => {
   const [zoomAlert, setZoomAlert] = useState<string | null>(null);
 
   const handleJoinZoom = async (session: Booking) => {
+    console.log('[ZOOM] Start Session / Join Zoom handler clicked.');
+    console.log('session:', session);
+    console.log('session.meetingLink:', (session as any).meetingLink);
+    console.log('session.zoomUrl:', session.zoomUrl);
+    console.log('session.joinLink:', session.joinLink);
+
     setJoiningZoom(session.id);
     const newWindow = window.open('', '_blank');
+    if (newWindow) {
+      console.log('[ZOOM] window.open() executed successfully.');
+    } else {
+      console.warn('[ZOOM] window.open() returned null or was blocked.');
+    }
+
     try {
       const link = await getOrCreateSessionMeetingLink(session, isDoctor);
-      
+      console.log('[ZOOM] getOrCreateSessionMeetingLink returned link:', link);
+
       if (isDoctor && session.parentId) {
         try {
           const chat = await chatServiceAPI.startChat([session.parentId]);
@@ -178,9 +193,9 @@ export const DoctorHome = () => {
         newWindow.location.href = link;
       }
     } catch (err: any) {
-      console.error('Failed to join Zoom session:', err);
+      console.error('[ZOOM] Failed to join Zoom session:', err);
       if (newWindow) newWindow.close();
-      const errMsg = err.message || 'Error establishing Zoom link.';
+      const errMsg = err.message || 'No Zoom meeting link available.';
       setZoomAlert(errMsg);
       setTimeout(() => setZoomAlert(null), 4000);
     } finally {
@@ -344,7 +359,7 @@ export const DoctorHome = () => {
                 </h3>
                 <div className="space-y-4">
                   {todaySessions.map((session) => {
-                    const meetingUrl = session.zoomUrl || session.joinLink || (session.id ? `https://zoom.us/j/${cleanIntId(session.id)}` : '');
+                    const meetingUrl = session.zoomUrl || session.joinLink || '';
                     return (
                       <div key={session.id} className="p-6 bg-white dark:bg-slate-900 border border-green-300 dark:border-green-900/50 shadow-sm hover:shadow-md transition-shadow rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                         <div className="space-y-3 flex-1">
@@ -382,29 +397,23 @@ export const DoctorHome = () => {
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <Badge variant="success">Today</Badge>
-                          {meetingUrl ? (
-                            <Button
-                              size="sm"
-                              onClick={() => handleJoinZoom(session)}
-                              disabled={joiningZoom === session.id}
-                              className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer flex items-center gap-1"
-                            >
-                              {joiningZoom === session.id ? (
-                                <>
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                  Connecting...
-                                </>
-                              ) : (
-                                <>
-                                  🎥 {isDoctor ? 'Start Session' : 'Join Session'}
-                                </>
-                              )}
-                            </Button>
-                          ) : (
-                            <span className="text-xs text-red-500 font-semibold bg-red-50 dark:bg-red-950/20 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/30">
-                              No Zoom meeting link available.
-                            </span>
-                          )}
+                          <Button
+                            size="sm"
+                            onClick={() => handleJoinZoom(session)}
+                            disabled={joiningZoom === session.id}
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer flex items-center gap-1"
+                          >
+                            {joiningZoom === session.id ? (
+                              <>
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                Connecting...
+                              </>
+                            ) : (
+                              <>
+                                🎥 {isDoctor ? 'Start Session' : 'Join Session'}
+                              </>
+                            )}
+                          </Button>
                         </div>
                       </div>
                     );
@@ -452,7 +461,7 @@ export const DoctorHome = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={(e) => handleUpdateStatus(e, booking.id, 'cancelled')}
+                            onClick={(e) => handleUpdateStatus(e, booking.id, 'rejected')}
                             className="rounded-lg cursor-pointer"
                           >
                             Reject
@@ -476,7 +485,7 @@ export const DoctorHome = () => {
               ) : (
                 <div className="space-y-4">
                   {confirmedSessions.slice(0, 5).map((session) => {
-                    const meetingUrl = session.zoomUrl || session.joinLink || (session.id ? `https://zoom.us/j/${cleanIntId(session.id)}` : '');
+                    const meetingUrl = session.zoomUrl || session.joinLink || '';
                     return (
                       <div key={session.id} className="p-6 bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 shadow-sm hover:shadow-md transition-shadow rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                         <div className="space-y-3 flex-1">
@@ -514,29 +523,23 @@ export const DoctorHome = () => {
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <Badge variant="success">Confirmed</Badge>
-                          {meetingUrl ? (
-                            <Button
-                              size="sm"
-                              onClick={() => handleJoinZoom(session)}
-                              disabled={joiningZoom === session.id}
-                              className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer flex items-center gap-1"
-                            >
-                              {joiningZoom === session.id ? (
-                                <>
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                  Connecting...
-                                </>
-                              ) : (
-                                <>
-                                  🎥 {isDoctor ? 'Start Session' : 'Join Session'}
-                                </>
-                              )}
-                            </Button>
-                          ) : (
-                            <span className="text-xs text-red-500 font-semibold bg-red-50 dark:bg-red-950/20 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/30">
-                              No Zoom meeting link available.
-                            </span>
-                          )}
+                          <Button
+                            size="sm"
+                            onClick={() => handleJoinZoom(session)}
+                            disabled={joiningZoom === session.id}
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer flex items-center gap-1"
+                          >
+                            {joiningZoom === session.id ? (
+                              <>
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                Connecting...
+                              </>
+                            ) : (
+                              <>
+                                🎥 {isDoctor ? 'Start Session' : 'Join Session'}
+                              </>
+                            )}
+                          </Button>
                         </div>
                       </div>
                     );

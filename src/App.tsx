@@ -4,6 +4,7 @@ import { ModalProvider } from './context/ModalContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { BookingsProvider } from './context/BookingsContext';
 import { AppRoutes } from './routes/AppRoutes';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 import './App.css';
 
 function App() {
@@ -13,7 +14,9 @@ function App() {
         <AuthProvider>
           <ModalProvider>
             <BookingsProvider>
-              <AppRoutes />
+              <ErrorBoundary>
+                <AppRoutes />
+              </ErrorBoundary>
             </BookingsProvider>
           </ModalProvider>
         </AuthProvider>

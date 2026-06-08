@@ -85,6 +85,8 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
         childId: childId ? Number(childId) : undefined,
         bookingDate: formattedDate,
         bookingTime: formattedTime,
+        preferredDate: formattedDate,
+        preferredTime: formattedTime,
         reason: reason.trim() || undefined,
       };
       console.log('BOOKING PAYLOAD', payload);

@@ -1,2 +1,2 @@
-export { childrenService } from '../childrenService';
-export type { Child } from '../childrenService';
+export { childrenService } from './childrenService';
+export type { Child } from '../../types';

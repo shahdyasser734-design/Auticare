@@ -6,7 +6,9 @@ export type Booking = BookingType;
 export interface BookingRequest {
   specialistId: number;
   childId?: number;
-  bookingDate: string;
+  preferredDate?: string;
+  preferredTime?: string;
+  bookingDate?: string;
   bookingTime?: string;
   reason?: string;
 }
@@ -91,25 +93,26 @@ export const bookingService = {
       .sort((a, b) => new Date(b.dateTime ?? b.createdAt).getTime() - new Date(a.dateTime ?? a.createdAt).getTime());
   },
   updateBookingStatus: async (id: string, status: Booking['status']): Promise<Booking> => {
+    // The backend UpdateBookingStatusRequest only has { status: string }
+    // It uses additionalProperties: false, so no extra fields allowed
     let backendStatus = status as string;
     if (backendStatus === 'confirmed') backendStatus = 'Confirmed';
     else if (backendStatus === 'cancelled') backendStatus = 'Cancelled';
     else if (backendStatus === 'pending') backendStatus = 'Pending';
     else if (backendStatus === 'completed') backendStatus = 'Completed';
     else if (backendStatus === 'rejected') backendStatus = 'Rejected';
+    else if (backendStatus === 'approved') backendStatus = 'Confirmed'; // Map approved -> Confirmed
     else if (backendStatus && backendStatus.length > 0) {
       backendStatus = backendStatus.charAt(0).toUpperCase() + backendStatus.slice(1);
     }
+    console.log(`[BOOKING] PATCH /bookings/${id}/status with:`, { status: backendStatus });
     const response = await apiClient.patch<Booking>(`/bookings/${id}/status`, { status: backendStatus });
     return normalizeBooking(response.data);
   },
-  cancelBooking: async (id: string, reason: string, cancelledBy: 'doctor' | 'parent' | 'therapist'): Promise<Booking> => {
-    // Send cancellation reason and who cancelled it, as well as setting status to Cancelled
-    const response = await apiClient.patch<Booking>(`/bookings/${id}/status`, { 
-      status: 'Cancelled',
-      cancellationReason: reason,
-      cancelledBy: cancelledBy
-    });
+  cancelBooking: async (id: string, _reason?: string): Promise<Booking> => {
+    // Cancel uses the same status endpoint - no separate /cancel endpoint
+    console.log(`[BOOKING] Cancelling booking ${id} via PATCH /bookings/${id}/status`);
+    const response = await apiClient.patch<Booking>(`/bookings/${id}/status`, { status: 'Cancelled' });
     return normalizeBooking(response.data);
   },
 };

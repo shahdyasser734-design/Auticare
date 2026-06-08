@@ -9,7 +9,7 @@ import { bookingService, type Booking } from '../../services/api/bookings';
 import { useAuth } from '../../context/useAuth';
 import { Loader2 } from 'lucide-react';
 import { chatServiceAPI } from '../../services/api/chatService';
-import { getOrCreateSessionMeetingLink, cleanIntId } from '../../utils/zoomHelper';
+import { getOrCreateSessionMeetingLink } from '../../utils/zoomHelper';
 
 export const DoctorSessions = () => {
   const navigate = useNavigate();
@@ -21,6 +21,7 @@ export const DoctorSessions = () => {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'completed'>('upcoming');
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState('');
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
   const fetchSessions = async () => {
     try {
@@ -41,17 +42,20 @@ export const DoctorSessions = () => {
 
   const handleUpdateStatus = async (id: string, newStatus: Booking['status']) => {
     try {
+      setUpdateError(null);
       await bookingService.updateBookingStatus(id, newStatus);
       fetchSessions();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating status:', err);
+      const errMsg = err?.response?.data?.title || err?.response?.data?.detail || err.message || 'Failed to update booking status.';
+      setUpdateError(`Status Update Failed: ${errMsg}`);
     }
   };
 
   const handleCancelSession = async () => {
-    if (!cancellingId || !cancelReason.trim()) return;
+    if (!cancellingId) return;
     try {
-      await bookingService.cancelBooking(cancellingId, cancelReason, isDoctor ? 'doctor' : 'therapist');
+      await bookingService.cancelBooking(cancellingId, cancelReason.trim() || undefined);
       setCancellingId(null);
       setCancelReason('');
       fetchSessions();
@@ -60,15 +64,29 @@ export const DoctorSessions = () => {
     }
   };
 
+
   const [joiningZoom, setJoiningZoom] = useState<string | null>(null);
   const [zoomAlert, setZoomAlert] = useState<string | null>(null);
 
   const handleJoinZoom = async (session: Booking) => {
+    console.log('[ZOOM] Start Session / Join Zoom handler clicked.');
+    console.log('session:', session);
+    console.log('session.meetingLink:', (session as any).meetingLink);
+    console.log('session.zoomUrl:', session.zoomUrl);
+    console.log('session.joinLink:', session.joinLink);
+
     setJoiningZoom(session.id);
     const newWindow = window.open('', '_blank');
+    if (newWindow) {
+      console.log('[ZOOM] window.open() executed successfully.');
+    } else {
+      console.warn('[ZOOM] window.open() returned null or was blocked.');
+    }
+
     try {
       const link = await getOrCreateSessionMeetingLink(session, isDoctor);
-      
+      console.log('[ZOOM] getOrCreateSessionMeetingLink returned link:', link);
+
       if (isDoctor && session.parentId) {
         try {
           const chat = await chatServiceAPI.startChat([session.parentId]);
@@ -88,9 +106,9 @@ export const DoctorSessions = () => {
         newWindow.location.href = link;
       }
     } catch (err: any) {
-      console.error('Failed to join Zoom session:', err);
+      console.error('[ZOOM] Failed to join Zoom session:', err);
       if (newWindow) newWindow.close();
-      const errMsg = err.message || 'Error establishing Zoom link.';
+      const errMsg = err.message || 'No Zoom meeting link available.';
       setZoomAlert(errMsg);
       setTimeout(() => setZoomAlert(null), 4000);
     } finally {
@@ -101,11 +119,18 @@ export const DoctorSessions = () => {
   return (
     <MainLayout>
       <div className="space-y-8">
-        {/* Dynamic Zoom Alert */}
         {zoomAlert && (
           <div className="fixed top-20 right-6 z-50 p-4 bg-orange-600 text-white rounded-2xl shadow-xl flex items-center gap-2 animate-bounce">
             <span>⚠️</span>
             <p className="font-bold text-sm">{zoomAlert}</p>
+          </div>
+        )}
+        
+        {updateError && (
+          <div className="fixed top-20 right-6 z-50 p-4 bg-red-600 text-white rounded-2xl shadow-xl flex items-center gap-2 animate-bounce">
+            <span>⚠️</span>
+            <p className="font-bold text-sm">{updateError}</p>
+            <button onClick={() => setUpdateError(null)} className="ml-2 font-bold hover:text-red-200">✕</button>
           </div>
         )}
 
@@ -160,7 +185,7 @@ export const DoctorSessions = () => {
             }
 
             return displaySessions.map((session) => {
-              const meetingUrl = session.zoomUrl || session.joinLink || (session.id ? `https://zoom.us/j/${cleanIntId(session.id)}` : '');
+              const meetingUrl = session.zoomUrl || session.joinLink || '';
 
               return (
                 <Card key={session.id} className="border border-slate-300 dark:border-white/10 shadow hover:shadow-md transition-shadow rounded-2xl p-6 bg-white dark:bg-slate-900">
@@ -178,11 +203,6 @@ export const DoctorSessions = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
                         <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Child Name:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.childName || 'Not Provided'}</span></p>
                         <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Parent Name:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.parentName || 'Not Provided'}</span></p>
-                        {isDoctor ? (
-                          <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Assigned Therapist:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.therapistName || 'Not Assigned'}</span></p>
-                        ) : (
-                          <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Assigned Doctor:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.doctorName || 'Not Assigned'}</span></p>
-                        )}
                         <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Session Type:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.specialistType === 'doctor' ? 'Doctor Consultation' : 'Therapy Session'}</span></p>
                       </div>
 
@@ -213,7 +233,7 @@ export const DoctorSessions = () => {
                           <Button size="sm" onClick={() => handleUpdateStatus(session.id, 'confirmed')}>
                             Confirm & Approve
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => handleUpdateStatus(session.id, 'cancelled')}>
+                          <Button size="sm" variant="outline" onClick={() => handleUpdateStatus(session.id, 'rejected')}>
                             Reject
                           </Button>
                         </div>
@@ -225,29 +245,23 @@ export const DoctorSessions = () => {
                           <Button size="sm" variant="outline" className="border-red-200 text-red-600 hover:bg-red-50" onClick={() => setCancellingId(session.id)}>
                             Cancel Session
                           </Button>
-                          {meetingUrl ? (
-                            <Button
-                              size="sm"
-                              onClick={() => handleJoinZoom(session)}
-                              disabled={joiningZoom === session.id}
-                              className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer flex items-center gap-1"
-                            >
-                              {joiningZoom === session.id ? (
-                                <>
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                  Connecting...
-                                </>
-                              ) : (
-                                <>
-                                  🎥 {isDoctor ? 'Start Session' : 'Join Session'}
-                                </>
-                              )}
-                            </Button>
-                          ) : (
-                            <span className="text-xs text-red-500 font-semibold bg-red-50 dark:bg-red-950/20 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/30">
-                              No Zoom meeting link available.
-                            </span>
-                          )}
+                          <Button
+                            size="sm"
+                            onClick={() => handleJoinZoom(session)}
+                            disabled={joiningZoom === session.id}
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer flex items-center gap-1"
+                          >
+                            {joiningZoom === session.id ? (
+                              <>
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                Connecting...
+                              </>
+                            ) : (
+                              <>
+                                🎥 {isDoctor ? 'Start Session' : 'Join Session'}
+                              </>
+                            )}
+                          </Button>
                         </>
                       )}
                     </div>

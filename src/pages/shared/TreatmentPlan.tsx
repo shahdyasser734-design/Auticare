@@ -13,7 +13,7 @@ import { FileUpload } from '../../components/common/FileUpload';
 import { fileUploadService } from '../../services/api/fileUploadService';
 import { Activity, Plus, Trash2, CheckCircle2, User, FileText, BarChart3, Edit, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import type { Child, TreatmentPlan as TreatmentPlanType, Specialist } from '../../types';
-import { cleanIntId } from '../../utils/zoomHelper';
+
 
 
 export const TreatmentPlan = () => {
@@ -140,18 +140,83 @@ export const TreatmentPlan = () => {
           } as any;
         }
       } else {
+        // Resolve a valid 32-bit integer specialistId
+        // The backend requires a proper int32 ID that matches a specialist in the DB
+        let finalSpecialistId: number | null = null;
+        
+        try {
+          // Strategy 1: Match current user against the specialists list to get their actual int32 ID
+          const specs = await specialistsService.getSpecialists();
+          console.log('[TREATMENT PLAN] Fetched', specs.length, 'specialists for ID matching');
+          console.log('[TREATMENT PLAN] Current user email:', user?.email, 'name:', user?.name);
+          
+          const currentSpec = specs.find(s => 
+            (user?.email && s.email && s.email.toLowerCase() === user.email.toLowerCase()) || 
+            (user?.name && s.name && s.name.toLowerCase() === user.name.toLowerCase())
+          );
+          
+          if (currentSpec) {
+            const specIdNum = parseInt(String(currentSpec.id), 10);
+            if (!isNaN(specIdNum) && specIdNum > 0 && specIdNum <= 2147483647) {
+              finalSpecialistId = specIdNum;
+              console.log('[TREATMENT PLAN] Matched specialist by email/name. ID:', finalSpecialistId);
+            }
+          }
+        } catch (err) {
+          console.warn('[TREATMENT PLAN] Failed to fetch specialist list:', err);
+        }
+        
+        // Strategy 2: Get specialist ID from existing bookings (which have correct integer IDs)
+        if (!finalSpecialistId) {
+          try {
+            const bookings = await bookingsService.getMyBookings();
+            const relevantBooking = bookings.find(b => 
+              String(b.childId) === childId && b.specialistId
+            ) || bookings.find(b => b.specialistId);
+            
+            if (relevantBooking?.specialistId) {
+              const specIdFromBooking = parseInt(String(relevantBooking.specialistId), 10);
+              if (!isNaN(specIdFromBooking) && specIdFromBooking > 0 && specIdFromBooking <= 2147483647) {
+                finalSpecialistId = specIdFromBooking;
+                console.log('[TREATMENT PLAN] Got specialist ID from booking:', finalSpecialistId);
+              }
+            }
+          } catch (err) {
+            console.warn('[TREATMENT PLAN] Failed to get specialist from bookings:', err);
+          }
+        }
+        
+        // Strategy 3: Last resort - use 1 (this will likely fail validation, but logs will show why)
+        if (!finalSpecialistId) {
+          finalSpecialistId = 1;
+          console.warn('[TREATMENT PLAN] Could not resolve real specialist ID. Using fallback ID=1. This may cause API errors.');
+        }
+        
         // Create plan expects CreateTreatmentPlanRequest
+        const childIdNum = parseInt(childId, 10);
+        if (isNaN(childIdNum) || childIdNum <= 0) {
+          throw new Error(`Invalid childId: "${childId}". Expected a valid integer.`);
+        }
+        
         const createPayload = {
-          childId: cleanIntId(childId),
-          specialistId: cleanIntId(user?.id || 1),
+          childId: childIdNum,
+          specialistId: finalSpecialistId,
           startDate: startDate ? new Date(startDate).toISOString() : new Date().toISOString(),
           endDate: endDate ? new Date(endDate).toISOString() : null,
           goal: goals.length > 0 ? goals.join('\n') : 'Development Plan',
           notes: finalNotes
         };
-        console.log("SENDING TREATMENT PLAN PAYLOAD:", JSON.stringify(createPayload, null, 2));
-        savedPlan = await treatmentPlansService.createPlan(createPayload as any) as any;
+        console.log("[TREATMENT PLAN] SENDING CREATE PAYLOAD:", JSON.stringify(createPayload, null, 2));
+        try {
+          const res = await treatmentPlansService.createPlan(createPayload as any);
+          console.log("[TREATMENT PLAN] RECEIVED RESPONSE:", JSON.stringify(res, null, 2));
+          savedPlan = res as any;
+        } catch (createErr: any) {
+          console.error("[TREATMENT PLAN] FAILED TO CREATE. Backend response:", createErr?.response?.data || createErr?.message || createErr);
+          throw createErr;
+        }
       }
+
 
       setPlan(savedPlan);
       setEditMode(false);
