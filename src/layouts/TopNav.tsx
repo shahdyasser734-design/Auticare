@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Settings, Menu, Moon, SunMedium, MessageSquare } from 'lucide-react';
 import { Avatar } from '../components/common/Avatar';
@@ -17,12 +17,24 @@ export const TopNav = ({ onMenuClick }: TopNavProps) => {
   const { user } = useAuth();
   const { theme, toggleTheme, isDark } = useTheme();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const prevUnreadRef = useRef(0);
 
   useEffect(() => {
     const fetchUnread = async () => {
       try {
         const list = await notificationService.getNotifications();
-        const unread = list.filter((n) => !n.isRead).length;
+        const unreadList = list.filter((n) => !n.isRead);
+        const unread = unreadList.length;
+        
+        if (unread > prevUnreadRef.current && unreadList.length > 0) {
+          // Trigger a toast for the newest notification
+          const newest = unreadList[0];
+          setToastMessage(newest.message || 'You have a new notification!');
+          setTimeout(() => setToastMessage(null), 5000);
+        }
+        
+        prevUnreadRef.current = unread;
         setUnreadCount(unread);
       } catch (err) {
         console.warn('Could not load notifications count', err);
@@ -38,11 +50,18 @@ export const TopNav = ({ onMenuClick }: TopNavProps) => {
   }, [user]);
 
   return (
-    <header className={`fixed top-0 right-0 left-0 h-16 transition-all duration-300 z-20 ${
-      isDark
-        ? 'bg-slate-950/80 border-slate-800/50 text-slate-100'
-        : 'bg-white/80 border-slate-200 text-slate-900'
-    } backdrop-blur-xl border-b shadow-sm`}>
+    <>
+      {toastMessage && (
+        <div className="fixed top-20 right-6 z-50 p-4 bg-primary-600 text-white rounded-2xl shadow-xl flex items-center gap-3 animate-in slide-in-from-right-8 fade-in duration-300 max-w-sm">
+          <Bell className="animate-bounce" size={20} />
+          <span className="text-sm font-medium">{toastMessage}</span>
+        </div>
+      )}
+      <header className={`fixed top-0 right-0 left-0 h-16 transition-all duration-300 z-20 ${
+        isDark
+          ? 'bg-slate-950/80 border-slate-800/50 text-slate-100'
+          : 'bg-white/80 border-slate-200 text-slate-900'
+      } backdrop-blur-xl border-b shadow-sm`}>
       <div className="h-full px-4 md:px-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button 

@@ -124,16 +124,27 @@ export const DoctorHome = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleUpdateStatus = async (e: React.MouseEvent, id: string, newStatus: Booking['status']) => {
+  const handleUpdateStatus = async (e: React.MouseEvent, booking: Booking, newStatus: Booking['status']) => {
     e.preventDefault();
     e.stopPropagation();
     try {
-      console.log(`[DASHBOARD] Updating booking ${id} to status: ${newStatus}`);
-      await bookingService.updateBookingStatus(id, newStatus);
-      console.log(`[DASHBOARD] Successfully updated booking ${id}`);
+      console.log(`[DASHBOARD] Updating booking ${booking.id} to status: ${newStatus}`);
+      await bookingService.updateBookingStatus(booking.id, newStatus);
+      console.log(`[DASHBOARD] Successfully updated booking ${booking.id}`);
+      
+      // Feature: Chat Access Control
+      if (newStatus === 'confirmed' && booking.parentId) {
+        try {
+          console.log(`[DASHBOARD] Provisioning chat room for Parent: ${booking.parentId}`);
+          await chatServiceAPI.startChat([booking.parentId]);
+        } catch (chatErr) {
+          console.warn('[DASHBOARD] Failed to auto-provision chat room:', chatErr);
+        }
+      }
+      
       await fetchSpecialistData(); // Await the fetch to ensure UI updates before resolving
     } catch (err: any) {
-      console.error(`[DASHBOARD] Error updating booking ${id}:`, err);
+      console.error(`[DASHBOARD] Error updating booking ${booking.id}:`, err);
       const errMsg = err?.response?.data?.title || err?.response?.data?.detail || err.message || 'Failed to update booking status.';
       setError(`Status Update Failed: ${errMsg}`);
     }
@@ -463,7 +474,7 @@ export const DoctorHome = () => {
                         <div className="flex gap-2 shrink-0">
                           <Button
                             size="sm"
-                            onClick={(e) => handleUpdateStatus(e, booking.id, 'confirmed')}
+                            onClick={(e) => handleUpdateStatus(e, booking, 'confirmed')}
                             className="bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg cursor-pointer"
                           >
                             Approve
@@ -471,7 +482,7 @@ export const DoctorHome = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={(e) => handleUpdateStatus(e, booking.id, 'rejected')}
+                            onClick={(e) => handleUpdateStatus(e, booking, 'rejected')}
                             className="rounded-lg cursor-pointer"
                           >
                             Reject
