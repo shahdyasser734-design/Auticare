@@ -1,10 +1,10 @@
 import apiClient from '../apiClient';
 import type { Booking } from '../../types';
-import { normalizeBooking } from './bookings';
+import { normalizeBooking, type BookingRequest } from './bookings';
 
 export const bookingsService = {
   createBooking: async (
-    data: Partial<Booking> & { preferredDate?: string; preferredTime?: string; specialistType?: 'doctor' | 'therapist'; specialistId?: string | number }
+    data: BookingRequest
   ): Promise<Booking> => {
     console.log('[BOOKING] Creating booking with data:', data);
     const response = await apiClient.post<Booking>('/bookings', data);

@@ -191,11 +191,11 @@ const OurSpecialists = () => {
       setApiError(null);
       try {
         const payload: BookingRequest = {
-          SpecialistId: typeof selected.id === 'number' ? selected.id : Number(selected.id),
-          ChildId: childId || undefined,
-          PreferredDate: bookingDate || undefined,
-          PreferredTime: bookingTime || undefined,
-          Reason: bookingReason || undefined,
+          specialistId: typeof selected.id === 'number' ? selected.id : Number(selected.id),
+          childId: childId ? Number(childId) : undefined,
+          bookingDate: bookingDate || '',
+          bookingTime: bookingTime || undefined,
+          reason: bookingReason || undefined,
         };
         
         console.log(`[BOOKING] Creating booking for specialist: ${selected.name} (ID: ${selected.id}, Type: ${selected.type})`);

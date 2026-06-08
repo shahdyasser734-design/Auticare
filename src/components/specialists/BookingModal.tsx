@@ -3,7 +3,6 @@ import { Button } from '../common/Button';
 import { Modal } from '../common/Modal';
 import { bookingService, type BookingRequest } from '../../services/api/bookings';
 import { childrenService } from '../../services/childrenService';
-import { treatmentPlansService } from '../../services/api/treatmentPlans';
 import type { Child, Specialist } from '../../types';
 
 interface BookingModalProps {
@@ -62,55 +61,30 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
       // Format the date to ensure it's in the correct format (YYYY-MM-DD)
       const formattedDate = date.includes('-') ? date : new Date(date).toISOString().split('T')[0];
       const formattedTime = time;
-      const dateTimeIso = `${formattedDate}T${formattedTime}`;
-      const specialistIdValue =
+      const specialistIdValue = Number(
         specialist.id ||
-        (specialist as unknown as Record<string, unknown>)._id as string ||
-        (specialist as unknown as Record<string, unknown>).specialistId as string ||
         (specialist as unknown as Record<string, unknown>).doctorId as string ||
-        (specialist as unknown as Record<string, unknown>).therapistId as string;
+        (specialist as unknown as Record<string, unknown>).therapistId as string
+      );
 
       if (!specialistIdValue) {
         throw new Error('Specialist identifier could not be determined.');
       }
 
-      let treatmentPlanIdVal: number | undefined = undefined;
-      if (childId) {
-        try {
-          const plans = await treatmentPlansService.getChildPlans(childId);
-          const activePlan = plans.find(p => p.status === 'active') || plans[0];
-          if (activePlan) {
-            treatmentPlanIdVal = Number(activePlan.id);
-          }
-        } catch (planErr) {
-          console.warn('Could not find active treatment plan for child during booking:', planErr);
-        }
+      if (!childId) {
+        setError('Please select a child profile for this booking.');
+        setSubmitting(false);
+        return;
       }
 
       const payload: BookingRequest = {
-        specialistId: specialistIdValue,
-        specialistName: specialist.name,
-        specialistType: specialist.type || (specialist as any).role || 'doctor',
-        childId,
-        preferredDate: formattedDate,
-        preferredTime: formattedTime,
-        dateTime: dateTimeIso,
-        reason: reason.trim(),
-        request: reason.trim(),
-        notes: reason.trim(),
-        SpecialistId: specialistIdValue,
-        SpecialistName: specialist.name,
-        SpecialistType: specialist.type || (specialist as any).role || 'doctor',
-        ChildId: childId,
-        PreferredDate: formattedDate,
-        PreferredTime: formattedTime,
-        DateTime: dateTimeIso,
-        Reason: reason.trim(),
-        Notes: reason.trim(),
-        Request: reason.trim(),
-        treatmentId: treatmentPlanIdVal,
-        TreatmentId: treatmentPlanIdVal,
+        specialistId: typeof specialistIdValue === 'number' ? specialistIdValue : Number(specialistIdValue),
+        childId: childId ? Number(childId) : undefined,
+        bookingDate: formattedDate,
+        bookingTime: formattedTime,
+        reason: reason.trim() || undefined,
       };
+      console.log('BOOKING PAYLOAD', payload);
       await bookingService.createBooking(payload);
       onBooked();
     } catch (err) {

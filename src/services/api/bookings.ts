@@ -4,29 +4,11 @@ import type { Booking as BookingType } from '../../types';
 export type Booking = BookingType;
 
 export interface BookingRequest {
-  parentId?: string;
-  specialistId?: string | number;
-  specialistType?: 'doctor' | 'therapist';
-  childId?: string;
-  preferredDate?: string;
-  preferredTime?: string;
-  dateTime?: string;
+  specialistId: number;
+  childId?: number;
+  bookingDate: string;
+  bookingTime?: string;
   reason?: string;
-  request?: string;
-  notes?: string;
-  specialistName?: string;
-  SpecialistName?: string;
-  SpecialistId?: string | number;
-  SpecialistType?: 'doctor' | 'therapist';
-  ChildId?: string;
-  PreferredDate?: string;
-  PreferredTime?: string;
-  DateTime?: string;
-  Reason?: string;
-  Request?: string;
-  Notes?: string;
-  treatmentId?: string | number;
-  TreatmentId?: string | number;
 }
 
 export const normalizeBooking = (b: any): Booking => {
