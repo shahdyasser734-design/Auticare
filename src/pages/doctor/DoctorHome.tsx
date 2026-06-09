@@ -181,7 +181,15 @@ export const DoctorHome = () => {
 
       if (isDoctor && session.parentId) {
         try {
-          const chat = await chatServiceAPI.startChat([session.parentId]);
+          const participants = [session.parentId];
+          // Try to find the assigned therapist for this child
+          if (session.childId && dashboardData?.assignedChildren) {
+            const childInfo = dashboardData.assignedChildren.find(c => c.id === session.childId);
+            if (childInfo?.assignedTherapist) {
+              participants.push(childInfo.assignedTherapist);
+            }
+          }
+          const chat = await chatServiceAPI.startChat(participants);
           await chatServiceAPI.sendZoomLink(
             chat.id,
             link,

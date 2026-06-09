@@ -8,7 +8,7 @@ import { Avatar } from '../../components/common/Avatar';
 import { chatServiceAPI, type ChatConversation, type ChatMessage } from '../../services/api/chatService';
 import { useAuth } from '../../context/useAuth';
 import { childrenService, type Child } from '../../services/api/children';
-import { MessageSquare, Video, Send, Loader2, RefreshCw } from 'lucide-react';
+import { MessageSquare, Video, Send, Loader2 } from 'lucide-react';
 import { Badge } from '../../components/common/Badge';
 
 // ─── Safe helpers (prevent crashes on null API data) ──────────────────────────
@@ -39,8 +39,6 @@ export const Chat = () => {
   const [selectedConversation, setSelectedConversation] = useState<ChatConversation | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [sendingZoom, setSendingZoom] = useState(false);
@@ -53,7 +51,6 @@ export const Chat = () => {
 
   const fetchConversations = async () => {
     try {
-      setLoadError(null);
       const data = await chatServiceAPI.getMyChats();
       const safeData = Array.isArray(data) ? data : [];
       setConversations(safeData);
@@ -72,9 +69,6 @@ export const Chat = () => {
       }
     } catch (err) {
       console.error('Error fetching chats:', err);
-      setLoadError('Could not load conversations. You may not have any chats yet.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -245,33 +239,6 @@ export const Chat = () => {
     }
   };
 
-  const getChatSpecialty = (chat: ChatConversation): string => {
-    try {
-      const name = getChatName(chat).toLowerCase();
-      if (name.includes('dr.') || name.includes('doctor')) return 'Doctor';
-      if (name.includes('therapist') || name.includes('therapy')) return 'Therapist';
-      return isSpecialist ? 'Parent Contact' : 'Assigned Care Specialist';
-    } catch {
-      return 'Care Specialist';
-    }
-  };
-
-  const getLastMessageTime = (chat: ChatConversation): string => {
-    try {
-      if (!chat.lastMessage?.timestamp) return '';
-      const date = new Date(chat.lastMessage.timestamp);
-      const now = new Date();
-      const diffMs = now.getTime() - date.getTime();
-      const diffMins = Math.floor(diffMs / 60000);
-      if (diffMins < 1) return 'Just now';
-      if (diffMins < 60) return `${diffMins}m ago`;
-      const diffHrs = Math.floor(diffMins / 60);
-      if (diffHrs < 24) return `${diffHrs}h ago`;
-      return date.toLocaleDateString();
-    } catch {
-      return '';
-    }
-  };
 
   const isZoomMessage = (msg: ChatMessage): boolean => {
     try {
@@ -295,148 +262,74 @@ export const Chat = () => {
     <MainLayout>
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 min-h-[calc(100vh-8rem)]">
 
-        {/* Conversations List Panel */}
-        <Card className="lg:col-span-1 h-full overflow-hidden flex flex-col p-4 border border-stone-200/60 dark:border-white/8 shadow-md rounded-3xl bg-[var(--surface-strong)] dark:bg-slate-900/20">
-          <div className="flex items-center justify-between mb-4 px-1">
-            <h2 className="text-lg font-black text-stone-900 dark:text-white flex items-center gap-2 tracking-tight">
-              <MessageSquare className="text-indigo-500" size={18} />
-              Care Chats
-            </h2>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary">Active</Badge>
-              <button
-                onClick={() => void fetchConversations()}
-                className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-slate-800 transition-colors"
-                title="Refresh"
-              >
-                <RefreshCw size={13} className="text-stone-400" />
-              </button>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-            {loading ? (
-              <div className="flex flex-col items-center justify-center py-10 gap-3">
-                <Loader2 className="h-6 w-6 animate-spin text-indigo-500" />
-                <p className="text-xs text-stone-400 font-medium">Loading chats...</p>
-              </div>
-            ) : loadError ? (
-              <div className="text-center py-8 space-y-3 px-2">
-                <p className="text-stone-400 text-xs font-medium">{loadError}</p>
-                <button
-                  onClick={() => void fetchConversations()}
-                  className="text-xs text-indigo-600 font-bold hover:underline"
-                >
-                  Try again
-                </button>
-              </div>
-            ) : filteredConversations.length === 0 ? (
-              <div className="text-center py-10 space-y-2 px-2">
-                <MessageSquare size={28} className="text-stone-300 dark:text-slate-600 mx-auto" />
-                <p className="text-stone-500 dark:text-slate-400 text-xs font-medium">No care chats yet.</p>
-                <p className="text-stone-400 dark:text-slate-500 text-[10px]">Chats open when a session is approved.</p>
-              </div>
-            ) : (
-              filteredConversations.map((conv) => {
-                const isActiveConv = selectedConversation?.id === conv.id;
-                const details = getChatDetails(conv);
-                const chatName = getChatName(conv);
-                
-                let displayName = '';
-                let displaySubtitle = '';
-                
-                if (isSpecialist) {
-                  // Doctor/Therapist View
-                  displayName = details.parentName;
-                  displaySubtitle = details.childName && details.childName !== `${details.parentName}'s Child` 
-                    ? `Child: ${details.childName}` 
-                    : 'Parent';
-                } else {
-                  // Parent View
-                  displayName = chatName;
-                  displaySubtitle = getChatSpecialty(conv);
-                }
-
-                return (
-                  <button
-                    key={conv.id}
-                    onClick={() => setSelectedConversation(conv)}
-                    className={`w-full text-left p-3.5 rounded-2xl transition-all duration-200 flex items-center gap-3 border ${
-                      isActiveConv
-                        ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-500/20'
-                        : 'standard-card hover:bg-stone-50 dark:hover:bg-slate-800 border-stone-150  text-stone-800 dark:text-slate-200'
-                    }`}
-                  >
-                    <Avatar name={displayName} image={isSpecialist ? details.avatar : undefined} size="md" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1 mb-0.5">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <p className="font-bold text-sm truncate">{displayName}</p>
-                          {isSpecialist && (
-                            <span className="text-[9px] bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider shrink-0">
-                              {details.status}
-                            </span>
-                          )}
-                        </div>
-                        <span className={`text-[10px] shrink-0 ${isActiveConv ? 'opacity-70' : 'text-stone-400'}`}>
-                          {getLastMessageTime(conv)}
-                        </span>
-                      </div>
-                      <p className={`text-xs font-semibold truncate ${isActiveConv ? 'opacity-85' : 'text-stone-500 dark:text-slate-400'}`}>
-                        {displaySubtitle}
-                      </p>
-                      <p className={`text-xs truncate mt-0.5 ${isActiveConv ? 'opacity-60' : 'text-stone-400'}`}>
-                        {conv.lastMessage?.content || 'Consultation started'}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })
-            )}
-          </div>
-        </Card>
-
         {/* Messaging Area + Patient Info Sidebar */}
-        <div className={`lg:col-span-3 grid grid-cols-1 ${isSpecialist && selectedConversation ? 'lg:grid-cols-3' : ''} gap-5 h-full`}>
-          <Card className={`${isSpecialist && selectedConversation ? 'lg:col-span-2' : 'lg:col-span-3'} h-full flex flex-col p-5 border border-stone-200/60 dark:border-white/8 shadow-md rounded-3xl bg-[var(--surface-strong)] dark:bg-slate-900/10`}>
+        <div className={`col-span-1 lg:col-span-4 grid grid-cols-1 ${isSpecialist && selectedConversation ? 'lg:grid-cols-3' : 'max-w-4xl mx-auto w-full'} gap-5 h-full`}>
+          <Card className={`${isSpecialist && selectedConversation ? 'lg:col-span-2' : 'col-span-1'} h-full flex flex-col p-5 border border-stone-200/60 dark:border-white/8 shadow-md rounded-3xl bg-[var(--surface-strong)] dark:bg-slate-900/10`}>
+            {/* Unified Conversation Header */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-stone-200/60 dark:border-white/8 mb-4 shrink-0 gap-4">
+              <div className="flex flex-col">
+                <label className="text-xs text-stone-500 font-bold mb-1.5 uppercase tracking-wider flex items-center gap-2">
+                  <MessageSquare size={14} className="text-indigo-500" />
+                  Chat with:
+                </label>
+                <select
+                  className="bg-white dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-stone-900 dark:text-white text-sm rounded-xl px-4 py-2.5 font-bold outline-none cursor-pointer focus:ring-2 focus:ring-indigo-500 min-w-[280px] shadow-sm"
+                  value={selectedConversation?.id || ''}
+                  onChange={async (e) => {
+                    const targetChatId = e.target.value;
+                    const conv = conversations.find(c => c.id === targetChatId);
+                    if (conv) {
+                      const ids = safeParticipantIds(conv);
+                      const otherId = ids.find(id => id !== user?.id);
+                      if (otherId) {
+                        try {
+                          const started = await chatServiceAPI.startChat([otherId]);
+                          setSelectedConversation(started);
+                          void fetchConversations();
+                        } catch {
+                          setSelectedConversation(conv);
+                        }
+                      } else {
+                        setSelectedConversation(conv);
+                      }
+                    }
+                  }}
+                >
+                  <option value="" disabled>Select Participant</option>
+                  {filteredConversations.map(conv => {
+                    let label = '';
+                    if (isSpecialist) {
+                      const details = getChatDetails(conv);
+                      label = `Parent: ${details.parentName}`;
+                    } else {
+                      const chatName = getChatName(conv);
+                      label = chatName.includes(':') ? chatName : `Dr. / Therapist: ${chatName}`;
+                    }
+                    return (
+                      <option key={conv.id} value={conv.id}>{label}</option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {isSpecialist && selectedConversation && (
+                  <Button
+                    size="sm"
+                    onClick={handleSendZoomLink}
+                    disabled={sendingZoom}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center gap-1.5 rounded-xl cursor-pointer"
+                  >
+                    {sendingZoom ? <Loader2 size={14} className="animate-spin" /> : <Video size={14} />}
+                    Start Zoom Session
+                  </Button>
+                )}
+                {selectedConversation && <Badge variant="success">Connected</Badge>}
+              </div>
+            </div>
+
             {selectedConversation ? (
               <>
-                {/* Conversation Header */}
-                <div className="flex items-center justify-between pb-4 border-b border-stone-200/60 dark:border-white/8 mb-4 shrink-0">
-                  <div className="flex items-center gap-3">
-                    <Avatar
-                      name={isSpecialist ? getChatDetails(selectedConversation).parentName : getChatName(selectedConversation)}
-                      image={isSpecialist ? getChatDetails(selectedConversation).avatar : undefined}
-                      size="lg"
-                    />
-                    <div>
-                      <h3 className="font-black text-base text-stone-900 dark:text-white">
-                        {isSpecialist ? getChatDetails(selectedConversation).parentName : getChatName(selectedConversation)}
-                      </h3>
-                      <p className="text-xs text-stone-500 dark:text-slate-400 font-medium">
-                        {isSpecialist 
-                          ? (getChatDetails(selectedConversation).childName && getChatDetails(selectedConversation).childName !== `${getChatDetails(selectedConversation).parentName}'s Child` ? `Child: ${getChatDetails(selectedConversation).childName}` : 'Parent')
-                          : getChatSpecialty(selectedConversation)
-                        }
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    {isSpecialist && (
-                      <Button
-                        size="sm"
-                        onClick={handleSendZoomLink}
-                        disabled={sendingZoom}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center gap-1.5 rounded-xl cursor-pointer"
-                      >
-                        {sendingZoom ? <Loader2 size={14} className="animate-spin" /> : <Video size={14} />}
-                        Share Zoom Room
-                      </Button>
-                    )}
-                    <Badge variant="success">Connected</Badge>
-                  </div>
-                </div>
 
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto mb-4 space-y-3 pr-1 pl-1">

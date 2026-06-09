@@ -10,6 +10,7 @@ import { useAuth } from '../../context/useAuth';
 import { Loader2 } from 'lucide-react';
 import { chatServiceAPI } from '../../services/api/chatService';
 import { getOrCreateSessionMeetingLink } from '../../utils/zoomHelper';
+import { dashboardService } from '../../services/api/dashboard';
 
 export const DoctorSessions = () => {
   const navigate = useNavigate();
@@ -77,7 +78,21 @@ export const DoctorSessions = () => {
 
       if (isDoctor && session.parentId) {
         try {
-          const chat = await chatServiceAPI.startChat([session.parentId]);
+          const participants = [session.parentId];
+          if (session.childId) {
+            try {
+              const dashData = await dashboardService.getSpecialistDashboard();
+              if (dashData?.assignedChildren) {
+                const childInfo = dashData.assignedChildren.find(c => c.id === session.childId);
+                if (childInfo?.assignedTherapist) {
+                  participants.push(childInfo.assignedTherapist);
+                }
+              }
+            } catch (err) {
+              console.warn('[ZOOM] Failed to fetch dashboard data for therapist ID:', err);
+            }
+          }
+          const chat = await chatServiceAPI.startChat(participants);
           await chatServiceAPI.sendZoomLink(
             chat.id, 
             link, 
