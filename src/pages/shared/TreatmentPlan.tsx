@@ -11,6 +11,7 @@ import { treatmentPlansService } from '../../services/api/treatmentPlansService'
 import { specialistsService } from '../../services/api/specialistsService';
 import { FileUpload } from '../../components/common/FileUpload';
 import { fileUploadService } from '../../services/api/fileUploadService';
+import { childrenService } from '../../services/api/children';
 import { Activity, Plus, Trash2, CheckCircle2, User, FileText, BarChart3, Edit, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import type { Child, TreatmentPlan as TreatmentPlanType, Specialist } from '../../types';
 
@@ -56,20 +57,28 @@ export const TreatmentPlan = () => {
     if (!childId) return;
     try {
       setLoading(true);
-      // 1. Fetch child profile from bookings
-      const bookings = await bookingsService.getMyBookings();
-      const booking = bookings.find(b => String(b.childId) === childId);
-      if (booking) {
-        setChild({
-          id: booking.childId,
-          name: booking.childName || 'Patient',
-          parentId: booking.parentId || '',
-          parentName: booking.parentName || 'Parent',
-          age: null,
-          gender: 'Unknown',
-          dateOfBirth: '',
-          status: 'active'
-        } as any);
+      // 1. Fetch real child profile
+      try {
+        const childData = await childrenService.getChild(childId);
+        if (childData) {
+          setChild(childData);
+        }
+      } catch (err) {
+        console.warn('Failed to load real child profile, fallback to booking data', err);
+        const bookings = await bookingsService.getMyBookings();
+        const booking = bookings.find(b => String(b.childId) === childId);
+        if (booking) {
+          setChild({
+            id: booking.childId,
+            name: booking.childName || 'Patient',
+            parentId: booking.parentId || '',
+            parentName: booking.parentName || 'Parent',
+            age: null,
+            gender: 'Unknown',
+            dateOfBirth: '',
+            status: 'active'
+          } as any);
+        }
       }
 
       // 2. Fetch treatment plans for child

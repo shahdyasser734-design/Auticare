@@ -204,7 +204,7 @@ export const Chat = () => {
   // ─── Fetch messages ──────────────────────────────────────────────────────
 
   const fetchMessages = useCallback(async (conv: ChatConversation) => {
-    if (!conv?.id) return;
+    if (!conv?.id || String(conv.id).startsWith('new-')) return;
     setLoadingMessages(true);
     try {
       const raw = await chatServiceAPI.getMessages(conv.id);

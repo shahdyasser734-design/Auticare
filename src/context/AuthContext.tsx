@@ -112,7 +112,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const normalizeAuthResponse = (data: AuthResponse) => {
     const rawUser = (data.user ?? data) as any;
-    const email = String(rawUser.email ?? '');
+    const email = String(rawUser.email ?? '').toLowerCase();
     const phone = String(
       rawUser.phone ??
       rawUser.phoneNumber ??
@@ -188,6 +188,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       const rawData: AuthResponse = await authService.login(email, password);
+      console.log('[AuthContext] login rawData:', JSON.stringify(rawData));
       
       const tempToken = rawData.token || (rawData as any).accessToken;
       if (tempToken) {
@@ -247,44 +248,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (payload.phone) {
         data.user.phone = String(payload.phone);
         if (data.user.email) {
-          localStorage.setItem(`auticare.user.phone.${data.user.email}`, String(payload.phone));
+          localStorage.setItem(`auticare.user.phone.${String(data.user.email).toLowerCase()}`, String(payload.phone));
         }
       }
       if (payload.nationalId) {
         data.user.nationalId = String(payload.nationalId);
         if (data.user.email) {
-          localStorage.setItem(`auticare.user.nationalId.${data.user.email}`, String(payload.nationalId));
+          localStorage.setItem(`auticare.user.nationalId.${String(data.user.email).toLowerCase()}`, String(payload.nationalId));
         }
       }
       if (payload.specialization) {
         data.user.specialization = String(payload.specialization);
         data.user.specialty = String(payload.specialization);
         if (data.user.email) {
-          localStorage.setItem(`auticare.user.specialization.${data.user.email}`, String(payload.specialization));
+          localStorage.setItem(`auticare.user.specialization.${String(data.user.email).toLowerCase()}`, String(payload.specialization));
         }
       }
       if (payload.yearsOfExperience) {
         data.user.yearsOfExperience = Number(payload.yearsOfExperience);
         if (data.user.email) {
-          localStorage.setItem(`auticare.user.yearsOfExperience.${data.user.email}`, String(payload.yearsOfExperience));
+          localStorage.setItem(`auticare.user.yearsOfExperience.${String(data.user.email).toLowerCase()}`, String(payload.yearsOfExperience));
         }
       }
       if (payload.licenseNumber) {
         data.user.licenseNumber = String(payload.licenseNumber);
         if (data.user.email) {
-          localStorage.setItem(`auticare.user.licenseNumber.${data.user.email}`, String(payload.licenseNumber));
+          localStorage.setItem(`auticare.user.licenseNumber.${String(data.user.email).toLowerCase()}`, String(payload.licenseNumber));
         }
       }
       if (payload.bio) {
         data.user.bio = String(payload.bio);
         if (data.user.email) {
-          localStorage.setItem(`auticare.user.bio.${data.user.email}`, String(payload.bio));
+          localStorage.setItem(`auticare.user.bio.${String(data.user.email).toLowerCase()}`, String(payload.bio));
         }
       }
       if (payload.gender) {
         data.user.gender = String(payload.gender);
         if (data.user.email) {
-          localStorage.setItem(`auticare.user.gender.${data.user.email}`, String(payload.gender));
+          localStorage.setItem(`auticare.user.gender.${String(data.user.email).toLowerCase()}`, String(payload.gender));
         }
       }
 

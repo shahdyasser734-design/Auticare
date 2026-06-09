@@ -26,6 +26,7 @@ export const ParentHome = () => {
   const [plans, setPlans] = useState<TreatmentPlan[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [totalUnreadCount, setTotalUnreadCount] = useState(0);
   const [upcomingSessions, setUpcomingSessions] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -74,6 +75,7 @@ export const ParentHome = () => {
       setPlans(finalPlanList);
       setNotes([]);
       setNotifications(notifs);
+      setTotalUnreadCount(notifList.filter(n => !n.isRead).length);
       setUpcomingSessions(finalUpcoming.length);
     } catch (err) {
       console.error('Error fetching parent dashboard:', err);
@@ -101,7 +103,7 @@ export const ParentHome = () => {
     return `${timeGreet}, ${firstName}!`;
   };
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = totalUnreadCount;
 
   if (loading) {
     return (

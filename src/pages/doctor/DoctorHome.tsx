@@ -10,9 +10,8 @@ import { useAuth } from '../../context/useAuth';
 import { dashboardService, type DashboardSpecialistData, type PatientCard } from '../../services/api/dashboard';
 import { bookingService, type Booking } from '../../services/api/bookings';
 import { notificationService, type Notification } from '../../services/api/notifications';
-import { notesService, type Note } from '../../services/api/notes';
+import { notesService } from '../../services/api/notes';
 import { NoteCard } from '../../components/notes/NoteCard';
-import type { Child } from '../../services/api/children';
 
 import {
   Loader2, Calendar, Users, Bell, ClipboardList, ArrowRight,
@@ -39,9 +38,10 @@ export const DoctorHome = () => {
   const [dashboardData, setDashboardData] = useState<DashboardSpecialistData | null>(null);
   const [patients, setPatients] = useState<PatientCard[]>([]);
   const [sessions, setSessions] = useState<Booking[]>([]);
-  const [children, setChildren] = useState<Child[]>([]);
+  const [children, setChildren] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [myNotes, setMyNotes] = useState<Note[]>([]);
+  const [totalUnreadCount, setTotalUnreadCount] = useState(0);
+  const [myNotes, setMyNotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -105,6 +105,7 @@ export const DoctorHome = () => {
       setSessions(bookingData);
       setChildren(extractedPatients as any[]);
       setNotifications(notifData.slice(0, 5));
+      setTotalUnreadCount(notifData.filter((n: any) => !n.isRead).length);
       setMyNotes(notesData || []);
 
       console.log(
@@ -701,9 +702,9 @@ export const DoctorHome = () => {
               <h3 className="font-black text-base text-stone-800 dark:text-white mb-5 flex items-center gap-2 tracking-tight">
                 <Bell className="text-amber-500" size={17} />
                 Action Alerts
-                {notifications.filter(n => !n.isRead).length > 0 && (
+                {totalUnreadCount > 0 && (
                   <span className="ml-auto w-5 h-5 rounded-full bg-amber-500 text-white text-[9px] font-black flex items-center justify-center">
-                    {notifications.filter(n => !n.isRead).length}
+                    {totalUnreadCount}
                   </span>
                 )}
               </h3>

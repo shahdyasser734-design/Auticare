@@ -7,15 +7,37 @@ export type { ChatMessage, ChatConversation };
 
 export const chatServiceAPI = {
   startChat: async (contactId: string): Promise<ChatConversation> => {
-    const response = await apiClient.post<ChatConversation>('/chat/start', {
+    const response = await apiClient.post<any>('/chat/start', {
       specialistId: Number(contactId),
     });
-    return response.data;
+    const r = response.data;
+    return {
+      id: String(r.chatId || r.id),
+      participantIds: [String(contactId)],
+      participantNames: {
+        [String(contactId)]: r.specialistName || r.parentName || r.patientName || 'Unknown',
+      },
+      lastUpdated: r.lastMessageAt || new Date().toISOString(),
+      unreadCount: r.unreadCount || 0,
+      createdAt: new Date().toISOString(),
+      ...r
+    } as ChatConversation;
   },
 
   getMyChats: async (): Promise<ChatConversation[]> => {
-    const response = await apiClient.get<ChatConversation[]>('/chat/my-chats');
-    return response.data ?? [];
+    const response = await apiClient.get<any[]>('/chat/my-chats');
+    const raw = response.data ?? [];
+    return raw.map((r: any) => ({
+      id: String(r.chatId || r.id),
+      participantIds: r.specialistId ? [String(r.specialistId)] : (r.parentId ? [String(r.parentId)] : []),
+      participantNames: {
+        [String(r.specialistId || r.parentId)]: r.specialistName || r.parentName || r.patientName || 'Unknown',
+      },
+      lastUpdated: r.lastMessageAt || new Date().toISOString(),
+      unreadCount: r.unreadCount || 0,
+      createdAt: new Date().toISOString(),
+      ...r
+    }));
   },
 
   getMessages: async (chatId: string, limit?: number): Promise<ChatMessage[]> => {
@@ -29,9 +51,8 @@ export const chatServiceAPI = {
     content: string,
     messageType: 'text' | 'file' = 'text'
   ): Promise<ChatMessage> => {
-    // Send chatId exactly as it is since it could be a UUID string
     const response = await apiClient.post<any>('/chat/send', {
-      chatId,
+      chatId: Number(chatId),
       content,
       messageType,
     });
@@ -45,9 +66,8 @@ export const chatServiceAPI = {
     confirmedTime?: string, 
     note?: string
   ): Promise<ChatMessage> => {
-    // Send chatId exactly as it is since it could be a UUID string
     const response = await apiClient.post<any>('/chat/send-zoom-link', {
-      chatId,
+      chatId: Number(chatId),
       zoomLink,
       confirmedDate: confirmedDate || new Date().toISOString().split('T')[0],
       confirmedTime: confirmedTime || new Date().toISOString().split('T')[1].substring(0, 5),
