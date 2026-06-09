@@ -25,6 +25,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [childrenLoaded, setChildrenLoaded] = useState(false);
   const [parentChildren, setParentChildren] = useState<any[]>([]);
+  const [activeChildId, setActiveChildId] = useState<string | null>(() => localStorage.getItem('latestChildId') || null);
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return localStorage.getItem('isAuthenticated') === 'true';
@@ -67,6 +68,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           try {
             const kids = await childrenService.getMyChildren();
             setParentChildren(kids);
+            if (kids.length > 0 && !localStorage.getItem('latestChildId')) {
+              setActiveChildId(kids[0].id);
+              localStorage.setItem('latestChildId', kids[0].id);
+              localStorage.setItem('latestChildName', kids[0].name);
+            }
           } catch (e) {
             console.warn('[AuthContext] Failed to fetch children:', e);
           }
@@ -486,6 +492,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     loading,
     childrenLoaded,
     parentChildren,
+    activeChildId,
+    setActiveChildId: (id: string | null) => {
+      setActiveChildId(id);
+      if (id) {
+        localStorage.setItem('latestChildId', id);
+        const child = parentChildren.find(c => c.id === id);
+        if (child) localStorage.setItem('latestChildName', child.name);
+      } else {
+        localStorage.removeItem('latestChildId');
+        localStorage.removeItem('latestChildName');
+      }
+    },
     error,
     isAuthenticated,
     login,

@@ -119,7 +119,7 @@ const LOCAL_QUESTIONS: IScreeningQuestion[] = [
 
 export const ParentScreening = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, activeChildId } = useAuth();
   const { showPrompt } = useModal();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -146,15 +146,14 @@ export const ParentScreening = () => {
       try {
         const params = new URLSearchParams(window.location.search);
         const queryChildId = params.get('childId');
-        const storedChildId = localStorage.getItem('latestChildId');
-        const activeChildId = queryChildId || storedChildId;
+        const activeId = queryChildId || activeChildId;
 
-        if (!activeChildId) {
+        if (!activeId) {
           navigate(ROUTES.PARENT_ADD_CHILD, { replace: true });
           return;
         }
 
-        setChildId(activeChildId);
+        setChildId(activeId);
         const storedChildName = localStorage.getItem('latestChildName');
         if (storedChildName) {
           setChildName(storedChildName);
@@ -162,7 +161,7 @@ export const ParentScreening = () => {
 
         // Try backend first, but only use it when it provides valid questions.
         try {
-          const startRes = await screeningService.startScreening(activeChildId);
+          const startRes = await screeningService.startScreening(activeId);
           if (startRes?.sessionId) setSessionId(startRes.sessionId);
           const q = startRes?.questions ?? (await screeningService.getQuestions());
           const hasValidQuestions =

@@ -7,6 +7,7 @@ import { useAuth } from '../context/useAuth';
 import { useTheme } from '../context/useTheme';
 import { ROUTES } from '../utils/constants';
 import { notificationService } from '../services/notificationService';
+import { ChildSelector } from '../components/common/ChildSelector';
 
 interface TopNavProps {
   onMenuClick: () => void;
@@ -86,6 +87,8 @@ export const TopNav = ({ onMenuClick }: TopNavProps) => {
         </div>
         
         <div className="flex items-center gap-3 md:gap-5">
+          <ChildSelector />
+          
           <button 
             onClick={() => navigate(ROUTES.NOTIFICATIONS)}
             className={`relative p-2 rounded-xl transition-colors cursor-pointer ${

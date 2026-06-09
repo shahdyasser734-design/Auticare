@@ -10,6 +10,7 @@ import { treatmentPlansService } from '../../services/api/treatmentPlans';
 import { bookingService } from '../../services/api/bookings';
 import type { ScreeningResult } from '../../types';
 import { LoadingSpinner } from '../../components/common/Loading';
+import { useAuth } from '../../context/useAuth';
 
 // ---------------------------------------------------------------------------
 // Helper: build a normalised ScreeningResult from whatever the backend returns
@@ -98,6 +99,7 @@ const exportPDF = (result: ScreeningResult) => {
 // ---------------------------------------------------------------------------
 export const ParentScreeningResults = () => {
   const navigate = useNavigate();
+  const { activeChildId } = useAuth();
   const [result, setResult] = useState<ScreeningResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [childId, setChildId] = useState<string | null>(null);
@@ -108,7 +110,7 @@ export const ParentScreeningResults = () => {
     const load = async () => {
       try {
         const params = new URLSearchParams(window.location.search);
-        const id = params.get('childId') || localStorage.getItem('latestChildId');
+        const id = params.get('childId') || activeChildId;
         setChildId(id);
 
         const childName = localStorage.getItem('latestChildName') || 'Child';

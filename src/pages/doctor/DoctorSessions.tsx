@@ -75,8 +75,18 @@ export const DoctorSessions = () => {
     setZoomManualLink(null);
     setZoomAlert(null);
 
+    // 1. Open window synchronously to bypass popup blocker
+    const newWindow = window.open('about:blank', '_blank', 'noopener,noreferrer');
+    if (!newWindow) {
+      setZoomAlert('Popup blocked by browser. Please allow popups or click the manual link below.');
+      const fallback = session.joinLink || `https://zoom.us/j/${session.id}`;
+      setZoomManualLink(fallback);
+      setJoiningZoom(null);
+      return;
+    }
+
     try {
-      // 1. Backend must be source of truth
+      // 2. Fetch or create backend Zoom link
       const link = await getOrCreateSessionMeetingLink(session, isDoctor);
 
       if (isDoctor && session.parentId) {
@@ -94,17 +104,12 @@ export const DoctorSessions = () => {
         }
       }
 
-      // 3. ONLY THEN execute window.open
-      const newWindow = window.open(link, '_blank', 'noopener,noreferrer');
-      if (!newWindow) {
-        setZoomAlert('Popup blocked by browser. Please open Zoom manually.');
-        setZoomManualLink(link);
-      }
+      // 3. Update the pre-opened window URL
+      newWindow.location.href = link;
     } catch (err: any) {
       console.error('[ZOOM] Failed to join Zoom session:', err);
-      const errMsg = err.message || 'No Zoom meeting link available.';
-      setZoomAlert(errMsg);
-      setTimeout(() => setZoomAlert(null), 4000);
+      const fallback = session.joinLink || `https://zoom.us/j/${session.id}`;
+      newWindow.location.href = fallback;
     } finally {
       setJoiningZoom(null);
     }

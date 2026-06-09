@@ -19,27 +19,35 @@ interface RawSpecialist {
   email?: unknown;
   bio?: unknown;
   about?: unknown;
+  role?: unknown;
 }
 
 export const normalizeSpecialist = (raw: Record<string, unknown>): Specialist => {
   const r = raw as RawSpecialist;
   const specId = String(r.id ?? r.specialistId ?? '');
   
-  // Determine type based on specialization/title
+  // Determine type based on explicit backend 'role' or 'type', otherwise fallback to specialization/title
   let calculatedType: 'doctor' | 'therapist' = 'doctor';
-  const specialization = String(r.specialization ?? '').toLowerCase();
-  if (
-    specialization.includes('therapist') || 
-    specialization.includes('therapy') ||
-    specialization.includes('speech') ||
-    specialization.includes('aba') ||
-    specialization.includes('sensory') ||
-    specialization.includes('occupational')
-  ) {
-    calculatedType = 'therapist';
-  }
   
-  const typeValue = (r.type === 'doctor' || r.type === 'therapist') ? r.type : calculatedType;
+  if (r.role === 'therapist' || r.type === 'therapist') {
+    calculatedType = 'therapist';
+  } else if (r.role === 'doctor' || r.type === 'doctor') {
+    calculatedType = 'doctor';
+  } else {
+    const specialization = String(r.specialization ?? '').toLowerCase();
+    if (
+      specialization.includes('therapist') || 
+      specialization.includes('therapy') ||
+      specialization.includes('speech') ||
+      specialization.includes('aba') ||
+      specialization.includes('sensory') ||
+      specialization.includes('occupational')
+    ) {
+      calculatedType = 'therapist';
+    }
+  }
+
+  const typeValue = calculatedType;
 
   return {
     id: specId,

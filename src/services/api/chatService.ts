@@ -44,9 +44,9 @@ export const chatServiceAPI = {
     content: string,
     messageType: 'text' | 'file' = 'text'
   ): Promise<ChatMessage> => {
-    const numericChatId = typeof chatId === 'number' ? chatId : parseInt(String(chatId).replace(/\D/g, ''), 10);
+    // Send chatId exactly as it is since it could be a UUID string
     const response = await apiClient.post<any>('/chat/send', {
-      chatId: numericChatId || parseInt(chatId as string, 10),
+      chatId,
       content,
       messageType,
     });
@@ -60,9 +60,9 @@ export const chatServiceAPI = {
     confirmedTime?: string, 
     note?: string
   ): Promise<ChatMessage> => {
-    const numericChatId = typeof chatId === 'number' ? chatId : parseInt(String(chatId).replace(/\D/g, ''), 10);
+    // Send chatId exactly as it is since it could be a UUID string
     const response = await apiClient.post<any>('/chat/send-zoom-link', {
-      chatId: numericChatId || parseInt(chatId as string, 10),
+      chatId,
       zoomLink,
       confirmedDate: confirmedDate || new Date().toISOString().split('T')[0],
       confirmedTime: confirmedTime || new Date().toISOString().split('T')[1].substring(0, 5),

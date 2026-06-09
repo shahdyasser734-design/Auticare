@@ -15,13 +15,13 @@ import { formatDateTime } from '../../utils/dateUtils';
 import {
   Loader2, Plus, FileText, Activity, MessageSquare, Calendar,
   ClipboardCheck, Bell, ChevronRight, Sparkles, Heart, Star,
-  BookOpen, Users, ShieldCheck
+  BookOpen, Users, ShieldCheck, User
 } from 'lucide-react';
 import { Avatar } from '../../components/common/Avatar';
 
 export const ParentHome = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, activeChildId } = useAuth();
   const [children, setChildren] = useState<Child[]>([]);
   const [plans, setPlans] = useState<TreatmentPlan[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -78,12 +78,23 @@ export const ParentHome = () => {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchDashboard();
+
+    const fetchOnlyNotifications = async () => {
+      try {
+        const notifList = await notificationService.getNotifications().catch(() => []);
+        setNotifications(notifList.slice(0, 4));
+      } catch (err) {
+        // ignore background poll errors
+      }
+    };
+
+    const interval = setInterval(fetchOnlyNotifications, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleStartScreening = () => {
-    const latestChildId = localStorage.getItem('latestChildId') || (children.length > 0 ? children[0].id : null);
-    if (latestChildId) {
-      navigate(`${ROUTES.PARENT_SCREENING}?childId=${latestChildId}`);
+    if (activeChildId) {
+      navigate(`${ROUTES.PARENT_SCREENING}?childId=${activeChildId}`);
     } else {
       navigate(ROUTES.PARENT_ADD_CHILD);
     }
@@ -348,15 +359,16 @@ export const ParentHome = () => {
 
               {children.length === 0 ? (
                 <div className="text-center py-10 space-y-3">
-                  {localStorage.getItem('latestChildId') ? (
-                    <>
-                      <div className="w-14 h-14 rounded-2xl bg-stone-100 dark:bg-slate-700/50 flex items-center justify-center mx-auto">
-                        <Users size={24} className="text-stone-400" />
+                  {activeChildId ? (
+                    <div className="flex items-center gap-3">
+                      <div className="bg-indigo-100 dark:bg-indigo-500/20 p-2 rounded-xl border border-indigo-200 dark:border-indigo-500/30">
+                        <User className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
                       </div>
-                      <p className="text-stone-500 text-sm font-medium">⚠️ Could not load child data from server.</p>
-                      <p className="text-stone-400 text-xs">Child ID: {localStorage.getItem('latestChildId')} · {localStorage.getItem('latestChildName') || 'Registered'}</p>
-                      <Button size="sm" onClick={() => window.location.reload()} className="rounded-xl">Retry Loading</Button>
-                    </>
+                      <div>
+                        <p className="font-bold text-slate-900 dark:text-white leading-tight">Patient Profile</p>
+                        <p className="text-stone-400 text-xs">Child ID: {activeChildId}</p>
+                      </div>
+                    </div>
                   ) : (
                     <>
                       <div className="w-14 h-14 rounded-2xl bg-stone-100 dark:bg-slate-700/50 flex items-center justify-center mx-auto">

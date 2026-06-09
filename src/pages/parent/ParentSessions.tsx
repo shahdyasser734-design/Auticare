@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../../context/useAuth';
 import { MainLayout } from '../../layouts/MainLayout';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
@@ -15,6 +16,7 @@ import { getOrCreateSessionMeetingLink } from '../../utils/zoomHelper';
 
 
 export const ParentSessions = () => {
+  const { activeChildId } = useAuth();
   const [upcomingSessions, setUpcomingSessions] = useState<Booking[]>([]);
   const [pastSessions, setPastSessions] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,8 +29,18 @@ export const ParentSessions = () => {
   const fetchSessions = async () => {
     setLoading(true);
     try {
-      const upcoming = await bookingsService.getUpcomingBookings();
-      const history = await bookingsService.getMyBookings();
+      const allBookings = await bookingsService.getMyBookings();
+      
+      const upcoming = allBookings.filter((b) => {
+        const s = (b.status ?? '').toLowerCase();
+        return s !== 'completed' && s !== 'cancelled';
+      });
+      
+      const history = allBookings.filter((b) => {
+        const s = (b.status ?? '').toLowerCase();
+        return s === 'completed' || s === 'cancelled';
+      });
+      
       setUpcomingSessions(upcoming);
       setPastSessions(history);
     } catch (err) {
@@ -42,7 +54,7 @@ export const ParentSessions = () => {
     void fetchSessions();
     const loadConnectedSpecialists = async () => {
       try {
-        const childId = localStorage.getItem('latestChildId') || 'child-1';
+        const childId = activeChildId || 'child-1';
         const allBookings = await bookingsService.getMyBookings().catch(() => []);
         const allSpecs = await specialistsService.getSpecialists().catch(() => []);
         const plans = childId ? await treatmentPlansService.getChildPlans(childId).catch(() => []) : [];
@@ -63,7 +75,14 @@ export const ParentSessions = () => {
           }
         });
         
-        const connected = allSpecs.filter(spec => connectedIds.has(String(spec.id)));
+        const uniqueSpecs = new Map<string, Specialist>();
+        allSpecs.forEach(spec => {
+          if (connectedIds.has(String(spec.id)) && !uniqueSpecs.has(String(spec.id))) {
+            uniqueSpecs.set(String(spec.id), spec);
+          }
+        });
+        
+        const connected = Array.from(uniqueSpecs.values());
         
         setConnectedSpecialists(connected);
         if (connected.length > 0) {
@@ -85,25 +104,26 @@ export const ParentSessions = () => {
     setZoomManualLink(null);
     setZoomAlert(null);
 
-    try {
-      // 1. Backend must be source of truth
-      const link = await getOrCreateSessionMeetingLink(session, false);
+    // 1. Open window synchronously to bypass popup blocker
+    const newWindow = window.open('about:blank', '_blank', 'noopener,noreferrer');
+    if (!newWindow) {
+      setZoomAlert('Popup blocked by browser. Please allow popups or click the manual link below.');
+      const fallback = session.joinLink || `https://zoom.us/j/${session.id}`;
+      setZoomManualLink(fallback);
+      setJoiningZoom(null);
+      return;
+    }
 
-      // 3. ONLY THEN execute window.open
-      const newWindow = window.open(link, '_blank', 'noopener,noreferrer');
-      if (!newWindow) {
-        setZoomAlert('Popup blocked by browser. Please open Zoom manually.');
-        setZoomManualLink(link);
-      }
+    try {
+      // 2. Fetch or create backend Zoom link
+      const link = await getOrCreateSessionMeetingLink(session, false);
+      
+      // 3. Update the pre-opened window URL
+      newWindow.location.href = link;
     } catch (err: any) {
       console.error('[ZOOM] Failed to join Zoom session:', err);
       const fallback = session.joinLink || `https://zoom.us/j/${session.id}`;
-      // Attempt fallback open
-      const newWindow = window.open(fallback, '_blank', 'noopener,noreferrer');
-      if (!newWindow) {
-        setZoomAlert('Popup blocked by browser. Please open Zoom manually.');
-        setZoomManualLink(fallback);
-      }
+      newWindow.location.href = fallback;
     } finally {
       setJoiningZoom(null);
     }
@@ -338,39 +358,68 @@ export const ParentSessions = () => {
             <p className="text-sm text-slate-600 dark:text-slate-400">
               Choose a specialist from your treatment team to book a session with.
             </p>
-            <div className="grid gap-3">
-              {connectedSpecialists.map((spec) => {
-                const isDoctor = spec.type === 'doctor';
-                return (
-                  <button
-                    key={spec.id}
-                    onClick={() => {
-                      setSelectedSpecialist(spec);
-                      setShowSelectorModal(false);
-                      setShowBookingModal(true);
-                    }}
-                    className="w-full text-left p-4 rounded-2xl border border-slate-200 dark:border-white/10 standard-card hover:border-orange-500 hover:ring-2 hover:ring-orange-200 dark:hover:border-orange-500 transition-all flex items-center justify-between group cursor-pointer"
-                  >
-                    <div>
-                      <h4 className="font-bold text-slate-950 dark:text-white group-hover:text-orange-500 transition-colors">
-                        {spec.name}
-                      </h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        {spec.specialization}
-                      </p>
-                    </div>
-                    <span
-                      className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
-                        isDoctor
-                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                          : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
-                      }`}
+            <div className="grid gap-6">
+              {connectedSpecialists.filter(s => s.type === 'doctor').length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">👨‍⚕️ Doctors</h3>
+                  {connectedSpecialists.filter(s => s.type === 'doctor').map((spec) => (
+                    <button
+                      key={spec.id}
+                      onClick={() => {
+                        setSelectedSpecialist(spec);
+                        setShowSelectorModal(false);
+                        setShowBookingModal(true);
+                      }}
+                      className="w-full text-left p-4 rounded-2xl border border-slate-200 dark:border-white/10 standard-card hover:border-orange-500 hover:ring-2 hover:ring-orange-200 dark:hover:border-orange-500 transition-all flex items-center justify-between group cursor-pointer"
                     >
-                      {isDoctor ? '👨‍⚕️ Doctor' : '🧑‍🏫 Therapist'}
-                    </span>
-                  </button>
-                );
-              })}
+                      <div>
+                        <h4 className="font-bold text-slate-950 dark:text-white group-hover:text-orange-500 transition-colors">
+                          {spec.name}
+                        </h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          {spec.specialization}
+                        </p>
+                      </div>
+                      <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300">
+                        Doctor
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {connectedSpecialists.filter(s => s.type === 'therapist').length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">🧠 Therapists</h3>
+                  {connectedSpecialists.filter(s => s.type === 'therapist').map((spec) => (
+                    <button
+                      key={spec.id}
+                      onClick={() => {
+                        setSelectedSpecialist(spec);
+                        setShowSelectorModal(false);
+                        setShowBookingModal(true);
+                      }}
+                      className="w-full text-left p-4 rounded-2xl border border-slate-200 dark:border-white/10 standard-card hover:border-orange-500 hover:ring-2 hover:ring-orange-200 dark:hover:border-orange-500 transition-all flex items-center justify-between group cursor-pointer"
+                    >
+                      <div>
+                        <h4 className="font-bold text-slate-950 dark:text-white group-hover:text-orange-500 transition-colors">
+                          {spec.name}
+                        </h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          {spec.specialization}
+                        </p>
+                      </div>
+                      <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
+                        Therapist
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {connectedSpecialists.length === 0 && (
+                <p className="text-sm text-slate-500 text-center py-4">No specialists connected yet.</p>
+              )}
             </div>
           </div>
         </Modal>

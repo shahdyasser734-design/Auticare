@@ -60,6 +60,8 @@ export interface AuthContextType {
   loading: boolean;
   childrenLoaded: boolean;
   parentChildren: any[];
+  activeChildId: string | null;
+  setActiveChildId: (id: string | null) => void;
   error: string | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<LoginResponse>;
