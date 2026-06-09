@@ -49,4 +49,10 @@ export const sessionsService = {
     });
     return response.data;
   },
+
+  // Start Session (Zoom)
+  startSessionZoom: async (id: string): Promise<{ zoomMeetingUrl: string }> => {
+    const response = await apiClient.post<{ zoomMeetingUrl: string }>(`/sessions/${id}/start`);
+    return response.data;
+  },
 };

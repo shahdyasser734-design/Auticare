@@ -275,23 +275,11 @@ export const Chat = () => {
                 <select
                   className="bg-white dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-stone-900 dark:text-white text-sm rounded-xl px-4 py-2.5 font-bold outline-none cursor-pointer focus:ring-2 focus:ring-indigo-500 min-w-[280px] shadow-sm"
                   value={selectedConversation?.id || ''}
-                  onChange={async (e) => {
+                  onChange={(e) => {
                     const targetChatId = e.target.value;
                     const conv = conversations.find(c => c.id === targetChatId);
                     if (conv) {
-                      const ids = safeParticipantIds(conv);
-                      const otherId = ids.find(id => id !== user?.id);
-                      if (otherId) {
-                        try {
-                          const started = await chatServiceAPI.startChat([otherId]);
-                          setSelectedConversation(started);
-                          void fetchConversations();
-                        } catch {
-                          setSelectedConversation(conv);
-                        }
-                      } else {
-                        setSelectedConversation(conv);
-                      }
+                      setSelectedConversation(conv);
                     }
                   }}
                 >

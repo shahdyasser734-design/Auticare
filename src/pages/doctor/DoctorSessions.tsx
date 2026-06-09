@@ -5,12 +5,10 @@ import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
 import { bookingService, type Booking } from '../../services/api/bookings';
-
 import { useAuth } from '../../context/useAuth';
+
 import { Loader2 } from 'lucide-react';
-import { chatServiceAPI } from '../../services/api/chatService';
-import { getOrCreateSessionMeetingLink } from '../../utils/zoomHelper';
-import { dashboardService } from '../../services/api/dashboard';
+import { sessionsService } from '../../services/api/sessionsService';
 
 export const DoctorSessions = () => {
   const navigate = useNavigate();
@@ -73,40 +71,12 @@ export const DoctorSessions = () => {
     setJoiningZoom(session.id);
 
     try {
-      // 1. Fetch or create backend Zoom link
-      const link = await getOrCreateSessionMeetingLink(session, isDoctor);
-
-      if (isDoctor && session.parentId) {
-        try {
-          const participants = [session.parentId];
-          if (session.childId) {
-            try {
-              const dashData = await dashboardService.getSpecialistDashboard();
-              if (dashData?.assignedChildren) {
-                const childInfo = dashData.assignedChildren.find(c => c.id === session.childId);
-                if (childInfo?.assignedTherapist) {
-                  participants.push(childInfo.assignedTherapist);
-                }
-              }
-            } catch (err) {
-              console.warn('[ZOOM] Failed to fetch dashboard data for therapist ID:', err);
-            }
-          }
-          const chat = await chatServiceAPI.startChat(participants);
-          await chatServiceAPI.sendZoomLink(
-            chat.id, 
-            link, 
-            session.appointmentDate, 
-            session.appointmentTime,
-            session.reason || 'Zoom Session Link'
-          );
-        } catch (chatErr) {
-          console.warn('[ZOOM] Could not automatically send link to parent via chat:', chatErr);
-        }
+      const data = await sessionsService.startSessionZoom(session.id);
+      if (data?.zoomMeetingUrl) {
+        window.open(data.zoomMeetingUrl, '_blank', 'noopener,noreferrer');
+      } else {
+        throw new Error('No Zoom URL returned from backend');
       }
-
-      // 2. Open the window
-      window.open(link, '_blank', 'noopener,noreferrer');
     } catch (err: any) {
       console.error('[ZOOM] Failed to join Zoom session:', err);
       const fallback = session.joinLink || `https://zoom.us/j/${session.id}`;

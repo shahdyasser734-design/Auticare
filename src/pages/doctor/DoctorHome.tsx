@@ -10,11 +10,10 @@ import { useAuth } from '../../context/useAuth';
 import { dashboardService, type DashboardSpecialistData, type PatientCard } from '../../services/api/dashboard';
 import { bookingService, type Booking } from '../../services/api/bookings';
 import { notificationService, type Notification } from '../../services/api/notifications';
-import { chatServiceAPI } from '../../services/api/chatService';
 import { notesService, type Note } from '../../services/api/notes';
 import { NoteCard } from '../../components/notes/NoteCard';
 import type { Child } from '../../services/api/children';
-import { getOrCreateSessionMeetingLink } from '../../utils/zoomHelper';
+import { sessionsService } from '../../services/api/sessionsService';
 
 import {
   Loader2, Calendar, Users, Bell, ClipboardList, ArrowRight,
@@ -135,11 +134,9 @@ export const DoctorHome = () => {
 
       if (newStatus === 'confirmed' && booking.parentId) {
         try {
-          console.log(`[DASHBOARD] Provisioning chat room for Parent: ${booking.parentId}`);
-          await chatServiceAPI.startChat([booking.parentId]);
-          // Could optionally navigate here, but it's an inline update.
+          console.log(`[DASHBOARD] Session confirmed for Parent: ${booking.parentId}`);
         } catch (chatErr) {
-          console.warn('[DASHBOARD] Failed to auto-provision chat room:', chatErr);
+          console.warn('[DASHBOARD] Failed to handle session confirmation:', chatErr);
         }
       }
 
@@ -176,35 +173,12 @@ export const DoctorHome = () => {
     setJoiningZoom(session.id);
 
     try {
-      // 1. Fetch or create backend Zoom link
-      const link = await getOrCreateSessionMeetingLink(session, isDoctor);
-
-      if (isDoctor && session.parentId) {
-        try {
-          const participants = [session.parentId];
-          // Try to find the assigned therapist for this child
-          if (session.childId && dashboardData?.assignedChildren) {
-            const childInfo = dashboardData.assignedChildren.find(c => c.id === session.childId);
-            if (childInfo?.assignedTherapist) {
-              participants.push(childInfo.assignedTherapist);
-            }
-          }
-          const chat = await chatServiceAPI.startChat(participants);
-          await chatServiceAPI.sendZoomLink(
-            chat.id,
-            link,
-            session.appointmentDate,
-            session.appointmentTime,
-            session.reason || 'Zoom Session Link'
-          );
-          console.log('[ZOOM] Zoom link sent to chat. Opening Zoom tab locally as fallback.');
-        } catch (chatErr) {
-          console.error('[ZOOM] Failed to provision or send zoom to chat:', chatErr);
-        }
+      const data = await sessionsService.startSessionZoom(session.id);
+      if (data?.zoomMeetingUrl) {
+        window.open(data.zoomMeetingUrl, '_blank', 'noopener,noreferrer');
+      } else {
+        throw new Error('No Zoom URL returned from backend');
       }
-
-      // 2. Open the window
-      window.open(link, '_blank', 'noopener,noreferrer');
     } catch (err: any) {
       console.error('[ZOOM] Failed to join Zoom session:', err);
       const fallback = session.joinLink || `https://zoom.us/j/${session.id}`;
