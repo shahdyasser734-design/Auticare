@@ -5,7 +5,7 @@ import { Card } from '../../components/common/Card';
 import { Avatar } from '../../components/common/Avatar';
 import { chatServiceAPI, type ChatConversation, type ChatMessage } from '../../services/api/chatService';
 import { useAuth } from '../../context/useAuth';
-import { MessageSquare, Send, Loader2, RefreshCw } from 'lucide-react';
+import { MessageSquare, Send, Loader2, RefreshCw, ChevronLeft } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -221,7 +221,7 @@ export const Chat = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-5" style={{ height: 'calc(100vh - 7rem)' }}>
 
         {/* ── LEFT PANEL: Conversation List ──────────────────────────────── */}
-        <Card className="col-span-1 flex flex-col h-full lg:max-h-full max-h-[40vh] p-4 border border-stone-200/60 dark:border-white/8 shadow-md rounded-3xl bg-[var(--surface-strong)] dark:bg-slate-900/10 overflow-hidden">
+        <Card className={`col-span-1 flex-col h-full lg:max-h-full p-4 border border-stone-200/60 dark:border-white/8 shadow-md rounded-3xl bg-[var(--surface-strong)] dark:bg-slate-900/10 overflow-hidden ${selected ? 'hidden lg:flex max-h-[40vh]' : 'flex'}`}>
           <div className="flex items-center justify-between mb-4 shrink-0">
             <h2 className="text-xs font-black text-stone-900 dark:text-white uppercase tracking-widest">
               Messages
@@ -298,11 +298,19 @@ export const Chat = () => {
         </Card>
 
         {/* ── RIGHT PANEL: Message Thread ────────────────────────────────── */}
-        <Card className="col-span-1 lg:col-span-3 flex flex-col h-full p-5 border border-stone-200/60 dark:border-white/8 shadow-md rounded-3xl bg-[var(--surface-strong)] dark:bg-slate-900/10 overflow-hidden">
+        <Card className={`col-span-1 lg:col-span-3 flex-col h-full p-5 border border-stone-200/60 dark:border-white/8 shadow-md rounded-3xl bg-[var(--surface-strong)] dark:bg-slate-900/10 overflow-hidden ${selected ? 'flex' : 'hidden lg:flex'}`}>
           {selected && selectedOther ? (
             <>
               {/* Header — real name + role always */}
               <div className="flex items-center gap-3 pb-4 border-b border-stone-200/60 dark:border-white/8 mb-4 shrink-0">
+                {/* Mobile Back Button */}
+                <button
+                  onClick={() => setSelected(null)}
+                  className="lg:hidden p-2 -ml-2 rounded-xl text-stone-500 hover:bg-stone-100 dark:hover:bg-slate-800 transition-colors"
+                  aria-label="Back to conversations"
+                >
+                  <ChevronLeft size={24} />
+                </button>
                 <Avatar name={selectedOther.name} size="md" />
                 <div className="flex-1">
                   {/* NEVER show "Unknown" or "Specialist" here */}
