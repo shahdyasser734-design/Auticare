@@ -315,6 +315,25 @@ export const TreatmentPlan = () => {
     );
   }
 
+  if (plan && !isParent) {
+    return (
+      <MainLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+          <div className="p-8 max-w-md w-full bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-white/10 shadow-xl text-center">
+            <CheckCircle2 className="mx-auto h-16 w-16 text-green-500 mb-4" />
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Treatment Plan Active</h2>
+            <p className="text-slate-600 dark:text-slate-400 mb-6">
+              This treatment plan has been finalized and sent. Only the parent has full access to view its contents from this point forward.
+            </p>
+            <Button onClick={() => navigate(-1)} className="w-full">
+              Return to Patient Profile
+            </Button>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout>
       <div className="max-w-6xl mx-auto space-y-6 pb-12">

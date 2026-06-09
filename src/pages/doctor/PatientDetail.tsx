@@ -105,10 +105,24 @@ export const PatientDetail = () => {
           <Avatar name={patientName} size="xl" />
           <div>
             <h1 className="text-4xl font-bold text-slate-900 dark:text-white">{patientName}</h1>
-            <p className="text-slate-700 dark:text-slate-300">
-              {patient.age ? `Age: ${patient.age}` : 'Age: Not Provided'}
-              {' • '}
-              {patient.gender && patient.gender.toLowerCase() !== 'unknown' ? `Gender: ${patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1).toLowerCase()}` : 'Gender: Not Provided'}
+            {screeningResults.length > 0 && screeningResults[0].riskLevel && (
+              <div className="mt-2 mb-1">
+                <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold uppercase ${
+                  screeningResults[0].riskLevel.toLowerCase() === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300' :
+                  screeningResults[0].riskLevel.toLowerCase() === 'medium' ? 'bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300' :
+                  'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300'
+                }`}>
+                  {screeningResults[0].riskLevel} Risk
+                </span>
+              </div>
+            )}
+            <p className="text-slate-700 dark:text-slate-300 mt-1">
+              {patient.age ? `Age: ${patient.age}` : (screeningResults.length === 0 ? 'Age: Not Provided' : null)}
+              {patient.gender && patient.gender.toLowerCase() !== 'unknown' ? (
+                (patient.age || screeningResults.length === 0 ? ' • ' : '') + `Gender: ${patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1).toLowerCase()}`
+              ) : (
+                screeningResults.length === 0 ? ' • Gender: Not Provided' : null
+              )}
             </p>
           </div>
         </div>
@@ -116,7 +130,17 @@ export const PatientDetail = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Screening Results */}
           <Card>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">Screening Results</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">Screening Results</h3>
+              {screeningResults.length > 0 && (
+                <button 
+                  onClick={() => navigate(`/specialist/screening-results/${id}`)}
+                  className="text-xs text-primary-600 dark:text-primary-450 hover:text-primary-750 font-bold underline cursor-pointer"
+                >
+                  View Full Results
+                </button>
+              )}
+            </div>
             <div className="space-y-4">
               {screeningResults.length === 0 ? (
                 <p className="text-slate-500 dark:text-slate-400">No screening results available</p>
@@ -154,12 +178,14 @@ export const PatientDetail = () => {
           <Card>
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex justify-between items-center">
               <span>Treatment Plans</span>
-              <button 
-                onClick={() => navigate(`/treatment-plan/${id}`)}
-                className="text-xs text-primary-600 dark:text-primary-450 hover:text-primary-750 font-bold underline cursor-pointer"
-              >
-                {plans.length > 0 ? 'Edit Plan' : 'Create Plan'}
-              </button>
+              {plans.length === 0 && (
+                <button 
+                  onClick={() => navigate(`/treatment-plan/${id}`)}
+                  className="text-xs text-primary-600 dark:text-primary-450 hover:text-primary-750 font-bold underline cursor-pointer"
+                >
+                  Create Plan
+                </button>
+              )}
             </h3>
             <div className="space-y-4">
               {plans.length === 0 ? (
@@ -176,12 +202,6 @@ export const PatientDetail = () => {
                     <p className="text-xs text-slate-600 dark:text-slate-350 truncate mt-1">{p.description}</p>
                     <div className="flex justify-between items-center mt-3 text-xs">
                       <span className="text-slate-500 dark:text-slate-400 font-semibold">Status: <span className="capitalize text-primary-700 dark:text-primary-300 font-bold">{p.status}</span></span>
-                      <button
-                        onClick={() => navigate(`/treatment-plan/${id}`)}
-                        className="text-primary-600 dark:text-primary-450 hover:text-primary-700 font-bold underline cursor-pointer"
-                      >
-                        View Details
-                      </button>
                     </div>
                   </div>
                 ))

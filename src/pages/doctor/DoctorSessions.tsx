@@ -64,9 +64,15 @@ export const DoctorSessions = () => {
 
 
   const handleJoinZoom = (session: Booking) => {
-    console.log('[ZOOM] Doctor Join Zoom handler clicked.');
-    const link = session.joinLink || `https://zoom.us/j/${session.id}`;
-    window.open(link, '_blank', 'noopener,noreferrer');
+    // Synchronous open — avoids popup blocker
+    const tab = window.open('about:blank', '_blank', 'noopener,noreferrer');
+    const url = session.joinLink || session.zoomUrl || `https://zoom.us/j/${session.id}`;
+    if (tab && url) {
+      tab.location.href = url;
+    } else if (tab) {
+      tab.close();
+      alert('No Zoom meeting link is available for this session.');
+    }
   };
 
   return (
@@ -197,13 +203,7 @@ export const DoctorSessions = () => {
                         <Button
                           size="sm"
                           onClick={() => handleJoinZoom(session)}
-                          disabled={!isDoctor && !meetingUrl}
-                          className={`font-bold rounded-lg cursor-pointer flex items-center gap-1 ${
-                            (!isDoctor && !meetingUrl)
-                              ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                              : 'bg-blue-600 hover:bg-blue-700 text-white'
-                          }`}
-                          title={!isDoctor && !meetingUrl ? 'No active meeting available' : ''}
+                          className="font-bold rounded-lg cursor-pointer flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white"
                         >
                           <>
                             🎥 {isDoctor ? 'Start Session' : 'Join Session'}

@@ -27,6 +27,7 @@ import { DoctorHome } from '../pages/doctor/DoctorHome';
 import { DoctorSessions } from '../pages/doctor/DoctorSessions';
 import { DoctorPatients } from '../pages/doctor/DoctorPatients';
 import { PatientDetail } from '../pages/doctor/PatientDetail';
+import { SpecialistScreeningResults } from '../pages/doctor/SpecialistScreeningResults';
 
 // Therapist Pages
 import { TherapistHome, TherapistSessions, TherapistPatients } from '../pages/therapist/TherapistPages';
@@ -218,6 +219,14 @@ export const AppRoutes = () => {
           element={
             <ProtectedRoute requiredRole={ROLES.THERAPIST}>
               <PatientDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/specialist/screening-results/:id"
+          element={
+            <ProtectedRoute>
+              <SpecialistScreeningResults />
             </ProtectedRoute>
           }
         />

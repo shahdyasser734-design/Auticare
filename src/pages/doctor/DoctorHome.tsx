@@ -162,9 +162,15 @@ export const DoctorHome = () => {
   const displayChildren = children.map((c) => ({ ...c, status: 'active' as const }));
 
   const handleJoinZoom = (session: Booking) => {
-    console.log('[ZOOM] Start Session / Join Zoom handler clicked.');
-    const link = session.joinLink || `https://zoom.us/j/${session.id}`;
-    window.open(link, '_blank', 'noopener,noreferrer');
+    // Synchronous open — avoids popup blocker
+    const tab = window.open('about:blank', '_blank', 'noopener,noreferrer');
+    const url = session.joinLink || session.zoomUrl || `https://zoom.us/j/${session.id}`;
+    if (tab && url) {
+      tab.location.href = url;
+    } else if (tab) {
+      tab.close();
+      alert('No Zoom meeting link is available for this session.');
+    }
   };
 
   const getGreeting = () => {
@@ -458,13 +464,7 @@ export const DoctorHome = () => {
                             <Button
                               size="sm"
                               onClick={() => handleJoinZoom(session)}
-                              disabled={!isDoctor && !meetingUrl}
-                              className={`font-bold rounded-xl cursor-pointer flex items-center gap-1.5 ${
-                                (!isDoctor && !meetingUrl)
-                                  ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
-                                  : 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-blue-200'
-                              }`}
-                              title={!isDoctor && !meetingUrl ? 'No active meeting available' : ''}
+                              className="font-bold rounded-xl cursor-pointer flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-blue-200"
                             >
                               <><Video size={14} /> {isDoctor ? 'Start Session' : 'Join Session'}</>
                             </Button>

@@ -35,6 +35,7 @@ export const DoctorPatients = () => {
             gender: card?.gender ?? card?.childGender ?? card?.sex ?? 'Unknown',
             parentId: b.parentId || '',
             dateOfBirth: card?.dateOfBirth ?? card?.date_of_birth ?? card?.dob ?? card?.childDob ?? '',
+            riskLevel: card?.lastScreening?.riskLevel || card?.riskLevel || null,
             status: 'active',
           });
         }
@@ -76,6 +77,7 @@ export const DoctorPatients = () => {
               gender: card?.gender ?? card?.childGender ?? card?.sex ?? 'Unknown',
               parentId: b.parentId || '',
               dateOfBirth: card?.dateOfBirth ?? card?.date_of_birth ?? card?.dob ?? card?.childDob ?? '',
+              riskLevel: card?.lastScreening?.riskLevel || card?.riskLevel || null,
               status: 'active',
             });
           }
@@ -122,12 +124,29 @@ export const DoctorPatients = () => {
                       <Avatar name={patientName} size="lg" />
                       <div>
                         <h3 className="font-bold text-slate-900 dark:text-white">{patientName}</h3>
-                        <p className="text-sm text-slate-650 dark:text-slate-400">
-                          {patient.age ? `Age: ${patient.age}` : 'Age: Not Provided'}
-                        </p>
-                        <p className="text-sm text-slate-650 dark:text-slate-400 capitalize">
-                          {patient.gender && patient.gender.toLowerCase() !== 'unknown' ? patient.gender : 'Not Provided'}
-                        </p>
+                        {patient.riskLevel && (
+                          <div className="mb-1">
+                            <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                              patient.riskLevel.toLowerCase() === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+                              patient.riskLevel.toLowerCase() === 'medium' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' :
+                              'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                            }`}>
+                              {patient.riskLevel} Risk
+                            </span>
+                          </div>
+                        )}
+                        {patient.age ? (
+                          <p className="text-sm text-slate-650 dark:text-slate-400">
+                            Age: {patient.age}
+                          </p>
+                        ) : !patient.riskLevel ? (
+                          <p className="text-sm text-slate-500 italic">Age: Not Provided</p>
+                        ) : null}
+                        {patient.gender && patient.gender.toLowerCase() !== 'unknown' && (
+                          <p className="text-sm text-slate-650 dark:text-slate-400 capitalize">
+                            Gender: {patient.gender}
+                          </p>
+                        )}
                       </div>
                     </div>
 
