@@ -41,10 +41,10 @@ import { Unauthorized } from '../pages/auth/Unauthorized';
 import { HomeLanding } from '../pages/HomeLanding';
 
 export const AppRoutes = () => {
-  const { loading, childrenLoaded, isAuthenticated, user } = useAuth() as any;
+  const { authInitialized, childrenLoaded, isAuthenticated, user } = useAuth() as any;
 
   // Global Hydration Gate: Do not allow ANY routing decisions until fully synced
-  if (loading) {
+  if (!authInitialized) {
     return <Loading />;
   }
 
