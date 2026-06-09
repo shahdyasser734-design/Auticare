@@ -1,15 +1,16 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosError } from 'axios';
 
-// Use the environment variable if available, otherwise fallback to the relative path (which uses the Vite proxy)
-export const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+// Use the Vite proxy during development and a relative API path in production.
+// WARNING: Using the absolute URL directly will cause CORS preflight (OPTIONS) 405 errors from the backend.
+export const API_BASE_URL = '/api';
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 15000, // 15 seconds to be safe
+  timeout: 60000, // 60 seconds to allow the Railway backend to wake up from cold starts
 });
 
 // Request interceptor to add auth token
@@ -99,6 +100,12 @@ apiClient.interceptors.response.use(
       } else if (status >= 500) {
         console.error('Server Error:', apiMessage);
       }
+    } else if (error.code === 'ECONNABORTED') {
+      console.error('Timeout Error:', {
+        url: error.config?.url,
+        message: error.message,
+      });
+      error.message = `The server took too long to respond (it may be waking up from sleep). Please try again in a moment.`;
     } else if (error.request) {
       console.error('Network Error - No response from server:', {
         url: error.config?.url,
