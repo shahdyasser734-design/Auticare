@@ -429,7 +429,14 @@ export const Chat = () => {
                     const zoom  = isZoomMsg(msg);
 
                     if (zoom) {
-                      const zoomUrl = (msg as unknown as { zoomLink?: string }).zoomLink || msg.content;
+                      let zoomUrl = (msg as unknown as { zoomLink?: string }).zoomLink;
+                      if (!zoomUrl && typeof msg.content === 'string') {
+                        const match = msg.content.match(/https?:\/\/[^\s]+/);
+                        zoomUrl = match ? match[0] : msg.content;
+                      } else if (!zoomUrl) {
+                        zoomUrl = '';
+                      }
+                      
                       return (
                         <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                           <div className="max-w-sm rounded-3xl border border-blue-200 dark:border-blue-800/50 bg-gradient-to-br from-blue-50 to-white dark:from-slate-900 dark:to-slate-800 p-4 shadow-md space-y-3">
