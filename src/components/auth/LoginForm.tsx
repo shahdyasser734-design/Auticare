@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../common/Button';
@@ -17,8 +17,23 @@ export const LoginForm = () => {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  const { login, loading } = useAuth();
+  const { login, loading, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const role = user.role.toLowerCase();
+      if (role === 'parent') {
+        navigate(ROUTES.PARENT_HOME, { replace: true });
+      } else if (role === 'doctor' || role === 'specialist') {
+        navigate(ROUTES.DOCTOR_HOME, { replace: true });
+      } else if (role === 'therapist') {
+        navigate(ROUTES.THERAPIST_HOME, { replace: true });
+      } else {
+        navigate(ROUTES.ROOT, { replace: true });
+      }
+    }
+  }, [isAuthenticated, user, navigate]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,21 +53,8 @@ export const LoginForm = () => {
     }
 
     try {
-      const data = await login(email, password);
+      await login(email, password);
       setAlert({ type: 'success', message: 'Login successful! Redirecting...' });
-      
-      const role = data.user?.role || localStorage.getItem('role') || '';
-      const normalizedRole = role.toLowerCase();
-      
-      if (normalizedRole === 'parent') {
-        navigate(ROUTES.PARENT_HOME, { replace: true });
-      } else if (normalizedRole === 'doctor' || normalizedRole === 'specialist') {
-        navigate(ROUTES.DOCTOR_HOME, { replace: true });
-      } else if (normalizedRole === 'therapist') {
-        navigate(ROUTES.THERAPIST_HOME, { replace: true });
-      } else {
-        navigate(ROUTES.ROOT, { replace: true });
-      }
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : 'Login failed. Please check your credentials.';
       setAlert({

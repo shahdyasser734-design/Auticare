@@ -164,10 +164,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     );
 
     const user: User = {
-      id: String(rawUser.id ?? data.userId ?? ''),
+      id: String(rawUser.id ?? rawUser.userId ?? data.userId ?? ''),
       email,
       name: String(rawUser.name ?? data.fullName ?? rawUser.fullName ?? (rawUser.firstName ? `${rawUser.firstName} ${rawUser.lastName ?? ''}`.trim() : '')),
-      role: String(rawUser.role ?? data.role ?? localStorage.getItem('role') ?? 'parent').toLowerCase() as UserRole,
+      role: String(rawUser.role ?? data.role ?? localStorage.getItem('role') ?? 'parent').trim().toLowerCase() as UserRole,
       phone,
       nationalId,
       profileImage,
