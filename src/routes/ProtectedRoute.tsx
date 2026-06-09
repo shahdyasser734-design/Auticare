@@ -9,24 +9,14 @@ interface ProtectedRouteProps {
   requiredRole?: string | string[];
 }
 
-const SCREENING_EXEMPT_PATHS = [
-  ROUTES.PARENT_SCREENING,
-  ROUTES.PARENT_ADD_CHILD,
-  ROUTES.PARENT_SCREENING_RESULTS,
-  ROUTES.PARENT_RE_SCREENING,
-];
+// Global flag to prevent redirect loops and allow normal drawer navigation
+let hasRedirectedToAddChild = false;
 
 export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
   const { authInitialized, isAuthenticated, user, childrenLoaded, parentChildren } = useAuth() as any;
   const location = useLocation();
 
   const isParent = user?.role === 'parent';
-  const isExemptPath =
-    location.pathname === ROUTES.PARENT_HOME ||
-    location.pathname.startsWith(ROUTES.PARENT_HOME + '/') ||
-    SCREENING_EXEMPT_PATHS.some(
-      (path) => location.pathname === path || location.pathname.startsWith(path + '?')
-    );
 
   if (!authInitialized) {
     return <LoadingPage />;
@@ -43,7 +33,15 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
     }
   }
 
-  if (isParent && !isExemptPath && childrenLoaded && (!parentChildren || parentChildren.length === 0)) {
+  if (
+    isParent &&
+    authInitialized &&
+    childrenLoaded &&
+    (!parentChildren || parentChildren.length === 0) &&
+    location.pathname !== ROUTES.PARENT_ADD_CHILD &&
+    !hasRedirectedToAddChild
+  ) {
+    hasRedirectedToAddChild = true;
     return <Navigate to={ROUTES.PARENT_ADD_CHILD} replace />;
   }
 
