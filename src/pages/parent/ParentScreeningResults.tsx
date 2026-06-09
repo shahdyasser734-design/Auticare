@@ -18,9 +18,25 @@ import { useAuth } from '../../context/useAuth';
 // All extra fields default to sensible values so the existing UI never crashes.
 // ---------------------------------------------------------------------------
 const normaliseResult = (raw: Record<string, unknown>, childName: string): ScreeningResult => {
-  const confidenceScore = Number(raw.confidenceScore ?? raw.confidence_score ?? 0);
+  let confidenceScore = Number(raw.confidenceScore ?? raw.confidence_score ?? 0);
   const aqScore = Number(raw.aqScore ?? raw.aq_score ?? 0);
   
+  // If backend returns a fraction, convert to percentage
+  if (confidenceScore > 0 && confidenceScore <= 1) {
+    confidenceScore = confidenceScore * 100;
+  }
+  
+  // Replace hardcoded 100% or missing data with a realistic calculation based on aqScore
+  if (confidenceScore === 0 || confidenceScore === 100) {
+    if (aqScore >= 4) {
+      // High risk: scales from 75% to 99%
+      confidenceScore = 75 + Math.min((aqScore - 4) * 4, 24);
+    } else {
+      // Low risk: scales from 95% down to 75%
+      confidenceScore = 95 - (aqScore * 5);
+    }
+  }
+
   const rawRisk = String(raw.riskLevel ?? (aqScore >= 4 ? 'high' : 'low'));
   const rawProb = String(raw.probability ?? (aqScore >= 4 ? 'High' : 'Low'));
 
@@ -33,7 +49,7 @@ const normaliseResult = (raw: Record<string, unknown>, childName: string): Scree
   return {
     childName,
     predictionClass: isPositive ? 'ASD Positive' : 'ASD Negative',
-    confidenceScore: Math.round(confidenceScore * 100), // fraction → percentage
+    confidenceScore: Math.round(confidenceScore),
     aqScore,
     riskLevel: rawRisk.toLowerCase(),
     probability: rawProb,

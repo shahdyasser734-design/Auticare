@@ -4,6 +4,7 @@ import { MainLayout } from '../../layouts/MainLayout';
 import { Card } from '../../components/common/Card';
 import { Avatar } from '../../components/common/Avatar';
 import { chatServiceAPI, type ChatConversation, type ChatMessage } from '../../services/api/chatService';
+import { bookingService } from '../../services/api/bookings';
 import { useAuth } from '../../context/useAuth';
 import { MessageSquare, Send, Loader2, RefreshCw, ChevronLeft } from 'lucide-react';
 
@@ -107,7 +108,76 @@ export const Chat = () => {
     setLoadingChats(true);
     try {
       const raw = await chatServiceAPI.getMyChats();
-      const data = Array.isArray(raw) ? raw : [];
+      let data = Array.isArray(raw) ? raw : [];
+
+      // Enrich with real linked users from bookings
+      try {
+        const bookings = await bookingService.getMyBookings();
+        const contactMap = new Map<string, ParticipantInfo>();
+
+        bookings.forEach(b => {
+          if (user?.role === 'parent') {
+            if (b.specialistId && b.specialistName) {
+              contactMap.set(String(b.specialistId), {
+                id: String(b.specialistId),
+                name: b.specialistName,
+                role: String(b.specialistType || 'Specialist').replace(/^./, c => c.toUpperCase())
+              });
+            }
+          } else {
+            // For doctor/therapist, show the parent
+            if (b.parentId && b.parentName) {
+              contactMap.set(String(b.parentId), {
+                id: String(b.parentId),
+                name: b.parentName,
+                role: 'Parent'
+              });
+            }
+          }
+        });
+
+        // Patch existing chats with real names if missing
+        data = data.map(chat => {
+          const patchedChat = { ...chat };
+          patchedChat.participantNames = { ...patchedChat.participantNames };
+          const ids = Array.isArray(patchedChat.participantIds) ? patchedChat.participantIds : [];
+          ids.forEach(id => {
+            if (id !== myId && contactMap.has(id)) {
+              patchedChat.participantNames![id] = contactMap.get(id)!.name;
+              // Add a suffix to role so getOtherParticipants parses it correctly if we want
+              if (contactMap.get(id)!.role === 'Doctor' && !patchedChat.participantNames![id].toLowerCase().includes('dr.')) {
+                patchedChat.participantNames![id] = 'Dr. ' + patchedChat.participantNames![id];
+              } else if (contactMap.get(id)!.role === 'Therapist') {
+                patchedChat.participantNames![id] = patchedChat.participantNames![id] + ' (Therapist)';
+              } else if (contactMap.get(id)!.role === 'Parent') {
+                patchedChat.participantNames![id] = patchedChat.participantNames![id] + ' (Parent)';
+              }
+            }
+          });
+          return patchedChat;
+        });
+
+        // Add dummy chats for contacts we have no chat with
+        contactMap.forEach((info, contactId) => {
+          const hasChat = data.some(c => Array.isArray(c.participantIds) && c.participantIds.includes(contactId));
+          if (!hasChat) {
+            data.push({
+              id: `new-${contactId}`,
+              participantIds: [myId, contactId],
+              participantNames: {
+                [contactId]: info.role === 'Doctor' && !info.name.toLowerCase().includes('dr.') 
+                  ? `Dr. ${info.name}` 
+                  : `${info.name} (${info.role})`
+              },
+              lastMessage: undefined
+            });
+          }
+        });
+
+      } catch (err) {
+        console.warn('[Chat] Failed to fetch bookings for contacts:', err);
+      }
+
       setConversations(data);
 
       // Auto-select from navigation state
@@ -126,7 +196,7 @@ export const Chat = () => {
     } finally {
       setLoadingChats(false);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [myId, user?.role, location.state]);
 
   // ─── Fetch messages ──────────────────────────────────────────────────────
 
@@ -176,7 +246,19 @@ export const Chat = () => {
     setSendError(null);
 
     try {
-      const result = await chatServiceAPI.sendMessage(selected.id, content, 'text');
+      let activeChatId = selected.id;
+
+      // If it's a new uninitialized chat, start it first
+      if (activeChatId.startsWith('new-')) {
+        const contactId = activeChatId.replace('new-', '');
+        const newChat = await chatServiceAPI.startChat([myId, contactId]);
+        activeChatId = newChat.id;
+        setSelected(newChat); // update active chat
+        // We also need to refresh the conversation list to get the real chat ID
+        void fetchConversations();
+      }
+
+      const result = await chatServiceAPI.sendMessage(activeChatId, content, 'text');
       console.log('[Chat] Send success:', result);
 
       // Immediately re-fetch so the sent message appears without waiting for next poll

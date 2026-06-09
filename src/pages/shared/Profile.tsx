@@ -29,6 +29,7 @@ export const Profile = () => {
     specialty: user?.specialization || user?.specialty || '',
     yearsOfExperience: user?.yearsOfExperience?.toString() || '',
     licenseNumber: user?.licenseNumber || '',
+    nationalId: resolvedNationalId,
   });
 
   useEffect(() => {
@@ -41,8 +42,9 @@ export const Profile = () => {
       specialty: user?.specialization || user?.specialty || '',
       yearsOfExperience: user?.yearsOfExperience?.toString() || '',
       licenseNumber: user?.licenseNumber || '',
+      nationalId: resolvedNationalId,
     }));
-  }, [user, resolvedPhone]);
+  }, [user, resolvedPhone, resolvedNationalId]);
   
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [saving, setSaving] = useState(false);
@@ -59,6 +61,7 @@ export const Profile = () => {
       const payload: Record<string, unknown> = {
         name: formData.name,
         phone: formData.phone,
+        nationalId: formData.nationalId,
       };
 
       if (isSpecialist) {
@@ -251,10 +254,12 @@ export const Profile = () => {
               />
               <Input
                 label="National ID"
-                value={resolvedNationalId}
-                disabled={true}
+                type="text"
+                value={formData.nationalId}
+                onChange={(e) => setFormData({ ...formData, nationalId: e.target.value })}
+                disabled={!isEditing}
                 fullWidth
-                hint="Provided during registration (read-only)"
+                hint={!resolvedNationalId && !formData.nationalId ? 'Not provided during registration' : undefined}
               />
             </div>
 

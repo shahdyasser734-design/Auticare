@@ -60,12 +60,12 @@ export const ParentHome = () => {
         bookingService.getUpcomingBookings().catch(() => []),
       ]);
 
-      let finalPlanList = plansArrays.flat();
+      let finalPlanList = plansArrays.flat().filter(p => p.status === 'active');
       let finalUpcoming = upcoming;
 
       if (activeChildId) {
-        finalPlanList = finalPlanList.filter(p => p.childId === activeChildId);
-        finalUpcoming = finalUpcoming.filter(s => s.childId === activeChildId);
+        finalPlanList = finalPlanList.filter(p => String(p.childId) === String(activeChildId));
+        finalUpcoming = finalUpcoming.filter(s => String(s.childId) === String(activeChildId));
       }
 
       let notifs = notifList.slice(0, 4);

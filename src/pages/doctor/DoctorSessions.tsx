@@ -66,32 +66,10 @@ export const DoctorSessions = () => {
 
   const [joiningZoom, setJoiningZoom] = useState<string | null>(null);
 
-  const handleJoinZoom = async (session: Booking) => {
+  const handleJoinZoom = (session: Booking) => {
     console.log('[ZOOM] Doctor Join Zoom handler clicked.');
-    setJoiningZoom(session.id);
-
-    try {
-      // 1. Open a blank window synchronously immediately to bypass popup blockers
-      const zoomTab = window.open('about:blank', '_blank', 'noopener,noreferrer');
-      
-      // 2. Fetch the URL from backend
-      const data = await sessionsService.startSessionZoom(session.id);
-      
-      // 3. Redirect the opened tab
-      if (data?.zoomMeetingUrl && zoomTab) {
-        zoomTab.location.href = data.zoomMeetingUrl;
-      } else {
-        if (zoomTab) zoomTab.close();
-        throw new Error('No Zoom URL returned from backend');
-      }
-    } catch (err: any) {
-      console.error('[ZOOM] Failed to join Zoom session:', err);
-      // fallback
-      const fallback = session.joinLink || `https://zoom.us/j/${session.id}`;
-      window.open(fallback, '_blank', 'noopener,noreferrer');
-    } finally {
-      setJoiningZoom(null);
-    }
+    const link = session.joinLink || `https://zoom.us/j/${session.id}`;
+    window.open(link, '_blank', 'noopener,noreferrer');
   };
 
   return (
