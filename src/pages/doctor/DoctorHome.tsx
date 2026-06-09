@@ -164,7 +164,7 @@ export const DoctorHome = () => {
   const handleJoinZoom = (session: Booking) => {
     // Synchronous open — avoids popup blocker
     const tab = window.open('about:blank', '_blank', 'noopener,noreferrer');
-    const url = session.joinLink || session.zoomUrl || `https://zoom.us/j/${session.id}`;
+    const url = isDoctor ? 'https://app.zoom.us/wc' : (session.joinLink || session.zoomUrl || `https://zoom.us/j/${session.id}`);
     if (tab && url) {
       tab.location.href = url;
     } else if (tab) {

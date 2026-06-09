@@ -119,7 +119,17 @@ export const SpecialistScreeningResults = () => {
           const childData = await childrenService.getChild(id);
           if (childData?.name) name = childData.name;
         } catch (e) {
-          console.warn('Could not fetch child name', e);
+          console.warn('Could not fetch child profile directly, falling back to bookings search.', e);
+          try {
+            const { bookingService } = await import('../../services/api/bookings');
+            const myBookings = await bookingService.getMyBookings();
+            const booking = myBookings.find(b => String(b.childId) === String(id));
+            if (booking?.childName) {
+              name = booking.childName;
+            }
+          } catch (bookingErr) {
+            console.warn('Fallback booking search failed', bookingErr);
+          }
         }
         setChildName(name);
 

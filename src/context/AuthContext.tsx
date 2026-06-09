@@ -305,9 +305,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     if (localStorage.getItem('token')) {
-      void authService.logout().catch(e => console.warn('Logout API failed:', e));
+      try {
+        await authService.logout();
+      } catch (e) {
+        // Suppress logout 401 errors
+      }
     }
     localStorage.removeItem('token');
     localStorage.removeItem('user');

@@ -62,15 +62,19 @@ const getApiErrorMessage = (error: AxiosError): string => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    console.error('API Error Details:', {
-      message: error.message,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      url: error.config?.url,
-      method: error.config?.method,
-      responseData: error.response?.data,
-      requestData: error.config?.data,
-    });
+    const isLogout401 = error.response?.status === 401 && error.config?.url?.includes('/auth/logout');
+
+    if (!isLogout401) {
+      console.error('API Error Details:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        url: error.config?.url,
+        method: error.config?.method,
+        responseData: error.response?.data,
+        requestData: error.config?.data,
+      });
+    }
 
     if (error.response) {
       const status = error.response.status;
@@ -81,7 +85,9 @@ apiClient.interceptors.response.use(
 
       if (status === 401) {
         // Token expired or invalid
-        console.warn('API returned 401 Unauthorized for URL:', error.config?.url);
+        if (!isLogout401) {
+          console.warn('API returned 401 Unauthorized for URL:', error.config?.url);
+        }
         const url = error.config?.url || '';
         if (!url.includes('/auth/logout') && !url.includes('/auth/login')) {
           window.dispatchEvent(new CustomEvent('auth:unauthorized', { detail: { url } }));
