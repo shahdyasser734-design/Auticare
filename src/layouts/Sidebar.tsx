@@ -35,7 +35,6 @@ export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
         { label: t.autismScreening, href: ROUTES.PARENT_SCREENING },
         { label: t.screeningResults, href: ROUTES.PARENT_SCREENING_RESULTS },
         { label: t.bookSpecialist, href: ROUTES.PARENT_BOOK_SPECIALIST },
-        { label: t.myBookings, href: ROUTES.PARENT_MY_BOOKINGS },
         { label: t.sessions, href: ROUTES.PARENT_SESSIONS },
       ],
       [ROLES.DOCTOR]: [

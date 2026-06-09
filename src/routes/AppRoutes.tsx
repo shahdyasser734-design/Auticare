@@ -17,7 +17,7 @@ import { ParentScreeningResults } from '../pages/parent/ParentScreeningResults';
 import { BookSpecialist } from '../pages/parent/BookSpecialist';
 import { DoctorDetails } from '../pages/parent/DoctorDetails';
 import { TherapistDetails } from '../pages/parent/TherapistDetails';
-import { MyBookings } from '../pages/parent/MyBookings';
+
 import { ParentSessions } from '../pages/parent/ParentSessions';
 import { ParentReScreening } from '../pages/parent/ParentReScreening';
 import { AddChild } from '../pages/parent/AddChild';
@@ -126,14 +126,6 @@ export const AppRoutes = () => {
           element={
             <ProtectedRoute requiredRole={ROLES.PARENT}>
               <TherapistDetails />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.PARENT_MY_BOOKINGS}
-          element={
-            <ProtectedRoute requiredRole={ROLES.PARENT}>
-              <MyBookings />
             </ProtectedRoute>
           }
         />

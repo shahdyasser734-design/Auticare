@@ -5,7 +5,7 @@ import { bookingService } from '../../services/api/bookings';
 import type { Booking } from '../../types';
 import { Calendar, User, Clock, Video, CheckCircle2 } from 'lucide-react';
 
-// ─── Status helpers (mirrors MyBookings) ─────────────────────────────────────
+// ─── Status helpers ──────────────────────────────────────────────────────────
 
 const STATUS_LABEL: Record<string, string> = {
   pending:   'Pending',
@@ -85,15 +85,13 @@ export const ParentSessions = () => {
 
   const handleJoinZoom = (session: Booking) => {
     setJoiningId(session.id);
-    // Synchronous open to bypass popup blockers
-    const tab = window.open('about:blank', '_blank', 'noopener,noreferrer');
     const url = session.joinLink || session.zoomUrl;
-    if (tab && url) {
-      tab.location.href = url;
-    } else if (tab) {
-      tab.close();
-      alert('No Zoom link is available for this session yet. Please wait for your specialist to set up the meeting.');
+    // Synchronous open — must happen directly in user click handler to avoid popup blockers
+    if (url) {
+      const tab = window.open('about:blank', '_blank', 'noopener,noreferrer');
+      if (tab) tab.location.href = url;
     }
+    // Do NOT show alerts or fake fallbacks — if no URL, button is already hidden/disabled
     setJoiningId(null);
   };
 
@@ -175,7 +173,7 @@ export const ParentSessions = () => {
               const status         = (session.status || '').toLowerCase();
               const isCompleted    = status === 'completed';
               const isCancelled    = status === 'cancelled' || status === 'rejected';
-              const canJoin        = (status === 'approved' || status === 'confirmed') && !isCompleted && !isCancelled;
+              const canJoin        = (status === 'approved' || status === 'confirmed') && !isCompleted && !isCancelled && !!(session.joinLink || session.zoomUrl);
               const specialistRole = session.specialistType === 'therapist' ? 'Therapist' : 'Doctor';
 
               return (

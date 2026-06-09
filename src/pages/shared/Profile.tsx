@@ -13,11 +13,18 @@ import { User, Briefcase, Award, Loader2, Upload } from 'lucide-react';
 export const Profile = () => {
   const { user, updateUserFields } = useAuth();
 
+  // Phone and National ID may come from user object OR from localStorage fallback
+  // (stored during signup as auticare.user.phone.<email>)
+  const resolvedPhone = user?.phone ||
+    (user?.email ? localStorage.getItem(`auticare.user.phone.${user.email}`) : null) || '';
+  const resolvedNationalId = user?.nationalId ||
+    (user?.email ? localStorage.getItem(`auticare.user.nationalId.${user.email}`) : null) || '';
+
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    phone: user?.phone || '',
+    phone: resolvedPhone,
     bio: user?.bio || '',
     specialty: user?.specialization || user?.specialty || '',
     yearsOfExperience: user?.yearsOfExperience?.toString() || '',
@@ -227,13 +234,14 @@ export const Profile = () => {
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 disabled={!isEditing}
                 fullWidth
+                hint={!resolvedPhone && !formData.phone ? 'Not provided during registration' : undefined}
               />
               <Input
                 label="National ID"
-                value={user?.nationalId || ''}
+                value={resolvedNationalId}
                 disabled={true}
                 fullWidth
-                hint="Provided during registration"
+                hint="Provided during registration (read-only)"
               />
             </div>
 
