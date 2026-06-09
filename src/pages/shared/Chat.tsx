@@ -169,7 +169,10 @@ export const Chat = () => {
                   ? `Dr. ${info.name}` 
                   : `${info.name} (${info.role})`
               },
-              lastMessage: undefined
+              lastMessage: undefined,
+              lastUpdated: new Date().toISOString(),
+              unreadCount: 0,
+              createdAt: new Date().toISOString()
             });
           }
         });

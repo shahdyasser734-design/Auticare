@@ -8,7 +8,6 @@ import { bookingService, type Booking } from '../../services/api/bookings';
 import { useAuth } from '../../context/useAuth';
 
 import { Loader2 } from 'lucide-react';
-import { sessionsService } from '../../services/api/sessionsService';
 
 export const DoctorSessions = () => {
   const navigate = useNavigate();
@@ -63,8 +62,6 @@ export const DoctorSessions = () => {
     }
   };
 
-
-  const [joiningZoom, setJoiningZoom] = useState<string | null>(null);
 
   const handleJoinZoom = (session: Booking) => {
     console.log('[ZOOM] Doctor Join Zoom handler clicked.');

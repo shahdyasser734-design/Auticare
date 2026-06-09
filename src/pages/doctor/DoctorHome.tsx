@@ -13,7 +13,6 @@ import { notificationService, type Notification } from '../../services/api/notif
 import { notesService, type Note } from '../../services/api/notes';
 import { NoteCard } from '../../components/notes/NoteCard';
 import type { Child } from '../../services/api/children';
-import { sessionsService } from '../../services/api/sessionsService';
 
 import {
   Loader2, Calendar, Users, Bell, ClipboardList, ArrowRight,
@@ -165,8 +164,6 @@ export const DoctorHome = () => {
   const stats = isDoctor ? createDoctorStats(computedDashboardData) : createTherapistStats(computedDashboardData);
 
   const displayChildren = children.map((c) => ({ ...c, status: 'active' as const }));
-
-  const [joiningZoom, setJoiningZoom] = useState<string | null>(null);
 
   const handleJoinZoom = (session: Booking) => {
     console.log('[ZOOM] Start Session / Join Zoom handler clicked.');
