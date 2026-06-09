@@ -306,7 +306,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
-    void authService.logout();
+    if (localStorage.getItem('token')) {
+      void authService.logout().catch(e => console.warn('Logout API failed:', e));
+    }
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('userId');

@@ -80,10 +80,12 @@ apiClient.interceptors.response.use(
       }
 
       if (status === 401) {
-        // Token expired or invalid — emit an event instead of aggressively clearing storage
-        // to prevent false-negative forced logouts on endpoints that return 401 incorrectly.
+        // Token expired or invalid
         console.warn('API returned 401 Unauthorized for URL:', error.config?.url);
-        window.dispatchEvent(new CustomEvent('auth:unauthorized', { detail: { url: error.config?.url } }));
+        const url = error.config?.url || '';
+        if (!url.includes('/auth/logout') && !url.includes('/auth/login')) {
+          window.dispatchEvent(new CustomEvent('auth:unauthorized', { detail: { url } }));
+        }
       } else if (status === 403) {
         console.error('Forbidden action:', apiMessage);
       } else if (status === 404) {
