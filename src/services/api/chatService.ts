@@ -3,7 +3,16 @@ import type { ChatMessage, ChatConversation } from '../../types';
 
 export type { ChatMessage, ChatConversation };
 
-// No frontend transformation applied to raw message payloads
+// Helper to map backend message schema to frontend interface
+const mapMessage = (m: any): ChatMessage => ({
+  id: String(m.messageId || m.id),
+  senderId: String(m.senderUserId || m.senderId),
+  senderName: m.senderName || '',
+  content: m.content || '',
+  timestamp: m.timeStamp || m.timestamp || new Date().toISOString(),
+  messageType: m.messageType || 'text',
+  ...m
+});
 
 export const chatServiceAPI = {
   startChat: async (contactId: string): Promise<ChatConversation> => {
@@ -43,7 +52,8 @@ export const chatServiceAPI = {
   getMessages: async (chatId: string, limit?: number): Promise<ChatMessage[]> => {
     const params = limit ? { limit } : {};
     const response = await apiClient.get<any[]>(`/chat/${chatId}/messages`, { params });
-    return response.data ?? [];
+    const raw = response.data ?? [];
+    return raw.map(mapMessage);
   },
 
   sendMessage: async (
@@ -56,7 +66,7 @@ export const chatServiceAPI = {
       content,
       messageType,
     });
-    return response.data;
+    return mapMessage(response.data);
   },
 
   sendZoomLink: async (
@@ -73,7 +83,7 @@ export const chatServiceAPI = {
       confirmedTime: confirmedTime || new Date().toISOString().split('T')[1].substring(0, 5),
       note: note || 'Zoom Session Link'
     });
-    return response.data;
+    return mapMessage(response.data);
   },
 
   markAsRead: async (messageId: string): Promise<void> => {
