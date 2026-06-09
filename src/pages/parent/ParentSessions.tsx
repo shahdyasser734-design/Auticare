@@ -3,7 +3,7 @@ import { useAuth } from '../../context/useAuth';
 import { MainLayout } from '../../layouts/MainLayout';
 import { bookingService } from '../../services/api/bookings';
 import type { Booking } from '../../types';
-import { Calendar, User, Clock, Video, CheckCircle2 } from 'lucide-react';
+import { Calendar, User, Clock, CheckCircle2 } from 'lucide-react';
 
 // ─── Status helpers ──────────────────────────────────────────────────────────
 
@@ -53,7 +53,6 @@ export const ParentSessions = () => {
   const [loading, setLoading]           = useState(true);
   const [error, setError]               = useState('');
   const [activeTab, setActiveTab]       = useState<'upcoming' | 'history'>('upcoming');
-  const [joiningId, setJoiningId]       = useState<string | null>(null);
 
   const loadSessions = useCallback(async () => {
     setLoading(true);
@@ -83,7 +82,7 @@ export const ParentSessions = () => {
   const historySessions  = sorted.filter(b => isHistory(b.status));
   const display          = activeTab === 'upcoming' ? upcomingSessions : historySessions;
 
-  const handleJoinZoom = (session: Booking) => {
+  const handleJoinZoom = () => {
     window.open('https://app.zoom.us/wc', '_blank', 'noopener,noreferrer');
   };
 
@@ -165,7 +164,6 @@ export const ParentSessions = () => {
               const status         = (session.status || '').toLowerCase();
               const isCompleted    = status === 'completed';
               const isCancelled    = status === 'cancelled' || status === 'rejected';
-              const isCancelled    = status === 'cancelled' || status === 'rejected';
               const specialistRole = session.specialistType === 'therapist' ? 'Therapist' : 'Doctor';
 
               return (
@@ -233,7 +231,7 @@ export const ParentSessions = () => {
                   {activeTab === 'upcoming' && (
                     <div className="px-5 py-3 bg-slate-50 dark:bg-slate-900/30 border-t border-slate-100 dark:border-white/5 flex items-center justify-end">
                       <button
-                        onClick={() => handleJoinZoom(session)}
+                        onClick={() => handleJoinZoom()}
                         className="flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2 text-sm font-bold text-white transition-colors shadow-sm"
                       >
                         🎥 Start Session
