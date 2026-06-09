@@ -13,52 +13,49 @@ export interface BookingRequest {
   reason?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const normalizeBooking = (b: any): Booking => {
-  if (!b) return b;
+  if (!b) return b as unknown as Booking;
   const idVal = b.id || b.bookingId || b.BookingId || '';
   const idStr = String(idVal);
-  const appointmentDate = b.appointmentDate || (b.bookingDate ? b.bookingDate.split('T')[0] : b.preferredDate || '');
-  const appointmentTime = b.appointmentTime || b.bookingTime || b.preferredTime || '';
-  const dateTime = b.dateTime || b.bookingDate || `${appointmentDate}T${appointmentTime}`;
-  let status = b.status || 'pending';
-  if (typeof status === 'string') status = status.toLowerCase();
-  if (status === 'approved') status = 'confirmed'; 
-  const joinLink = b.meetingLink || b.joinLink || b.meeting_link || b.join_link || '';
-  const specName = b.specialistName || b.SpecialistName || '';
-  const specType = b.specialistType || b.SpecialistType || 'doctor';
-  let doctorName = 'Dr. Ahmed';
-  let therapistName = 'Therapist Sarah';
-  if (specType === 'doctor') {
-    doctorName = specName ? `Dr. ${specName.replace(/^Dr\.\s+/i, '')}` : 'Dr. Ahmed';
-  } else if (specType === 'therapist') {
-    therapistName = specName ? `Therapist ${specName.replace(/^Therapist\s+/i, '')}` : 'Therapist Sarah';
-  }
+  const appointmentDate = String(b.appointmentDate || (b.bookingDate ? String(b.bookingDate).split('T')[0] : b.preferredDate || ''));
+  const appointmentTime = String(b.appointmentTime || b.bookingTime || b.preferredTime || '');
+  const dateTime = String(b.dateTime || b.bookingDate || `${appointmentDate}T${appointmentTime}`);
+  // Keep the real status from backend — do NOT silently convert 'approved' to 'confirmed'
+  let status = String(b.status || 'pending').toLowerCase();
+  // Map backend casing variants to our lowercase enum values
+  if (status === 'scheduled') status = 'confirmed';
+  const joinLink = String(b.meetingLink || b.joinLink || b.meeting_link || b.join_link || '');
+  // Use the real specialist name from the backend — never fall back to hardcoded names
+  const specName = String(b.specialistName || b.SpecialistName || '');
+  const specType = String(b.specialistType || b.SpecialistType || 'doctor');
   const treatmentId = b.treatmentId || b.TreatmentId || '';
   return {
     id: idStr,
     parentId: String(b.parentId || b.ParentId || ''),
-    parentName: b.parentName || b.ParentName || '',
+    parentName: String(b.parentName || b.ParentName || ''),
     childId: String(b.childId || b.ChildId || ''),
-    childName: b.childName || b.ChildName || '',
+    childName: String(b.childName || b.ChildName || ''),
     specialistId: String(b.specialistId || b.SpecialistId || ''),
     specialistName: specName,
-    specialistType: specType,
-    status: status as any,
+    specialistType: specType as 'doctor' | 'therapist',
+    status: status as Booking['status'],
     appointmentDate,
     appointmentTime,
-    duration: b.duration || 60,
-    notes: b.notes || b.reason || '',
-    consultationNotes: b.consultationNotes || '',
-    createdAt: b.createdAt || new Date().toISOString(),
-    updatedAt: b.updatedAt || new Date().toISOString(),
+    duration: Number(b.duration) || 60,
+    notes: String(b.notes || b.reason || ''),
+    consultationNotes: String(b.consultationNotes || ''),
+    createdAt: String(b.createdAt || new Date().toISOString()),
+    updatedAt: String(b.updatedAt || new Date().toISOString()),
     dateTime,
     joinLink,
     zoomUrl: joinLink,
-    reason: b.reason || '',
-    doctorName,
-    therapistName,
-    treatmentId,
-    TreatmentId: treatmentId,
+    reason: String(b.reason || ''),
+    // For display: build specialist display name from real data
+    doctorName: specType === 'doctor' ? specName : '',
+    therapistName: specType === 'therapist' ? specName : '',
+    treatmentId: String(treatmentId),
+    TreatmentId: String(treatmentId),
   };
 };
 

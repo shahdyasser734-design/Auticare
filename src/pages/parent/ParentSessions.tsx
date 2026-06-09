@@ -1,403 +1,263 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/useAuth';
 import { MainLayout } from '../../layouts/MainLayout';
-import { Card } from '../../components/common/Card';
-import { Button } from '../../components/common/Button';
-import { Badge } from '../../components/common/Badge';
-import { Modal } from '../../components/common/Modal';
-import { bookingsService } from '../../services/api/bookingsService';
-import { specialistsService } from '../../services/api/specialists';
-import { treatmentPlansService } from '../../services/api/treatmentPlans';
-import { BookingModal } from '../../components/specialists/BookingModal';
+import { bookingService } from '../../services/api/bookings';
 import type { Booking } from '../../types';
-import type { Specialist } from '../../types';
-import { Loader2 } from 'lucide-react';
-import { getOrCreateSessionMeetingLink } from '../../utils/zoomHelper';
+import { Calendar, User, Clock, Video, CheckCircle2 } from 'lucide-react';
 
+// ─── Status helpers (mirrors MyBookings) ─────────────────────────────────────
+
+const STATUS_LABEL: Record<string, string> = {
+  pending:   'Pending',
+  approved:  'Approved',
+  confirmed: 'Confirmed',
+  rejected:  'Rejected',
+  cancelled: 'Cancelled',
+  completed: 'Completed',
+};
+
+const STATUS_BADGE: Record<string, string> = {
+  pending:   'bg-amber-100 text-amber-800  dark:bg-amber-900/30  dark:text-amber-300  border border-amber-200  dark:border-amber-800/40',
+  approved:  'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40',
+  confirmed: 'bg-sky-100 text-sky-800   dark:bg-sky-900/30   dark:text-sky-300   border border-sky-200   dark:border-sky-800/40',
+  rejected:  'bg-rose-100 text-rose-800   dark:bg-rose-900/30   dark:text-rose-300   border border-rose-200   dark:border-rose-800/40',
+  cancelled: 'bg-rose-100 text-rose-800   dark:bg-rose-900/30   dark:text-rose-300   border border-rose-200   dark:border-rose-800/40',
+  completed: 'bg-teal-100 text-teal-800   dark:bg-teal-900/30   dark:text-teal-300   border border-teal-200   dark:border-teal-800/40',
+};
+
+const statusLabel = (s: string) => STATUS_LABEL[s?.toLowerCase()] ?? (s || 'Pending');
+const statusBadge = (s: string) => STATUS_BADGE[s?.toLowerCase()] ?? 'bg-slate-100 text-slate-700 border border-slate-200';
+
+const isUpcoming = (s: string) => {
+  const low = s?.toLowerCase();
+  return low === 'pending' || low === 'approved' || low === 'confirmed';
+};
+
+const isHistory = (s: string) => {
+  const low = s?.toLowerCase();
+  return low === 'completed' || low === 'cancelled' || low === 'rejected';
+};
+
+const formatDate = (d: string) => {
+  if (!d) return 'TBD';
+  try {
+    return new Date(d).toLocaleDateString('en-US', {
+      weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
+    });
+  } catch { return d; }
+};
 
 export const ParentSessions = () => {
   const { activeChildId } = useAuth();
-  const [upcomingSessions, setUpcomingSessions] = useState<Booking[]>([]);
-  const [pastSessions, setPastSessions] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [connectedSpecialists, setConnectedSpecialists] = useState<Specialist[]>([]);
-  const [selectedSpecialist, setSelectedSpecialist] = useState<Specialist | null>(null);
-  const [showBookingModal, setShowBookingModal] = useState(false);
-  const [showSelectorModal, setShowSelectorModal] = useState(false);
+  const [allBookings, setAllBookings]   = useState<Booking[]>([]);
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState('');
+  const [activeTab, setActiveTab]       = useState<'upcoming' | 'history'>('upcoming');
+  const [joiningId, setJoiningId]       = useState<string | null>(null);
 
-  const fetchSessions = async () => {
+  const loadSessions = useCallback(async () => {
     setLoading(true);
+    setError('');
     try {
-      const allBookings = await bookingsService.getMyBookings();
-      
-      const upcoming = allBookings.filter((b) => {
-        const s = (b.status ?? '').toLowerCase();
-        return s !== 'completed' && s !== 'cancelled';
-      });
-      
-      const history = allBookings.filter((b) => {
-        const s = (b.status ?? '').toLowerCase();
-        return s === 'completed' || s === 'cancelled';
-      });
-      
-      setUpcomingSessions(upcoming);
-      setPastSessions(history);
-    } catch (err) {
-      console.error('Error fetching sessions:', err);
+      const data = await bookingService.getMyBookings();
+      setAllBookings(Array.isArray(data) ? data : []);
+    } catch {
+      setError('Could not load your sessions. Please try again.');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => {
-    void fetchSessions();
-    const loadConnectedSpecialists = async () => {
-      try {
-        const childId = activeChildId || 'child-1';
-        const allBookings = await bookingsService.getMyBookings().catch(() => []);
-        const allSpecs = await specialistsService.getSpecialists().catch(() => []);
-        const plans = childId ? await treatmentPlansService.getChildPlans(childId).catch(() => []) : [];
-        
-        const connectedIds = new Set<string>();
-        
-        allBookings.forEach(b => {
-          if (b.specialistId) connectedIds.add(String(b.specialistId));
-          if ((b as any).SpecialistId) connectedIds.add(String((b as any).SpecialistId));
-        });
-        
-        plans.forEach(p => {
-          if ((p as any).specialistId) connectedIds.add(String((p as any).specialistId));
-          if ((p as any).doctorId) connectedIds.add(String((p as any).doctorId));
-          if ((p as any).therapistId) connectedIds.add(String((p as any).therapistId));
-          if (Array.isArray((p as any).assignedTherapists)) {
-            (p as any).assignedTherapists.forEach((tId: any) => connectedIds.add(String(tId)));
-          }
-        });
-        
-        const uniqueSpecs = new Map<string, Specialist>();
-        allSpecs.forEach(spec => {
-          if (connectedIds.has(String(spec.id)) && !uniqueSpecs.has(String(spec.id))) {
-            uniqueSpecs.set(String(spec.id), spec);
-          }
-        });
-        
-        const connected = Array.from(uniqueSpecs.values());
-        
-        setConnectedSpecialists(connected);
-        if (connected.length > 0) {
-          setSelectedSpecialist(connected[0]);
-        }
-      } catch (err) {
-        console.warn('Unable to load connected specialists for session booking', err);
-      }
-    };
-    void loadConnectedSpecialists();
-  }, [activeChildId]);
+  // Refetch whenever child selection changes
+  useEffect(() => { void loadSessions(); }, [loadSessions, activeChildId]);
 
-  const [joiningZoom, setJoiningZoom] = useState<string | null>(null);
+  const childFiltered = activeChildId
+    ? allBookings.filter(b => String(b.childId) === String(activeChildId))
+    : allBookings;
 
-  const handleJoinZoom = async (session: Booking) => {
-    console.log('[ZOOM] Parent Join Zoom handler clicked.');
-    setJoiningZoom(session.id);
+  const sorted = [...childFiltered].sort((a, b) =>
+    new Date(b.dateTime ?? b.createdAt ?? 0).getTime() - new Date(a.dateTime ?? a.createdAt ?? 0).getTime()
+  );
 
-    try {
-      // 1. Fetch or create backend Zoom link
-      const link = await getOrCreateSessionMeetingLink(session, false);
-      
-      // 2. Open the window
-      window.open(link, '_blank', 'noopener,noreferrer');
-    } catch (err: any) {
-      console.error('[ZOOM] Failed to join Zoom session:', err);
-      const fallback = session.joinLink || `https://zoom.us/j/${session.id}`;
-      window.open(fallback, '_blank', 'noopener,noreferrer');
-    } finally {
-      setJoiningZoom(null);
+  const upcomingSessions = sorted.filter(b => isUpcoming(b.status));
+  const historySessions  = sorted.filter(b => isHistory(b.status));
+  const display          = activeTab === 'upcoming' ? upcomingSessions : historySessions;
+
+  const handleJoinZoom = (session: Booking) => {
+    setJoiningId(session.id);
+    // Synchronous open to bypass popup blockers
+    const tab = window.open('about:blank', '_blank', 'noopener,noreferrer');
+    const url = session.joinLink || session.zoomUrl;
+    if (tab && url) {
+      tab.location.href = url;
+    } else if (tab) {
+      tab.close();
+      alert('No Zoom link is available for this session yet. Please wait for your specialist to set up the meeting.');
     }
+    setJoiningId(null);
   };
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center space-y-3">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-indigo-300 border-t-indigo-600 mx-auto" />
+            <p className="text-slate-500 dark:text-slate-400 font-medium">Loading your sessions…</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
-      <div className="space-y-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="max-w-4xl mx-auto space-y-8 pb-12">
+
+        {/* Header */}
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">My Sessions</h1>
-            <p className="text-slate-600 dark:text-slate-400">Manage your upcoming and past sessions</p>
+            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">My Sessions</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">
+              Upcoming and past sessions with your care team
+            </p>
           </div>
-          <Button 
-            onClick={() => {
-              if (connectedSpecialists.length > 1) {
-                setShowSelectorModal(true);
-              } else if (connectedSpecialists.length === 1) {
-                setSelectedSpecialist(connectedSpecialists[0]);
-                setShowBookingModal(true);
-              }
-            }} 
-            disabled={connectedSpecialists.length === 0}
+          <button
+            onClick={() => void loadSessions()}
+            className="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
           >
-            Book a New Session
-          </Button>
+            ↻ Refresh
+          </button>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        {error && (
+          <div className="rounded-2xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/40 p-4 text-rose-700 dark:text-rose-300 text-sm font-medium flex items-center justify-between">
+            <span>{error}</span>
+            <button onClick={() => setError('')} className="ml-4 text-rose-400 hover:text-rose-600">✕</button>
+          </div>
+        )}
+
+        {/* Tabs */}
+        <div className="flex gap-1 border-b border-slate-200 dark:border-white/10">
+          {(['upcoming', 'history'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-6 py-3 font-bold text-sm border-b-2 transition-colors capitalize ${
+                activeTab === tab
+                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                  : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+              }`}
+            >
+              {tab === 'upcoming'
+                ? `Upcoming (${upcomingSessions.length})`
+                : `History (${historySessions.length})`}
+            </button>
+          ))}
+        </div>
+
+        {/* Session Cards */}
+        {display.length === 0 ? (
+          <div className="rounded-3xl border-2 border-dashed border-slate-200 dark:border-white/10 py-16 text-center">
+            <Calendar size={40} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+            <p className="font-bold text-slate-600 dark:text-slate-400">
+              {activeTab === 'upcoming' ? 'No upcoming sessions' : 'No session history'}
+            </p>
+            <p className="text-sm text-slate-400 mt-1">
+              {activeTab === 'upcoming'
+                ? 'Book a specialist to schedule a session.'
+                : 'Completed sessions will appear here.'}
+            </p>
           </div>
         ) : (
-          <>
-            {/* Upcoming / Requested Sessions */}
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Sessions & Requests</h2>
-              {upcomingSessions.filter(s => s.status !== 'completed').length === 0 ? (
-                <Card>
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-blue-50 dark:bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">📅</div>
-                    <p className="text-slate-600 dark:text-slate-400 mb-4">No active sessions or requests</p>
-                    <Button 
-                      onClick={() => {
-                        if (connectedSpecialists.length > 1) {
-                          setShowSelectorModal(true);
-                        } else if (connectedSpecialists.length === 1) {
-                          setSelectedSpecialist(connectedSpecialists[0]);
-                          setShowBookingModal(true);
-                        }
-                      }}
-                      disabled={connectedSpecialists.length === 0}
-                    >
-                      Book a Session
-                    </Button>
+          <div className="space-y-4">
+            {display.map(session => {
+              const status         = (session.status || '').toLowerCase();
+              const isCompleted    = status === 'completed';
+              const isCancelled    = status === 'cancelled' || status === 'rejected';
+              const canJoin        = (status === 'approved' || status === 'confirmed') && !isCompleted && !isCancelled;
+              const specialistRole = session.specialistType === 'therapist' ? 'Therapist' : 'Doctor';
+
+              return (
+                <div
+                  key={session.id}
+                  className={`rounded-2xl border bg-white dark:bg-slate-800 shadow-sm hover:shadow-md transition-all overflow-hidden ${
+                    isCompleted ? 'opacity-80 border-teal-100 dark:border-teal-900/30' :
+                    isCancelled ? 'opacity-60 border-rose-100 dark:border-rose-900/30' :
+                    'border-slate-200 dark:border-white/10'
+                  }`}
+                >
+                  <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+                    {/* Child */}
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 mb-1">
+                        <User size={11} /> Child
+                      </p>
+                      <p className="font-bold text-slate-900 dark:text-white text-sm">
+                        {session.childName || '—'}
+                      </p>
+                    </div>
+
+                    {/* Specialist */}
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                        {specialistRole}
+                      </p>
+                      <p className="font-bold text-slate-900 dark:text-white text-sm">
+                        {session.specialistName || '—'}
+                      </p>
+                      <p className="text-xs text-slate-500 capitalize">{specialistRole}</p>
+                    </div>
+
+                    {/* Date & Time */}
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 mb-1">
+                        <Clock size={11} /> Date &amp; Time
+                      </p>
+                      <p className="font-bold text-slate-900 dark:text-white text-sm">
+                        {formatDate(session.appointmentDate)}
+                      </p>
+                      <p className="text-xs text-slate-500">{session.appointmentTime || 'Time TBD'}</p>
+                    </div>
+
+                    {/* Status */}
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status</p>
+                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${statusBadge(status)}`}>
+                        {isCompleted && <CheckCircle2 size={11} />}
+                        {statusLabel(status)}
+                      </span>
+                    </div>
+
+                    {/* Notes */}
+                    {session.notes && (
+                      <div className="sm:col-span-2">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Notes</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">{session.notes}</p>
+                      </div>
+                    )}
                   </div>
-                </Card>
-              ) : (
-                <div className="grid gap-4">
-                  {upcomingSessions
-                    .filter(s => s.status !== 'completed')
-                    .map((session) => {
-                      const meetingUrl = session.zoomUrl || session.joinLink || '';
-                      return (
-                        <Card key={session.id} className="border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-md transition rounded-2xl p-5">
-                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="space-y-2 flex-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className="font-bold text-lg text-slate-900 dark:text-white block">
-                                  {session.reason || (session.specialistType === 'doctor' ? 'Clinical Consultation' : 'Therapy Session')}
-                                </span>
-                                <Badge variant={meetingUrl ? 'success' : 'warning'}>
-                                  {meetingUrl ? '🟢 Zoom Available' : '🔴 No Zoom Link'}
-                                </Badge>
-                              </div>
-                              
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-400">
-                                <p><strong>Child Name:</strong> {session.childName || 'Not Provided'}</p>
-                                <p><strong>Parent Name:</strong> {session.parentName || 'Not Provided'}</p>
-                                {session.specialistType === 'doctor' ? (
-                                  <p><strong>Doctor Name:</strong> {session.doctorName || 'Not Assigned'}</p>
-                                ) : (
-                                  <p><strong>Therapist Name:</strong> {session.therapistName || 'Not Assigned'}</p>
-                                )}
-                              </div>
 
-                              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                                <strong>Date & Time:</strong> {session.appointmentDate || 'TBD'} at {session.appointmentTime || 'TBD'}
-                              </p>
-                              {session.notes && <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-white/5 font-mono text-xs">Session Note: {session.notes}</p>}
-                            </div>
-                            
-                            <div className="flex items-center gap-3 shrink-0">
-                              <Badge variant={session.status === 'confirmed' || session.status === 'scheduled' ? 'success' : 'warning'}>
-                                {session.status}
-                              </Badge>
-                              {(session.status !== 'pending' && session.status !== 'rejected') && (
-                                <Button 
-                                  size="sm" 
-                                  onClick={() => handleJoinZoom(session)}
-                                  disabled={joiningZoom === session.id || !meetingUrl}
-                                  className={`font-semibold flex items-center gap-1 rounded-xl cursor-pointer ${
-                                    joiningZoom === session.id || !meetingUrl
-                                      ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                                      : 'bg-blue-600 hover:bg-blue-700 text-white'
-                                  }`}
-                                  title={!meetingUrl ? 'No active meeting available' : ''}
-                                >
-                                  {joiningZoom === session.id ? (
-                                    <>
-                                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                      Connecting...
-                                    </>
-                                  ) : (
-                                    <>
-                                      🎥 Join Session
-                                    </>
-                                  )}
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </Card>
-                      );
-                    })}
+                  {/* Zoom action — only for upcoming (approved/confirmed), never for completed/cancelled */}
+                  {canJoin && (
+                    <div className="px-5 py-3 bg-slate-50 dark:bg-slate-900/30 border-t border-slate-100 dark:border-white/5 flex items-center justify-end">
+                      <button
+                        onClick={() => handleJoinZoom(session)}
+                        disabled={joiningId === session.id}
+                        className="flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-4 py-2 text-sm font-bold text-white transition-colors shadow-sm"
+                      >
+                        <Video size={14} />
+                        {joiningId === session.id ? 'Opening…' : 'Join Zoom Meeting'}
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-
-            {/* Completed Sessions */}
-            {(pastSessions.filter(s => s.status === 'completed').length > 0 || upcomingSessions.filter(s => s.status === 'completed').length > 0) && (
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mt-8">Completed Sessions</h2>
-                <div className="grid gap-4">
-                  {[...upcomingSessions, ...pastSessions]
-                    .filter(s => s.status === 'completed')
-                    // deduplicate by id
-                    .filter((value, index, self) => self.findIndex(t => t.id === value.id) === index)
-                    .map((session) => {
-                      const meetingUrl = session.zoomUrl || session.joinLink || '';
-                      return (
-                        <Card key={session.id} className="border border-slate-200 dark:border-white/10 rounded-2xl p-5 bg-slate-50/50">
-                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="space-y-2 flex-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className="font-bold text-lg text-slate-900 dark:text-white block">
-                                  {session.reason || (session.specialistType === 'doctor' ? 'Clinical Consultation' : 'Therapy Session')}
-                                </span>
-                              </div>
-
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-400">
-                                <p><strong>Child Name:</strong> {session.childName || 'Not Provided'}</p>
-                                <p><strong>Parent Name:</strong> {session.parentName || 'Not Provided'}</p>
-                                {session.specialistType === 'doctor' ? (
-                                  <p><strong>Doctor Name:</strong> {session.doctorName || 'Not Assigned'}</p>
-                                ) : (
-                                  <p><strong>Therapist Name:</strong> {session.therapistName || 'Not Assigned'}</p>
-                                )}
-                              </div>
-
-                              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                                <strong>Date & Time:</strong> {session.appointmentDate || 'TBD'} at {session.appointmentTime || 'TBD'}
-                              </p>
-                              {session.notes && <p className="text-sm text-slate-550 dark:text-slate-450 mt-2 bg-slate-100/50 p-3 rounded-xl">Session Summary: {session.notes}</p>}
-                            </div>
-                            <div className="flex items-center gap-3 shrink-0">
-                              <Badge>Completed</Badge>
-                              <Button 
-                                size="sm" 
-                                onClick={() => handleJoinZoom(session)}
-                                disabled={joiningZoom === session.id || !meetingUrl}
-                                className={`font-semibold flex items-center gap-1 rounded-xl cursor-pointer ${
-                                  joiningZoom === session.id || !meetingUrl
-                                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                                }`}
-                                title={!meetingUrl ? 'No active meeting available' : ''}
-                              >
-                                {joiningZoom === session.id ? (
-                                  <>
-                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                    Connecting...
-                                  </>
-                                ) : (
-                                  <>
-                                    🎥 Join Session
-                                  </>
-                                )}
-                              </Button>
-                            </div>
-                          </div>
-                        </Card>
-                      );
-                    })}
-                </div>
-              </div>
-            )}
-          </>
+              );
+            })}
+          </div>
         )}
       </div>
-      {showSelectorModal && (
-        <Modal
-          isOpen={showSelectorModal}
-          onClose={() => setShowSelectorModal(false)}
-          title="Select Connected Specialist"
-        >
-          <div className="space-y-4">
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Choose a specialist from your treatment team to book a session with.
-            </p>
-            <div className="grid gap-6">
-              {connectedSpecialists.filter(s => s.type === 'doctor').length > 0 && (
-                <div className="space-y-3">
-                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">👨‍⚕️ Doctors</h3>
-                  {connectedSpecialists.filter(s => s.type === 'doctor').map((spec) => (
-                    <button
-                      key={spec.id}
-                      onClick={() => {
-                        setSelectedSpecialist(spec);
-                        setShowSelectorModal(false);
-                        setShowBookingModal(true);
-                      }}
-                      className="w-full text-left p-4 rounded-2xl border border-slate-200 dark:border-white/10 standard-card hover:border-orange-500 hover:ring-2 hover:ring-orange-200 dark:hover:border-orange-500 transition-all flex items-center justify-between group cursor-pointer"
-                    >
-                      <div>
-                        <h4 className="font-bold text-slate-950 dark:text-white group-hover:text-orange-500 transition-colors">
-                          {spec.name}
-                        </h4>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                          {spec.specialization}
-                        </p>
-                      </div>
-                      <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300">
-                        Doctor
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {connectedSpecialists.filter(s => s.type === 'therapist').length > 0 && (
-                <div className="space-y-3">
-                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">🧠 Therapists</h3>
-                  {connectedSpecialists.filter(s => s.type === 'therapist').map((spec) => (
-                    <button
-                      key={spec.id}
-                      onClick={() => {
-                        setSelectedSpecialist(spec);
-                        setShowSelectorModal(false);
-                        setShowBookingModal(true);
-                      }}
-                      className="w-full text-left p-4 rounded-2xl border border-slate-200 dark:border-white/10 standard-card hover:border-orange-500 hover:ring-2 hover:ring-orange-200 dark:hover:border-orange-500 transition-all flex items-center justify-between group cursor-pointer"
-                    >
-                      <div>
-                        <h4 className="font-bold text-slate-950 dark:text-white group-hover:text-orange-500 transition-colors">
-                          {spec.name}
-                        </h4>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                          {spec.specialization}
-                        </p>
-                      </div>
-                      <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
-                        Therapist
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-              
-              {connectedSpecialists.length === 0 && (
-                <p className="text-sm text-slate-500 text-center py-4">No specialists connected yet.</p>
-              )}
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {selectedSpecialist && (
-        <BookingModal
-          open={showBookingModal}
-          specialist={selectedSpecialist}
-          onClose={() => setShowBookingModal(false)}
-          onBooked={() => {
-            setShowBookingModal(false);
-            void fetchSessions();
-          }}
-        />
-      )}
     </MainLayout>
   );
 };

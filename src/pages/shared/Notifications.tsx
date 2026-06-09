@@ -1,239 +1,289 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { MainLayout } from '../../layouts/MainLayout';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
-import { Alert } from '../../components/common/Alert';
-import { NotificationCard } from '../../components/common/NotificationCard';
 import { notificationsService } from '../../services/api/notificationsService';
 import type { Notification } from '../../types';
-import { useAuth } from '../../context/useAuth';
+import { Bell, CheckCheck, Check, RefreshCw } from 'lucide-react';
 
-const filterOptions = [
-  { value: 'all', label: 'All' },
-  { value: 'unread', label: 'Unread' },
-  { value: 'read', label: 'Read' },
-] as const;
+// ─── Mock notifications (shown ONLY when backend returns empty) ───────────────
+const MOCK_NOTIFICATIONS: Notification[] = [
+  {
+    id: 'demo-1',
+    userId: 'demo',
+    type: 'session',
+    title: '🗓 Session Approved',
+    message: 'Your consultation request has been approved. Please check your booking for the meeting details.',
+    isRead: false,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'demo-2',
+    userId: 'demo',
+    type: 'message',
+    title: '💬 New Message',
+    message: 'Your specialist has sent you a message. Open the chat to view it.',
+    isRead: false,
+    createdAt: new Date(Date.now() - 3_600_000).toISOString(),
+  },
+  {
+    id: 'demo-3',
+    userId: 'demo',
+    type: 'booking',
+    title: '📋 Booking Reminder',
+    message: 'You have an upcoming appointment scheduled. Make sure to prepare your child\'s information.',
+    isRead: true,
+    createdAt: new Date(Date.now() - 86_400_000).toISOString(),
+  },
+];
 
-type NotificationFilter = (typeof filterOptions)[number]['value'];
+const TYPE_ICON: Record<string, string> = {
+  session: '🗓',
+  booking: '📋',
+  message: '💬',
+  'treatment-plan': '📄',
+  screening: '🔬',
+  reminder: '⏰',
+  system: '🔔',
+  notes: '📝',
+};
+
+const formatDate = (d: string) => {
+  try {
+    return new Date(d).toLocaleString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+  } catch { return d; }
+};
+
+type FilterOption = 'all' | 'unread' | 'read';
 
 export const Notifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [filter, setFilter] = useState<NotificationFilter>('all');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [usingMock, setUsingMock]         = useState(false);
+  const [filter, setFilter]               = useState<FilterOption>('all');
+  const [loading, setLoading]             = useState(false);
+  const [markingAll, setMarkingAll]       = useState(false);
+  const [error, setError]                 = useState<string | null>(null);
+  const [success, setSuccess]             = useState<string | null>(null);
 
-  const { user } = useAuth();
-  const isSpecialist = user?.role === 'doctor' || user?.role === 'therapist';
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const data = await notificationsService.getNotifications();
-      // Filter out notifications based on user role to make it specialist-focused
-      if (isSpecialist) {
-        // Show notifications explicitly for specialist or general system alerts
-        const specData = data.filter(n => n.userId.includes('doctor') || n.userId.includes('therapist') || n.id.startsWith('spec') || n.type === 'system');
-        setNotifications(specData);
+      const list = Array.isArray(data) ? data : [];
+      if (list.length === 0) {
+        // Backend returned empty — show mock data for UI preview
+        setNotifications(MOCK_NOTIFICATIONS);
+        setUsingMock(true);
       } else {
-        // Show parent-focused notifications
-        const parentData = data.filter(n => !n.userId.includes('doctor') && !n.userId.includes('therapist') && !n.id.startsWith('spec'));
-        setNotifications(parentData);
+        setNotifications(list);
+        setUsingMock(false);
       }
-    } catch (error) {
-      console.error(error);
-      setError('Unable to load notifications. Please try again later.');
+    } catch {
+      setError('Could not load notifications. Showing preview data instead.');
+      setNotifications(MOCK_NOTIFICATIONS);
+      setUsingMock(true);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => {
-    const loadNotifications = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await notificationsService.getNotifications();
-        if (isSpecialist) {
-          const specData = data.filter(n => n.userId.includes('doctor') || n.userId.includes('therapist') || n.id.startsWith('spec') || n.type === 'system');
-          setNotifications(specData);
-        } else {
-          const parentData = data.filter(n => !n.userId.includes('doctor') && !n.userId.includes('therapist') && !n.id.startsWith('spec'));
-          setNotifications(parentData);
-        }
-      } catch (error) {
-        console.error(error);
-        setError('Unable to load notifications. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
+  useEffect(() => { void fetchNotifications(); }, [fetchNotifications]);
 
-    void loadNotifications();
-  }, [isSpecialist]);
+  const filteredNotifications = notifications.filter(n => {
+    if (filter === 'read')   return n.isRead;
+    if (filter === 'unread') return !n.isRead;
+    return true;
+  });
 
-  const filteredNotifications = useMemo(() => {
-    if (filter === 'read') {
-      return notifications.filter((notification) => notification.isRead);
-    }
-    if (filter === 'unread') {
-      return notifications.filter((notification) => !notification.isRead);
-    }
-    return notifications;
-  }, [filter, notifications]);
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
-  const unreadCount = notifications.filter((notification) => !notification.isRead).length;
+  const handleMarkAsRead = async (id: string) => {
+    // Optimistic update
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
 
-  const handleMarkAsRead = async (notificationId: string) => {
-    setNotifications((current) =>
-      current.map((notification) =>
-        notification.id === notificationId ? { ...notification, isRead: true } : notification
-      )
-    );
+    if (usingMock) return; // Don't call API for mock data
 
     try {
-      await notificationsService.markAsRead(notificationId);
-      setSuccessMessage('Notification marked as read.');
-      setTimeout(() => setSuccessMessage(null), 3000);
+      await notificationsService.markAsRead(id);
     } catch {
-      setError('Unable to update notification status. Please try again.');
-      fetchNotifications();
+      // Revert on failure
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: false } : n));
+      setError('Failed to mark notification as read.');
     }
   };
 
   const handleMarkAllAsRead = async () => {
-    setNotifications((current) =>
-      current.map((notification) => ({ ...notification, isRead: true }))
-    );
+    setMarkingAll(true);
+    // Optimistic update
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+
+    if (usingMock) { setMarkingAll(false); return; }
+
     try {
       await notificationsService.markAllAsRead();
-      setSuccessMessage('All notifications marked as read.');
-      setTimeout(() => setSuccessMessage(null), 3000);
+      setSuccess('All notifications marked as read.');
+      setTimeout(() => setSuccess(null), 3000);
     } catch {
-      setError('Unable to mark all as read. Please try again.');
-      void fetchNotifications();
-    }
-  };
-
-  const handleClearAll = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      await notificationsService.deleteAllRead();
-      setNotifications([]);
-      setSuccessMessage('All notifications have been cleared.');
-      setTimeout(() => setSuccessMessage(null), 3000);
-    } catch {
-      setError('Unable to clear notifications. Please try again.');
+      setError('Failed to mark all as read. Please try again.');
+      void fetchNotifications(); // Revert
     } finally {
-      setLoading(false);
+      setMarkingAll(false);
     }
   };
 
   return (
     <MainLayout>
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="space-y-3">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div>
-              <h1 className="text-4xl font-bold text-slate-900 dark:text-white">Notifications</h1>
-              <p className="text-slate-650 dark:text-slate-400 max-w-2xl">
-                Stay on top of session updates, booking reminders, test alerts, messages, and system notices.
-              </p>
-            </div>
+      <div className="max-w-3xl mx-auto space-y-6 pb-12">
 
-            <div className="flex flex-wrap gap-3">
-              <Button variant="outline" onClick={fetchNotifications} disabled={loading}>
-                Refresh
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleMarkAllAsRead}
-                disabled={loading || notifications.every((n) => n.isRead)}
-              >
-                Mark All Read
-              </Button>
-              <Button variant="danger" onClick={handleClearAll} disabled={loading || notifications.length === 0}>
-                Clear All
-              </Button>
-            </div>
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Notifications</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">
+              {unreadCount > 0
+                ? `${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`
+                : 'All caught up!'}
+            </p>
           </div>
-
-          <Card className="grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
-            <div className="space-y-3">
-              <p className="text-sm font-semibold text-neutral-700">Filter notifications</p>
-              <div className="flex flex-wrap gap-2">
-                {filterOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setFilter(option.value)}
-                    className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                      filter === option.value
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-100'
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-3xl bg-slate-100 dark:bg-slate-800/80 p-4 text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/5">
-              <p className="font-semibold text-slate-900 dark:text-white">Summary</p>
-              <div className="mt-2 flex flex-wrap gap-3">
-                <span className="rounded-full standard-card px-3 py-1 text-sm text-slate-700 dark:text-slate-300 border">Total {notifications.length}</span>
-                <span className="rounded-full standard-card px-3 py-1 text-sm text-slate-700 dark:text-slate-300 border">Unread {unreadCount}</span>
-              </div>
-            </div>
-          </Card>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => void fetchNotifications()}
+              disabled={loading}
+              className="p-2 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-40"
+              title="Refresh"
+            >
+              <RefreshCw size={16} className={`text-slate-500 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+            {unreadCount > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => void handleMarkAllAsRead()}
+                disabled={markingAll}
+                className="rounded-xl font-bold flex items-center gap-1.5 cursor-pointer"
+              >
+                <CheckCheck size={14} />
+                {markingAll ? 'Marking…' : 'Mark All Read'}
+              </Button>
+            )}
+          </div>
         </div>
 
-        {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
-        {successMessage && <Alert type="success" message={successMessage} onClose={() => setSuccessMessage(null)} />}
+        {/* Mock notice */}
+        {usingMock && (
+          <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 p-4 text-amber-800 dark:text-amber-300 text-sm font-medium flex items-center gap-2">
+            <Bell size={15} />
+            Showing demo notifications — no real notifications found yet.
+          </div>
+        )}
 
+        {/* Error / Success */}
+        {error && (
+          <div className="rounded-2xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/40 p-4 text-rose-700 dark:text-rose-300 text-sm font-medium flex items-center justify-between">
+            <span>{error}</span>
+            <button onClick={() => setError(null)} className="ml-4 text-rose-400 hover:text-rose-600">✕</button>
+          </div>
+        )}
+        {success && (
+          <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/40 p-4 text-emerald-700 dark:text-emerald-300 text-sm font-medium">
+            {success}
+          </div>
+        )}
+
+        {/* Filter Tabs */}
+        <div className="flex gap-1 border-b border-slate-200 dark:border-white/10">
+          {(['all', 'unread', 'read'] as FilterOption[]).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setFilter(tab)}
+              className={`px-5 py-2.5 font-bold text-sm border-b-2 transition-colors capitalize ${
+                filter === tab
+                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                  : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+              }`}
+            >
+              {tab}
+              {tab === 'unread' && unreadCount > 0 && (
+                <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 text-white text-[9px] font-black px-1">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Loading skeleton */}
         {loading && notifications.length === 0 ? (
-          <div className="space-y-4">
-            {[...Array(3)].map((_, index) => (
-              <div key={index} className="animate-pulse rounded-3xl standard-card p-6">
-                <div className="flex items-center gap-4">
-                  <div className="h-14 w-14 rounded-3xl bg-neutral-200" />
-                  <div className="flex-1 space-y-3 py-2">
-                    <div className="h-4 w-3/4 rounded bg-neutral-200" />
-                    <div className="h-3 w-1/2 rounded bg-neutral-200" />
-                    <div className="h-3 w-1/3 rounded bg-neutral-200" />
+          <div className="space-y-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800 h-20" />
+            ))}
+          </div>
+        ) : filteredNotifications.length === 0 ? (
+          <Card className="text-center py-16">
+            <Bell size={40} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+            <p className="font-black text-lg text-slate-700 dark:text-slate-300">
+              {filter === 'unread' ? 'No unread notifications' : 'No notifications'}
+            </p>
+            <p className="text-sm text-slate-400 mt-1">
+              {filter === 'all' ? 'You\'re all caught up!' : 'Try switching to "All" to see everything.'}
+            </p>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {filteredNotifications.map(notification => (
+              <div
+                key={notification.id}
+                className={`rounded-2xl border p-4 transition-all ${
+                  notification.isRead
+                    ? 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/8'
+                    : 'bg-indigo-50/50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-800/30'
+                }`}
+              >
+                <div className="flex items-start gap-4">
+                  {/* Icon */}
+                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-lg shrink-0 ${
+                    notification.isRead
+                      ? 'bg-slate-100 dark:bg-slate-700'
+                      : 'bg-indigo-100 dark:bg-indigo-900/40'
+                  }`}>
+                    {TYPE_ICON[notification.type] ?? '🔔'}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className={`font-bold text-sm ${notification.isRead ? 'text-slate-700 dark:text-slate-300' : 'text-slate-900 dark:text-white'}`}>
+                        {notification.title}
+                        {!notification.isRead && (
+                          <span className="inline-block ml-2 w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                        )}
+                      </p>
+                      {!notification.isRead && (
+                        <button
+                          onClick={() => void handleMarkAsRead(notification.id)}
+                          className="shrink-0 flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:opacity-70 transition-opacity"
+                          title="Mark as read"
+                        >
+                          <Check size={12} /> Read
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium leading-relaxed">
+                      {notification.message}
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-2 font-medium">
+                      {formatDate(notification.createdAt)}
+                    </p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-        ) : filteredNotifications.length > 0 ? (
-          <div className="space-y-4">
-            {filteredNotifications.map((notification) => (
-              <NotificationCard
-                key={notification.id}
-                notification={notification}
-                onMarkAsRead={handleMarkAsRead}
-              />
-            ))}
-          </div>
-        ) : (
-          <Card className="text-center py-16">
-            <div className="mx-auto max-w-xl space-y-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-600">No notifications</p>
-              <h2 className="text-3xl font-bold text-neutral-900">You’re all caught up</h2>
-              <p className="text-neutral-600">
-                There are no notifications matching your selection right now. Check back later or refresh to load new activity.
-              </p>
-              <div className="flex justify-center">
-                <Button onClick={fetchNotifications} disabled={loading}>
-                  Refresh Notifications
-                </Button>
-              </div>
-            </div>
-          </Card>
         )}
       </div>
     </MainLayout>
