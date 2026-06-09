@@ -1,8 +1,8 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosError } from 'axios';
 
-// Use the Vite proxy during development and a relative API path in production.
-export const API_BASE_URL = '/api';
+// Use the environment variable if available, otherwise fallback to the relative path (which uses the Vite proxy)
+export const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
