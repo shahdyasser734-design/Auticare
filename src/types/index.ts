@@ -187,6 +187,7 @@ export interface Child {
   jaundiceHistory?: boolean;
   notes?: string;
   createdAt: string;
+  riskLevel?: string;
 }
 
 export interface Booking {
