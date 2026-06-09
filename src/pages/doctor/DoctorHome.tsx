@@ -173,14 +173,22 @@ export const DoctorHome = () => {
     setJoiningZoom(session.id);
 
     try {
+      // 1. Open a blank window synchronously immediately to bypass popup blockers
+      const zoomTab = window.open('about:blank', '_blank', 'noopener,noreferrer');
+      
+      // 2. Fetch the URL from backend
       const data = await sessionsService.startSessionZoom(session.id);
-      if (data?.zoomMeetingUrl) {
-        window.open(data.zoomMeetingUrl, '_blank', 'noopener,noreferrer');
+      
+      // 3. Redirect the opened tab
+      if (data?.zoomMeetingUrl && zoomTab) {
+        zoomTab.location.href = data.zoomMeetingUrl;
       } else {
+        if (zoomTab) zoomTab.close();
         throw new Error('No Zoom URL returned from backend');
       }
     } catch (err: any) {
       console.error('[ZOOM] Failed to join Zoom session:', err);
+      // fallback
       const fallback = session.joinLink || `https://zoom.us/j/${session.id}`;
       window.open(fallback, '_blank', 'noopener,noreferrer');
     } finally {

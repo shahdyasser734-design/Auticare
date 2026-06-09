@@ -8,9 +8,7 @@ export const ChildSelector = () => {
 
   return (
     <div className="flex items-center gap-2">
-      <label htmlFor="child-selector" className="text-xs font-semibold text-slate-500 hidden sm:block">
-        Viewing:
-      </label>
+
       <select
         id="child-selector"
         value={activeChildId || ''}

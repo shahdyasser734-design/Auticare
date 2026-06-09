@@ -17,11 +17,11 @@ export const Profile = () => {
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    phone: (user as unknown as Record<string, unknown>)?.phone as string || '',
-    bio: (user as unknown as Record<string, unknown>)?.bio as string || '',
-    specialty: (user as unknown as Record<string, unknown>)?.specialization as string || (user as unknown as Record<string, unknown>)?.specialty as string || '',
-    yearsOfExperience: (user as unknown as Record<string, unknown>)?.yearsOfExperience as string || '',
-    licenseNumber: (user as unknown as Record<string, unknown>)?.licenseNumber as string || '',
+    phone: user?.phone || '',
+    bio: user?.bio || '',
+    specialty: user?.specialization || user?.specialty || '',
+    yearsOfExperience: user?.yearsOfExperience?.toString() || '',
+    licenseNumber: user?.licenseNumber || '',
   });
   
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);

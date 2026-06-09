@@ -262,42 +262,125 @@ export const Chat = () => {
     <MainLayout>
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 min-h-[calc(100vh-8rem)]">
 
+        {/* Left Sidebar: Chat List */}
+        <div className="col-span-1 hidden lg:flex flex-col gap-3 h-full">
+          <Card className="h-full flex flex-col p-4 border border-stone-200/60 dark:border-white/8 shadow-md rounded-3xl bg-[var(--surface-strong)] dark:bg-slate-900/10">
+            <h2 className="text-sm font-black text-stone-900 dark:text-white uppercase tracking-wider mb-4 px-2">
+              Conversations
+            </h2>
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+              {filteredConversations.length === 0 ? (
+                <p className="text-xs text-stone-500 px-2 text-center mt-10">No conversations yet.</p>
+              ) : (
+                filteredConversations.map(conv => {
+                  let nameLabel = '';
+                  let roleLabel = '';
+                  if (isSpecialist) {
+                    const details = getChatDetails(conv);
+                    nameLabel = details.parentName;
+                    roleLabel = 'Parent';
+                  } else {
+                    const chatName = getChatName(conv);
+                    if (chatName.includes(':')) {
+                      const parts = chatName.split(':');
+                      roleLabel = parts[0].trim();
+                      nameLabel = parts[1].trim();
+                    } else {
+                      roleLabel = 'Specialist';
+                      nameLabel = chatName;
+                    }
+                  }
+                  
+                  const isSelected = selectedConversation?.id === conv.id;
+                  
+                  return (
+                    <div 
+                      key={conv.id}
+                      onClick={() => setSelectedConversation(conv)}
+                      className={`p-3 rounded-2xl cursor-pointer transition-all border ${
+                        isSelected 
+                          ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800' 
+                          : 'bg-white dark:bg-slate-800 border-transparent hover:border-stone-200 dark:hover:border-slate-700 hover:bg-stone-50 dark:hover:bg-slate-800/80'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar name={nameLabel} size="sm" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-stone-900 dark:text-white truncate">
+                            {nameLabel}
+                          </p>
+                          <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest truncate">
+                            {roleLabel}
+                          </p>
+                          {conv.lastMessage && (
+                            <p className="text-xs text-stone-500 dark:text-slate-400 truncate mt-0.5">
+                              {isZoomMessage(conv.lastMessage) ? '🎥 Zoom link' : conv.lastMessage.content}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </Card>
+        </div>
+
         {/* Messaging Area + Patient Info Sidebar */}
-        <div className={`col-span-1 lg:col-span-4 grid grid-cols-1 ${isSpecialist && selectedConversation ? 'lg:grid-cols-3' : 'max-w-4xl mx-auto w-full'} gap-5 h-full`}>
+        <div className={`col-span-1 lg:col-span-3 grid grid-cols-1 ${isSpecialist && selectedConversation ? 'lg:grid-cols-3' : 'w-full'} gap-5 h-full`}>
           <Card className={`${isSpecialist && selectedConversation ? 'lg:col-span-2' : 'col-span-1'} h-full flex flex-col p-5 border border-stone-200/60 dark:border-white/8 shadow-md rounded-3xl bg-[var(--surface-strong)] dark:bg-slate-900/10`}>
-            {/* Unified Conversation Header */}
+            {/* Unified Conversation Header (Mobile Dropdown + Desktop Info) */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-stone-200/60 dark:border-white/8 mb-4 shrink-0 gap-4">
               <div className="flex flex-col">
-                <label className="text-xs text-stone-500 font-bold mb-1.5 uppercase tracking-wider flex items-center gap-2">
-                  <MessageSquare size={14} className="text-indigo-500" />
-                  Chat with:
-                </label>
-                <select
-                  className="bg-white dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-stone-900 dark:text-white text-sm rounded-xl px-4 py-2.5 font-bold outline-none cursor-pointer focus:ring-2 focus:ring-indigo-500 min-w-[280px] shadow-sm"
-                  value={selectedConversation?.id || ''}
-                  onChange={(e) => {
-                    const targetChatId = e.target.value;
-                    const conv = conversations.find(c => c.id === targetChatId);
-                    if (conv) {
-                      setSelectedConversation(conv);
-                    }
-                  }}
-                >
-                  <option value="" disabled>Select Participant</option>
-                  {filteredConversations.map(conv => {
-                    let label = '';
-                    if (isSpecialist) {
-                      const details = getChatDetails(conv);
-                      label = `Parent: ${details.parentName}`;
-                    } else {
-                      const chatName = getChatName(conv);
-                      label = chatName.includes(':') ? chatName : `Dr. / Therapist: ${chatName}`;
-                    }
-                    return (
-                      <option key={conv.id} value={conv.id}>{label}</option>
-                    );
-                  })}
-                </select>
+                <div className="lg:hidden w-full mb-3">
+                  <label className="text-xs text-stone-500 font-bold mb-1.5 uppercase tracking-wider flex items-center gap-2">
+                    <MessageSquare size={14} className="text-indigo-500" />
+                    Chat with:
+                  </label>
+                  <select
+                    className="w-full bg-white dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-stone-900 dark:text-white text-sm rounded-xl px-4 py-2.5 font-bold outline-none cursor-pointer focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                    value={selectedConversation?.id || ''}
+                    onChange={(e) => {
+                      const targetChatId = e.target.value;
+                      const conv = conversations.find(c => c.id === targetChatId);
+                      if (conv) {
+                        setSelectedConversation(conv);
+                      }
+                    }}
+                  >
+                    <option value="" disabled>Select Participant</option>
+                    {filteredConversations.map(conv => {
+                      let label = '';
+                      if (isSpecialist) {
+                        const details = getChatDetails(conv);
+                        label = `Parent: ${details.parentName}`;
+                      } else {
+                        const chatName = getChatName(conv);
+                        label = chatName.includes(':') ? chatName : `Dr. / Therapist: ${chatName}`;
+                      }
+                      return (
+                        <option key={conv.id} value={conv.id}>{label}</option>
+                      );
+                    })}
+                  </select>
+                </div>
+                
+                {selectedConversation && (
+                  <div className="hidden lg:flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center">
+                       <MessageSquare size={18} className="text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-stone-900 dark:text-white">
+                        {isSpecialist ? `Parent: ${getChatDetails(selectedConversation).parentName}` : getChatName(selectedConversation)}
+                      </p>
+                      <p className="text-[10px] font-bold text-stone-500 uppercase tracking-widest">
+                        Active Conversation
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-2">

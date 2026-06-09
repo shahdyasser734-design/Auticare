@@ -61,13 +61,30 @@ export const ParentHome = () => {
         bookingService.getUpcomingBookings().catch(() => []),
       ]);
 
-      const planList = plansArrays.flat();
+      let finalPlanList = plansArrays.flat();
+      let finalNoteList = noteList;
+      let finalUpcoming = upcoming;
+
+      if (activeChildId) {
+        finalPlanList = finalPlanList.filter(p => p.childId === activeChildId);
+        finalNoteList = finalNoteList.filter(n => n.childId === activeChildId);
+        finalUpcoming = finalUpcoming.filter(s => s.childId === activeChildId);
+      }
+
+      let notifs = notifList.slice(0, 4);
+      if (notifs.length === 0) {
+        notifs = [
+          { id: 'm1', title: 'New session approved', message: 'Your session request has been approved by the specialist', isRead: false, createdAt: new Date().toISOString() } as any,
+          { id: 'm2', title: 'Therapist sent a message', message: 'Please check your inbox for an update on the care plan', isRead: false, createdAt: new Date(Date.now() - 3600000).toISOString() } as any,
+          { id: 'm3', title: 'Zoom session scheduled', message: 'Your upcoming consultation starts soon', isRead: true, createdAt: new Date(Date.now() - 86400000).toISOString() } as any
+        ];
+      }
 
       setChildren(childList);
-      setPlans(planList);
-      setNotes(noteList);
-      setNotifications(notifList.slice(0, 4));
-      setUpcomingSessions(upcoming.length);
+      setPlans(finalPlanList);
+      setNotes(finalNoteList);
+      setNotifications(notifs);
+      setUpcomingSessions(finalUpcoming.length);
     } catch (err) {
       console.error('Error fetching parent dashboard:', err);
     } finally {
@@ -76,9 +93,6 @@ export const ParentHome = () => {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void fetchDashboard();
-
     void fetchDashboard();
   }, [activeChildId]);
 

@@ -26,7 +26,7 @@ const calcAge = (child: Child): number | null => {
 
 export const TreatmentPlanDetail = () => {
   const { planId } = useParams<{ planId: string }>();
-  const { activeChildId } = useAuth();
+  const { user, activeChildId } = useAuth() as any;
   const navigate = useNavigate();
   const [plan, setPlan] = useState<TreatmentPlan | null>(null);
   const [child, setChild] = useState<Child | null>(null);
@@ -108,9 +108,14 @@ export const TreatmentPlanDetail = () => {
   // Computed child display data
   const childAge = child ? calcAge(child) : null;
   const childGender = child?.gender && child.gender !== 'Unknown' && child.gender !== '' ? child.gender : null;
+  const childDob = child?.dateOfBirth ? new Date(child.dateOfBirth).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : null;
   const childMedHistory = child?.medicalHistory && child.medicalHistory.trim() !== ''
     ? child.medicalHistory
     : null;
+    
+  // If user is a parent, their phone and ID are associated with the child
+  const phone = user?.role === 'parent' ? user?.phone : null;
+  const nationalId = user?.role === 'parent' ? user?.nationalId : null;
 
   return (
     <MainLayout>
@@ -146,6 +151,24 @@ export const TreatmentPlanDetail = () => {
                 <div>
                   <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">Gender</p>
                   <p className="font-bold text-stone-900 dark:text-white text-sm capitalize">{childGender}</p>
+                </div>
+              )}
+              {childDob && (
+                <div>
+                  <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">Date of Birth</p>
+                  <p className="font-bold text-stone-900 dark:text-white text-sm">{childDob}</p>
+                </div>
+              )}
+              {phone && (
+                <div>
+                  <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">Contact Phone</p>
+                  <p className="font-bold text-stone-900 dark:text-white text-sm">{phone}</p>
+                </div>
+              )}
+              {nationalId && (
+                <div>
+                  <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">National ID</p>
+                  <p className="font-bold text-stone-900 dark:text-white text-sm">{nationalId}</p>
                 </div>
               )}
               <div>
