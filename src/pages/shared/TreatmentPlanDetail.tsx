@@ -26,7 +26,7 @@ const calcAge = (child: Child): number | null => {
 
 export const TreatmentPlanDetail = () => {
   const { planId } = useParams<{ planId: string }>();
-  const { user, activeChildId } = useAuth() as any;
+  const { user, activeChildId } = useAuth();
   const navigate = useNavigate();
   const [plan, setPlan] = useState<TreatmentPlan | null>(null);
   const [child, setChild] = useState<Child | null>(null);

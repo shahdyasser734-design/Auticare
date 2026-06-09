@@ -74,9 +74,9 @@ export const ParentHome = () => {
       let notifs = notifList.slice(0, 4);
       if (notifs.length === 0) {
         notifs = [
-          { id: 'm1', title: 'New session approved', message: 'Your session request has been approved by the specialist', isRead: false, createdAt: new Date().toISOString() } as any,
-          { id: 'm2', title: 'Therapist sent a message', message: 'Please check your inbox for an update on the care plan', isRead: false, createdAt: new Date(Date.now() - 3600000).toISOString() } as any,
-          { id: 'm3', title: 'Zoom session scheduled', message: 'Your upcoming consultation starts soon', isRead: true, createdAt: new Date(Date.now() - 86400000).toISOString() } as any
+          { id: 'm1', title: 'New session approved', message: 'Your session request has been approved by the specialist', isRead: false, createdAt: new Date().toISOString() } as unknown as typeof notifList[0],
+          { id: 'm2', title: 'Therapist sent a message', message: 'Please check your inbox for an update on the care plan', isRead: false, createdAt: new Date(Date.now() - 3600000).toISOString() } as unknown as typeof notifList[0],
+          { id: 'm3', title: 'Zoom session scheduled', message: 'Your upcoming consultation starts soon', isRead: true, createdAt: new Date(Date.now() - 86400000).toISOString() } as unknown as typeof notifList[0]
         ];
       }
 
