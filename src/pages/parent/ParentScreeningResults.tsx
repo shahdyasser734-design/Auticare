@@ -99,7 +99,7 @@ const exportPDF = (result: ScreeningResult) => {
 // ---------------------------------------------------------------------------
 export const ParentScreeningResults = () => {
   const navigate = useNavigate();
-  const { activeChildId, parentChildren } = useAuth();
+  const { authInitialized, activeChildId, parentChildren } = useAuth();
   const [result, setResult] = useState<ScreeningResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [childId, setChildId] = useState<string | null>(null);
@@ -107,10 +107,18 @@ export const ParentScreeningResults = () => {
   const [hasProgress, setHasProgress] = useState(false);
 
   useEffect(() => {
+    if (!authInitialized || !activeChildId) {
+      console.log('Screening Results: Waiting for authInitialized and activeChildId...', { authInitialized, activeChildId });
+      return;
+    }
+
     const load = async () => {
+      setLoading(true);
       try {
         const id = activeChildId;
         setChildId(id);
+
+        console.log('Screening Results: Fetching data for activeChildId:', id);
 
         const currentChild = parentChildren?.find(c => c.id === id);
         const childName = currentChild?.name || localStorage.getItem('latestChildName') || 'Child';
@@ -138,6 +146,7 @@ export const ParentScreeningResults = () => {
         if (id) {
           try {
             const data = await screeningService.getResults(id);
+            console.log('Screening Results API response length:', data?.length);
             if (data && data.length > 0) {
               const sorted = [...data].sort((a, b) => new Date(String((b as any).createdAt ?? '')).getTime() - new Date(String((a as any).createdAt ?? '')).getTime());
               const raw = sorted[0] as unknown as Record<string, unknown>;
@@ -161,10 +170,16 @@ export const ParentScreeningResults = () => {
               const raw = JSON.parse(cached) as Record<string, unknown>;
               console.log('Using cached screening result:', raw);
               setResult(normaliseResult(raw, childName));
+              backendResultFetched = true;
             } catch {
               // corrupt cache
             }
           }
+        }
+        
+        // If still no result, ensure state is null
+        if (!backendResultFetched) {
+          setResult(null);
         }
       } catch (err) {
         console.error('Error loading screening results:', err);
@@ -174,7 +189,7 @@ export const ParentScreeningResults = () => {
     };
 
     void load();
-  }, [activeChildId, parentChildren]);
+  }, [authInitialized, activeChildId, parentChildren]);
 
   // ── Loading ──────────────────────────────────────────────────────────────
   if (loading) {

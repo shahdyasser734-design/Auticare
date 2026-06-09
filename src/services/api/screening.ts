@@ -58,9 +58,18 @@ export const screeningService = {
   },
 
   getResults: async (childId: string): Promise<ScreeningResult[]> => {
-    const response = await apiClient.get<ScreeningResult | ScreeningResult[]>(`/screening/results/${childId}`);
-    const data = response.data;
-    return Array.isArray(data) ? data : [data];
+    try {
+      // Primary: as requested by the user, using query param
+      const response = await apiClient.get<ScreeningResult | ScreeningResult[]>('/screening-results', { params: { childId } });
+      const data = response.data;
+      return Array.isArray(data) ? data : [data];
+    } catch (err) {
+      // Fallback to older route format just in case
+      console.warn('Fallback to legacy screening results route:', err);
+      const response = await apiClient.get<ScreeningResult | ScreeningResult[]>(`/screening/results/${childId}`);
+      const data = response.data;
+      return Array.isArray(data) ? data : [data];
+    }
   },
 
   getAnalytics: async (childId: string): Promise<Record<string, unknown>> => {
