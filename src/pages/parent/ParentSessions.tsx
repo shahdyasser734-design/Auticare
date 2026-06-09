@@ -84,15 +84,7 @@ export const ParentSessions = () => {
   const display          = activeTab === 'upcoming' ? upcomingSessions : historySessions;
 
   const handleJoinZoom = (session: Booking) => {
-    setJoiningId(session.id);
-    const url = session.joinLink || session.zoomUrl;
-    // Synchronous open — must happen directly in user click handler to avoid popup blockers
-    if (url) {
-      const tab = window.open('about:blank', '_blank', 'noopener,noreferrer');
-      if (tab) tab.location.href = url;
-    }
-    // Do NOT show alerts or fake fallbacks — if no URL, button is already hidden/disabled
-    setJoiningId(null);
+    window.open('https://app.zoom.us/wc', '_blank', 'noopener,noreferrer');
   };
 
   if (loading) {
@@ -173,7 +165,7 @@ export const ParentSessions = () => {
               const status         = (session.status || '').toLowerCase();
               const isCompleted    = status === 'completed';
               const isCancelled    = status === 'cancelled' || status === 'rejected';
-              const canJoin        = (status === 'approved' || status === 'confirmed') && !isCompleted && !isCancelled && !!(session.joinLink || session.zoomUrl);
+              const isCancelled    = status === 'cancelled' || status === 'rejected';
               const specialistRole = session.specialistType === 'therapist' ? 'Therapist' : 'Doctor';
 
               return (
@@ -237,16 +229,14 @@ export const ParentSessions = () => {
                     )}
                   </div>
 
-                  {/* Zoom action — only for upcoming (approved/confirmed), never for completed/cancelled */}
-                  {canJoin && (
+                  {/* Zoom action — always available for upcoming sessions */}
+                  {activeTab === 'upcoming' && (
                     <div className="px-5 py-3 bg-slate-50 dark:bg-slate-900/30 border-t border-slate-100 dark:border-white/5 flex items-center justify-end">
                       <button
                         onClick={() => handleJoinZoom(session)}
-                        disabled={joiningId === session.id}
-                        className="flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-4 py-2 text-sm font-bold text-white transition-colors shadow-sm"
+                        className="flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2 text-sm font-bold text-white transition-colors shadow-sm"
                       >
-                        <Video size={14} />
-                        {joiningId === session.id ? 'Opening…' : 'Join Zoom Meeting'}
+                        🎥 Start Session
                       </button>
                     </div>
                   )}

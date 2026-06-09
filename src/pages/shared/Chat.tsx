@@ -221,7 +221,7 @@ export const Chat = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-5" style={{ height: 'calc(100vh - 7rem)' }}>
 
         {/* ── LEFT PANEL: Conversation List ──────────────────────────────── */}
-        <Card className="col-span-1 hidden lg:flex flex-col h-full p-4 border border-stone-200/60 dark:border-white/8 shadow-md rounded-3xl bg-[var(--surface-strong)] dark:bg-slate-900/10 overflow-hidden">
+        <Card className="col-span-1 flex flex-col h-full lg:max-h-full max-h-[40vh] p-4 border border-stone-200/60 dark:border-white/8 shadow-md rounded-3xl bg-[var(--surface-strong)] dark:bg-slate-900/10 overflow-hidden">
           <div className="flex items-center justify-between mb-4 shrink-0">
             <h2 className="text-xs font-black text-stone-900 dark:text-white uppercase tracking-widest">
               Messages
@@ -314,24 +314,6 @@ export const Chat = () => {
                   </p>
                 </div>
 
-                {/* Mobile: conversation selector dropdown */}
-                <div className="lg:hidden">
-                  <select
-                    className="bg-white dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-stone-900 dark:text-white text-xs rounded-xl px-2 py-1.5 font-bold outline-none"
-                    value={selected?.id ?? ''}
-                    onChange={e => {
-                      const conv = conversations.find(c => c.id === e.target.value);
-                      if (conv) setSelected(conv);
-                    }}
-                  >
-                    {visibleConvs.map(conv => {
-                      const o = getPrimaryOther(conv, myId);
-                      return (
-                        <option key={conv.id} value={conv.id}>{o.name}</option>
-                      );
-                    })}
-                  </select>
-                </div>
               </div>
 
               {/* Messages area */}
@@ -451,28 +433,6 @@ export const Chat = () => {
                     : 'Choose a conversation from the sidebar to begin.'}
                 </p>
               </div>
-
-              {/* Mobile: list convs here if nothing selected */}
-              {!loadingChats && visibleConvs.length > 0 && (
-                <div className="lg:hidden w-full max-w-xs space-y-2 mt-2">
-                  {visibleConvs.map(conv => {
-                    const o = getPrimaryOther(conv, myId);
-                    return (
-                      <button
-                        key={conv.id}
-                        onClick={() => setSelected(conv)}
-                        className="w-full text-left p-3 bg-white dark:bg-slate-800 border border-stone-200 dark:border-white/10 rounded-2xl flex items-center gap-3 hover:border-indigo-300 transition-colors"
-                      >
-                        <Avatar name={o.name} size="sm" />
-                        <div>
-                          <p className="text-sm font-bold text-stone-900 dark:text-white">{o.name}</p>
-                          <p className="text-[10px] font-bold text-indigo-500 uppercase">{o.role}</p>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
             </div>
           )}
         </Card>

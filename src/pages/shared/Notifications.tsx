@@ -6,36 +6,6 @@ import { notificationsService } from '../../services/api/notificationsService';
 import type { Notification } from '../../types';
 import { Bell, CheckCheck, Check, RefreshCw } from 'lucide-react';
 
-// ─── Mock notifications (shown ONLY when backend returns empty) ───────────────
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: 'demo-1',
-    userId: 'demo',
-    type: 'session',
-    title: '🗓 Session Approved',
-    message: 'Your consultation request has been approved. Please check your booking for the meeting details.',
-    isRead: false,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'demo-2',
-    userId: 'demo',
-    type: 'message',
-    title: '💬 New Message',
-    message: 'Your specialist has sent you a message. Open the chat to view it.',
-    isRead: false,
-    createdAt: new Date(Date.now() - 3_600_000).toISOString(),
-  },
-  {
-    id: 'demo-3',
-    userId: 'demo',
-    type: 'booking',
-    title: '📋 Booking Reminder',
-    message: 'You have an upcoming appointment scheduled. Make sure to prepare your child\'s information.',
-    isRead: true,
-    createdAt: new Date(Date.now() - 86_400_000).toISOString(),
-  },
-];
 
 const TYPE_ICON: Record<string, string> = {
   session: '🗓',
@@ -61,7 +31,6 @@ type FilterOption = 'all' | 'unread' | 'read';
 
 export const Notifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [usingMock, setUsingMock]         = useState(false);
   const [filter, setFilter]               = useState<FilterOption>('all');
   const [loading, setLoading]             = useState(false);
   const [markingAll, setMarkingAll]       = useState(false);
@@ -74,18 +43,10 @@ export const Notifications = () => {
     try {
       const data = await notificationsService.getNotifications();
       const list = Array.isArray(data) ? data : [];
-      if (list.length === 0) {
-        // Backend returned empty — show mock data for UI preview
-        setNotifications(MOCK_NOTIFICATIONS);
-        setUsingMock(true);
-      } else {
-        setNotifications(list);
-        setUsingMock(false);
-      }
+      setNotifications(list);
     } catch {
-      setError('Could not load notifications. Showing preview data instead.');
-      setNotifications(MOCK_NOTIFICATIONS);
-      setUsingMock(true);
+      setError('Could not load notifications.');
+      setNotifications([]);
     } finally {
       setLoading(false);
     }
@@ -105,8 +66,6 @@ export const Notifications = () => {
     // Optimistic update
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
 
-    if (usingMock) return; // Don't call API for mock data
-
     try {
       await notificationsService.markAsRead(id);
     } catch {
@@ -120,8 +79,6 @@ export const Notifications = () => {
     setMarkingAll(true);
     // Optimistic update
     setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-
-    if (usingMock) { setMarkingAll(false); return; }
 
     try {
       await notificationsService.markAllAsRead();
@@ -173,13 +130,6 @@ export const Notifications = () => {
           </div>
         </div>
 
-        {/* Mock notice */}
-        {usingMock && (
-          <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 p-4 text-amber-800 dark:text-amber-300 text-sm font-medium flex items-center gap-2">
-            <Bell size={15} />
-            Showing demo notifications — no real notifications found yet.
-          </div>
-        )}
 
         {/* Error / Success */}
         {error && (

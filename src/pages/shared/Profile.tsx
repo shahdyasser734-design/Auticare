@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 import { MainLayout } from '../../layouts/MainLayout';
 import { Card } from '../../components/common/Card';
@@ -30,6 +30,19 @@ export const Profile = () => {
     yearsOfExperience: user?.yearsOfExperience?.toString() || '',
     licenseNumber: user?.licenseNumber || '',
   });
+
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      name: user?.name || '',
+      email: user?.email || '',
+      phone: resolvedPhone,
+      bio: user?.bio || '',
+      specialty: user?.specialization || user?.specialty || '',
+      yearsOfExperience: user?.yearsOfExperience?.toString() || '',
+      licenseNumber: user?.licenseNumber || '',
+    }));
+  }, [user, resolvedPhone]);
   
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [saving, setSaving] = useState(false);
