@@ -1,11 +1,9 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import { MainLayout } from '../../layouts/MainLayout';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
-import { notificationsService } from '../../services/api/notificationsService';
-import type { Notification } from '../../types';
+import { useNotification } from '../../context/NotificationContext';
 import { Bell, CheckCheck, Check, RefreshCw } from 'lucide-react';
-
 
 const TYPE_ICON: Record<string, string> = {
   session: '🗓',
@@ -30,29 +28,11 @@ const formatDate = (d: string) => {
 type FilterOption = 'all' | 'unread' | 'read';
 
 export const Notifications = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const { notifications, unreadCount, loading, fetchNotifications, markAsRead, markAllAsRead } = useNotification();
   const [filter, setFilter]               = useState<FilterOption>('all');
-  const [loading, setLoading]             = useState(false);
   const [markingAll, setMarkingAll]       = useState(false);
   const [error, setError]                 = useState<string | null>(null);
   const [success, setSuccess]             = useState<string | null>(null);
-
-  const fetchNotifications = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await notificationsService.getNotifications();
-      const list = Array.isArray(data) ? data : [];
-      setNotifications(list);
-    } catch {
-      setError('Could not load notifications.');
-      setNotifications([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { void fetchNotifications(); }, [fetchNotifications]);
 
   const filteredNotifications = notifications.filter(n => {
     if (filter === 'read')   return n.isRead;
@@ -60,33 +40,24 @@ export const Notifications = () => {
     return true;
   });
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
-
   const handleMarkAsRead = async (id: string) => {
-    // Optimistic update
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
-
     try {
-      await notificationsService.markAsRead(id);
+      await markAsRead(id);
     } catch {
-      // Revert on failure
-      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: false } : n));
       setError('Failed to mark notification as read.');
+      setTimeout(() => setError(null), 3000);
     }
   };
 
   const handleMarkAllAsRead = async () => {
     setMarkingAll(true);
-    // Optimistic update
-    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-
     try {
-      await notificationsService.markAllAsRead();
+      await markAllAsRead();
       setSuccess('All notifications marked as read.');
       setTimeout(() => setSuccess(null), 3000);
     } catch {
       setError('Failed to mark all as read. Please try again.');
-      void fetchNotifications(); // Revert
+      setTimeout(() => setError(null), 3000);
     } finally {
       setMarkingAll(false);
     }

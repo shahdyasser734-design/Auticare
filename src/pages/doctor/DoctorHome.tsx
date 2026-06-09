@@ -9,7 +9,7 @@ import { DashboardStats, createDoctorStats, createTherapistStats } from '../../c
 import { useAuth } from '../../context/useAuth';
 import { dashboardService, type DashboardSpecialistData, type PatientCard } from '../../services/api/dashboard';
 import { bookingService, type Booking } from '../../services/api/bookings';
-import { notificationService, type Notification } from '../../services/api/notifications';
+import { useNotification } from '../../context/NotificationContext';
 import { notesService } from '../../services/api/notes';
 import { NoteCard } from '../../components/notes/NoteCard';
 
@@ -34,13 +34,14 @@ export const DoctorHome = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isDoctor = user?.role === 'doctor';
+  
+  const { unreadCount: totalUnreadCount, notifications: allNotifications } = useNotification();
+  const notifications = allNotifications.slice(0, 5);
 
   const [dashboardData, setDashboardData] = useState<DashboardSpecialistData | null>(null);
   const [patients, setPatients] = useState<PatientCard[]>([]);
   const [sessions, setSessions] = useState<Booking[]>([]);
   const [children, setChildren] = useState<any[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [totalUnreadCount, setTotalUnreadCount] = useState(0);
   const [myNotes, setMyNotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +52,7 @@ export const DoctorHome = () => {
       setError(null);
       console.log(`[DASHBOARD] Fetching specialist dashboard data for ${user?.role}:`, user?.id);
 
-      const [dashData, bookingData, childList, notifData, notesData] = await Promise.all([
+      const [dashData, bookingData, childList, notesData] = await Promise.all([
         dashboardService.getSpecialistDashboard().catch((err) => {
           console.warn('[DASHBOARD] Failed to fetch specialist dashboard:', err);
           return null;
@@ -62,10 +63,6 @@ export const DoctorHome = () => {
         }),
         bookingService.getMyBookings().catch((err) => {
           console.warn('[DASHBOARD] Failed to fetch all bookings for patients:', err);
-          return [];
-        }),
-        notificationService.getNotifications().catch((err) => {
-          console.warn('[DASHBOARD] Failed to fetch notifications:', err);
           return [];
         }),
         notesService.getMyNotes().catch((err) => {
@@ -104,12 +101,10 @@ export const DoctorHome = () => {
       setPatients(extractedPatients as any[]);
       setSessions(bookingData);
       setChildren(extractedPatients as any[]);
-      setNotifications(notifData.slice(0, 5));
-      setTotalUnreadCount(notifData.filter((n: any) => !n.isRead).length);
       setMyNotes(notesData || []);
 
       console.log(
-        `[DASHBOARD] Dashboard ready - ${extractedPatients.length} patients, ${bookingData.length} bookings, ${notifData.length} notifications`
+        `[DASHBOARD] Dashboard ready - ${extractedPatients.length} patients, ${bookingData.length} bookings`
       );
     } catch (err) {
       console.error('[DASHBOARD] Error fetching dashboard data:', err);
@@ -726,7 +721,7 @@ export const DoctorHome = () => {
                     >
                       {!n.isRead && <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 inline-block mr-1.5 mb-0.5" />}
                       <p className="font-bold text-stone-900 dark:text-white mb-0.5 inline">{n.title}</p>
-                      <p className="text-stone-500 dark:text-slate-400 mt-0.5">{n.content}</p>
+                      <p className="text-stone-500 dark:text-slate-400 mt-0.5">{n.message}</p>
                     </div>
                   ))
                 )}

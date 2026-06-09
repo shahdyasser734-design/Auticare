@@ -4,29 +4,29 @@ import { MainLayout } from '../../layouts/MainLayout';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
+import { Avatar } from '../../components/common/Avatar';
 import { ROUTES } from '../../utils/constants';
 import { useAuth } from '../../context/useAuth';
+import { useNotification } from '../../context/NotificationContext';
 import { childrenService, type Child } from '../../services/api/children';
 import { treatmentPlansService, type TreatmentPlan } from '../../services/api/treatmentPlans';
 import { bookingService } from '../../services/api/bookings';
-import { type Note } from '../../services/api/notes';
-import { notificationService, type Notification } from '../../services/api/notifications';
 import { formatDateTime } from '../../utils/dateUtils';
+import { type Note } from '../../services/api/notes';
 import {
   Loader2, Plus, FileText, Activity, MessageSquare, Calendar,
   ClipboardCheck, Bell, ChevronRight, Sparkles, Heart, Star,
   BookOpen, Users, ShieldCheck, User
 } from 'lucide-react';
-import { Avatar } from '../../components/common/Avatar';
 
 export const ParentHome = () => {
   const navigate = useNavigate();
   const { user, activeChildId } = useAuth();
+  const { unreadCount, notifications: allNotifications } = useNotification();
+  const notifications = allNotifications.slice(0, 4);
   const [children, setChildren] = useState<Child[]>([]);
   const [plans, setPlans] = useState<TreatmentPlan[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [totalUnreadCount, setTotalUnreadCount] = useState(0);
   const [upcomingSessions, setUpcomingSessions] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -55,9 +55,8 @@ export const ParentHome = () => {
         return [] as Child[];
       });
 
-      const [plansArrays, notifList, upcoming] = await Promise.all([
+      const [plansArrays, upcoming] = await Promise.all([
         Promise.all(childList.map(c => treatmentPlansService.getChildPlans(c.id).catch(() => []))),
-        notificationService.getNotifications().catch(() => []),
         bookingService.getUpcomingBookings().catch(() => []),
       ]);
 
@@ -69,13 +68,9 @@ export const ParentHome = () => {
         finalUpcoming = finalUpcoming.filter(s => String(s.childId) === String(activeChildId));
       }
 
-      let notifs = notifList.slice(0, 4);
-
       setChildren(childList);
       setPlans(finalPlanList);
       setNotes([]);
-      setNotifications(notifs);
-      setTotalUnreadCount(notifList.filter(n => !n.isRead).length);
       setUpcomingSessions(finalUpcoming.length);
     } catch (err) {
       console.error('Error fetching parent dashboard:', err);
@@ -102,8 +97,6 @@ export const ParentHome = () => {
     const firstName = user?.name?.split(' ')[0] || user?.name || 'Parent';
     return `${timeGreet}, ${firstName}!`;
   };
-
-  const unreadCount = totalUnreadCount;
 
   if (loading) {
     return (

@@ -1,12 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Settings, Menu, Moon, SunMedium, MessageSquare } from 'lucide-react';
 import { Avatar } from '../components/common/Avatar';
 import { AutismLogo } from '../components/common/AutismLogo';
 import { useAuth } from '../context/useAuth';
 import { useTheme } from '../context/useTheme';
+import { useNotification } from '../context/NotificationContext';
 import { ROUTES } from '../utils/constants';
-import { notificationService } from '../services/notificationService';
 import { ChildSelector } from '../components/common/ChildSelector';
 
 interface TopNavProps {
@@ -17,45 +17,20 @@ export const TopNav = ({ onMenuClick }: TopNavProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { theme, toggleTheme, isDark } = useTheme();
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const prevUnreadRef = useRef(0);
+  const { unreadCount, newestUnreadMsg, clearNewestMsg } = useNotification();
 
   useEffect(() => {
-    const fetchUnread = async () => {
-      try {
-        const list = await notificationService.getNotifications();
-        const unreadList = list.filter((n) => !n.isRead);
-        const unread = unreadList.length;
-        
-        if (unread > prevUnreadRef.current && unreadList.length > 0) {
-          // Trigger a toast for the newest notification
-          const newest = unreadList[0];
-          setToastMessage(newest.message || 'You have a new notification!');
-          setTimeout(() => setToastMessage(null), 5000);
-        }
-        
-        prevUnreadRef.current = unread;
-        setUnreadCount(unread);
-      } catch (err) {
-        console.warn('Could not load notifications count', err);
-      }
-    };
-    if (user) {
-      void fetchUnread();
-      const interval = setInterval(() => {
-        void fetchUnread();
-      }, 10000);
-      return () => clearInterval(interval);
+    if (newestUnreadMsg) {
+      setTimeout(() => clearNewestMsg(), 5000);
     }
-  }, [user]);
+  }, [newestUnreadMsg, clearNewestMsg]);
 
   return (
     <>
-      {toastMessage && (
+      {newestUnreadMsg && (
         <div className="fixed top-20 right-6 z-50 p-4 bg-primary-600 text-white rounded-2xl shadow-xl flex items-center gap-3 animate-in slide-in-from-right-8 fade-in duration-300 max-w-sm">
           <Bell className="animate-bounce" size={20} />
-          <span className="text-sm font-medium">{toastMessage}</span>
+          <span className="text-sm font-medium">{newestUnreadMsg}</span>
         </div>
       )}
       <header
