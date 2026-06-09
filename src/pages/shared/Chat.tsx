@@ -116,23 +116,32 @@ export const Chat = () => {
     if (!newMessage.trim() || !selectedConversation?.id) return;
     setSending(true);
     setSendError(null);
+    
+    console.log('[Chat.tsx] Sending message:', {
+      chatId: selectedConversation.id,
+      contentLength: newMessage.trim().length,
+      messageType: 'text'
+    });
+    
     try {
       const msg = await chatServiceAPI.sendMessage(
         selectedConversation.id,
         newMessage.trim()
       );
-      if (msg) {
-        setMessages((prev) => [...prev, msg]);
-        setNewMessage('');
-        setConversations((current) =>
-          current.map((c) =>
-            c.id === selectedConversation.id ? { ...c, lastMessage: msg } : c
-          )
-        );
-      }
+      
+      console.log('[Chat.tsx] Message send response:', msg);
+      
+      setNewMessage('');
+      
+      // Strict sync: Fetch fresh messages from backend to guarantee UI alignment
+      await fetchMessages();
+      await fetchConversations();
+      
     } catch (err: any) {
-      console.error('Failed to send message:', err);
-      setSendError(err?.response?.data?.message || err?.message || 'Failed to send message. Please try again.');
+      console.error('[Chat.tsx] Failed to send message:', err);
+      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to send message. Please try again.';
+      console.error('[Chat.tsx] Backend error details:', err?.response?.data);
+      setSendError(errorMessage);
     } finally {
       setSending(false);
     }
@@ -141,14 +150,24 @@ export const Chat = () => {
   const handleSendZoomLink = async () => {
     if (!selectedConversation?.id) return;
     setSendingZoom(true);
+    
+    const meetingId = Math.floor(1000000000 + Math.random() * 9000000000);
+    const link = `https://zoom.us/j/${meetingId}`;
+    
+    console.log('[Chat.tsx] Sending Zoom link:', {
+      chatId: selectedConversation.id,
+      zoomLink: link
+    });
+    
     try {
-      const meetingId = Math.floor(1000000000 + Math.random() * 9000000000);
-      const link = `https://zoom.us/j/${meetingId}`;
-      await chatServiceAPI.sendZoomLink(selectedConversation.id, link);
+      const msg = await chatServiceAPI.sendZoomLink(selectedConversation.id, link);
+      console.log('[Chat.tsx] Zoom message send response:', msg);
+      
       await fetchMessages();
       await fetchConversations();
-    } catch (err) {
-      console.error('Failed to send Zoom link:', err);
+    } catch (err: any) {
+      console.error('[Chat.tsx] Failed to send Zoom link:', err);
+      console.error('[Chat.tsx] Backend error details:', err?.response?.data);
     } finally {
       setSendingZoom(false);
     }
@@ -159,11 +178,17 @@ export const Chat = () => {
     try {
       const names = safeParticipantNames(chat);
       const otherParticipants = Object.entries(names)
-        .filter(([, name]) => name && name !== user?.name && name !== 'You')
+        .filter(([id, name]) => id !== user?.id && name && name !== user?.name && name !== 'You')
         .map(([, name]) => name);
-      return otherParticipants.length > 0 ? (otherParticipants[0] ?? 'Specialist') : 'Specialist';
+      
+      if (otherParticipants.length > 0 && otherParticipants[0]) {
+        return otherParticipants[0];
+      }
+      
+      // Fallback based on context
+      return isSpecialist ? 'Parent' : 'Doctor / Therapist';
     } catch {
-      return 'Specialist';
+      return isSpecialist ? 'Parent' : 'Doctor / Therapist';
     }
   };
 
@@ -171,9 +196,15 @@ export const Chat = () => {
     try {
       const ids = safeParticipantIds(chat);
       const names = safeParticipantNames(chat);
-      const parentId = ids.find((id) => id && id !== user?.id);
-      const parentName = parentId ? (names[parentId] || 'Parent') : 'Parent';
-      const child = childrenList.find((c) => c.parentId === parentId);
+      const otherId = ids.find((id) => id && id !== user?.id);
+      
+      if (!isSpecialist) {
+        const docName = otherId ? (names[otherId] || 'Doctor / Therapist') : 'Doctor / Therapist';
+        return { parentName: 'You', childName: docName, avatar: undefined, status: 'Active' };
+      }
+
+      const parentName = otherId ? (names[otherId] || 'Parent') : 'Parent';
+      const child = childrenList.find((c) => c.parentId === otherId);
       return {
         parentName,
         childName: child ? child.name : `${parentName}'s Child`,
