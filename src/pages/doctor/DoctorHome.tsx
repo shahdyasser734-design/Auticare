@@ -163,11 +163,9 @@ export const DoctorHome = () => {
 
   const handleJoinZoom = (session: Booking) => {
     // Synchronous open — avoids popup blocker
-    const tab = window.open('about:blank', '_blank', 'noopener,noreferrer');
     const url = isDoctor ? 'https://app.zoom.us/wc' : (session.joinLink || session.zoomUrl || `https://zoom.us/j/${session.id}`);
-    if (tab && url) {
-      tab.location.href = url;
-    } else if (tab) {
+    const tab = window.open(url || 'https://app.zoom.us/wc', '_blank', 'noopener,noreferrer');
+    if (!url && tab) {
       tab.close();
       alert('No Zoom meeting link is available for this session.');
     }
