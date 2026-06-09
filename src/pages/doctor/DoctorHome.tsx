@@ -137,6 +137,7 @@ export const DoctorHome = () => {
         try {
           console.log(`[DASHBOARD] Provisioning chat room for Parent: ${booking.parentId}`);
           await chatServiceAPI.startChat([booking.parentId]);
+          // Could optionally navigate here, but it's an inline update.
         } catch (chatErr) {
           console.warn('[DASHBOARD] Failed to auto-provision chat room:', chatErr);
         }
@@ -188,8 +189,9 @@ export const DoctorHome = () => {
             session.appointmentTime,
             session.reason || 'Zoom Session Link'
           );
+          console.log('[ZOOM] Zoom link sent to chat. Opening Zoom tab locally as fallback.');
         } catch (chatErr) {
-          console.warn('[ZOOM] Could not automatically send link to parent via chat:', chatErr);
+          console.error('[ZOOM] Failed to provision or send zoom to chat:', chatErr);
         }
       }
 

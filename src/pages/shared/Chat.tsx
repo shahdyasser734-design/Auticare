@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { MainLayout } from '../../layouts/MainLayout';
 import { Card } from '../../components/common/Card';
 import { Input } from '../../components/common/Input';
@@ -33,6 +33,7 @@ const safeParticipantIds = (chat: ChatConversation): string[] => {
 export const Chat = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<ChatConversation | null>(null);
@@ -54,9 +55,18 @@ export const Chat = () => {
     try {
       setLoadError(null);
       const data = await chatServiceAPI.getMyChats();
-      // Guard: data might not be an array if API returns null/object
       const safeData = Array.isArray(data) ? data : [];
       setConversations(safeData);
+      
+      const state = location.state as { targetChatId?: string } | null;
+      if (state?.targetChatId) {
+        const target = safeData.find(c => c.id === state.targetChatId);
+        if (target) {
+          setSelectedConversation(target);
+          return;
+        }
+      }
+      
       if (safeData.length > 0 && !selectedConversation) {
         setSelectedConversation(safeData[0]);
       }
@@ -112,26 +122,31 @@ export const Chat = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedConversation?.id) return;
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+    const messageContent = newMessage.trim();
+    if (!messageContent || !selectedConversation?.id) return;
+    
+    // Clear UI state immediately so user can keep typing
+    setNewMessage('');
     setSending(true);
     setSendError(null);
     
     console.log('[Chat.tsx] Sending message:', {
       chatId: selectedConversation.id,
-      contentLength: newMessage.trim().length,
+      contentLength: messageContent.length,
       messageType: 'text'
     });
     
     try {
       const msg = await chatServiceAPI.sendMessage(
         selectedConversation.id,
-        newMessage.trim()
+        messageContent
       );
       
       console.log('[Chat.tsx] Message send response:', msg);
-      
-      setNewMessage('');
       
       // Strict sync: Fetch fresh messages from backend to guarantee UI alignment
       await fetchMessages();
@@ -182,7 +197,21 @@ export const Chat = () => {
         .map(([, name]) => name);
       
       if (otherParticipants.length > 0 && otherParticipants[0]) {
-        return otherParticipants[0];
+        // Evaluate role prefix if we know it
+        const rawName = otherParticipants[0];
+        if (!isSpecialist) {
+          // Parent looking at specialist
+          if (rawName.toLowerCase().includes('dr.') || rawName.toLowerCase().includes('therapist')) {
+            return rawName;
+          }
+          return `Dr. / Therapist: ${rawName}`;
+        } else {
+          // Specialist looking at parent
+          if (rawName.toLowerCase().includes('parent')) {
+            return rawName;
+          }
+          return `Parent: ${rawName}`;
+        }
       }
       
       // Fallback based on context
@@ -490,26 +519,25 @@ export const Chat = () => {
                 )}
                 
                 {/* Message Input */}
-                <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-stone-200/60 dark:border-white/8 shrink-0">
+                <form 
+                  onSubmit={handleSendMessage} 
+                  className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-stone-200/60 dark:border-white/8 shrink-0"
+                >
                   <Input
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') void handleSendMessage();
-                    }}
                     placeholder="Type your message here..."
-                    disabled={sending}
                     fullWidth
                   />
                   <Button
-                    onClick={handleSendMessage}
+                    type="submit"
                     disabled={!newMessage.trim() || sending}
                     className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl flex items-center justify-center gap-1.5 px-6 shrink-0 cursor-pointer"
                   >
                     {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                     Send
                   </Button>
-                </div>
+                </form>
               </>
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-stone-400 space-y-4 py-20 text-center">
