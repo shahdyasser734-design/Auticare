@@ -17,7 +17,7 @@ const SCREENING_EXEMPT_PATHS = [
 ];
 
 export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
-  const { isAuthenticated, loading, user, childrenLoaded, parentChildren } = useAuth() as any;
+  const { authInitialized, isAuthenticated, user, childrenLoaded, parentChildren } = useAuth() as any;
   const location = useLocation();
 
   const isParent = user?.role === 'parent';
@@ -28,7 +28,7 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
       (path) => location.pathname === path || location.pathname.startsWith(path + '?')
     );
 
-  if (loading || (!childrenLoaded && isParent && isAuthenticated && !isExemptPath)) {
+  if (!authInitialized) {
     return <LoadingPage />;
   }
 

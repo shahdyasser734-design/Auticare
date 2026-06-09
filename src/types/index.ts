@@ -56,6 +56,7 @@ export interface Therapist extends User {
 }
 
 export interface AuthContextType {
+  authInitialized: boolean;
   user: User | null;
   loading: boolean;
   childrenLoaded: boolean;

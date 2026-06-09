@@ -107,7 +107,7 @@
 
   /* Global UI Structural Classes */
   .standard-card {
-    @apply bg-white border border-slate-200 rounded-[16px] shadow-sm;
+    @apply bg-white border border-[#D8D0C4] rounded-[16px] shadow-md transition-shadow hover:shadow-lg p-6 mb-4;
   }
   .dark .standard-card {
     @apply bg-slate-900 border border-white/10 shadow-lg;

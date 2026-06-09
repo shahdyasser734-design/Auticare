@@ -99,7 +99,7 @@ const exportPDF = (result: ScreeningResult) => {
 // ---------------------------------------------------------------------------
 export const ParentScreeningResults = () => {
   const navigate = useNavigate();
-  const { activeChildId } = useAuth();
+  const { activeChildId, parentChildren } = useAuth();
   const [result, setResult] = useState<ScreeningResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [childId, setChildId] = useState<string | null>(null);
@@ -109,11 +109,11 @@ export const ParentScreeningResults = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const params = new URLSearchParams(window.location.search);
-        const id = params.get('childId') || activeChildId;
+        const id = activeChildId;
         setChildId(id);
 
-        const childName = localStorage.getItem('latestChildName') || 'Child';
+        const currentChild = parentChildren?.find(c => c.id === id);
+        const childName = currentChild?.name || localStorage.getItem('latestChildName') || 'Child';
 
         // Check if treatment plan exists
         if (id) {
@@ -174,7 +174,7 @@ export const ParentScreeningResults = () => {
     };
 
     void load();
-  }, [activeChildId]);
+  }, [activeChildId, parentChildren]);
 
   // ── Loading ──────────────────────────────────────────────────────────────
   if (loading) {
@@ -238,8 +238,14 @@ export const ParentScreeningResults = () => {
       <div className="max-w-4xl mx-auto space-y-6 pb-12">
 
         {/* Header */}
-        <div className="space-y-1">
-          <h1 className="text-4xl font-bold text-slate-900 dark:text-white">
+        <div className="space-y-2">
+          {result.childName && (
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 font-semibold text-sm border border-blue-200 dark:border-blue-800">
+              <span>👤 Viewing:</span>
+              <span>{result.childName}</span>
+            </div>
+          )}
+          <h1 className="text-4xl font-bold text-slate-900 dark:text-white mt-2">
             Screening Results
           </h1>
           <p className="text-slate-500 dark:text-slate-400">

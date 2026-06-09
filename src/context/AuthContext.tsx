@@ -22,6 +22,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return null;
     }
   });
+  const [authInitialized, setAuthInitialized] = useState(false);
   const [loading, setLoading] = useState(true);
   const [childrenLoaded, setChildrenLoaded] = useState(false);
   const [parentChildren, setParentChildren] = useState<any[]>([]);
@@ -51,8 +52,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(null);
         setChildrenLoaded(false);
         setParentChildren([]);
-        setError(null);
         setLoading(false);
+        setAuthInitialized(true);
         return;
       }
       
@@ -181,6 +182,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } finally {
         setChildrenLoaded(true);
         setLoading(false);
+        setAuthInitialized(true);
       }
     };
 
@@ -488,6 +490,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const value: AuthContextType = {
+    authInitialized,
     user,
     loading,
     childrenLoaded,

@@ -41,21 +41,18 @@ export const LoginForm = () => {
       const data = await login(email, password);
       setAlert({ type: 'success', message: 'Login successful! Redirecting...' });
       
-      setTimeout(async () => {
-        const role = data.user?.role || localStorage.getItem('role') || '';
-        const normalizedRole = role.toLowerCase();
-        
-        if (normalizedRole === 'parent') {
-          // ProtectedRoute handles the global redirect to ADD_CHILD if they don't have children!
-          navigate(ROUTES.PARENT_HOME, { replace: true });
-        } else if (normalizedRole === 'doctor' || normalizedRole === 'specialist') {
-          navigate(ROUTES.DOCTOR_HOME, { replace: true });
-        } else if (normalizedRole === 'therapist') {
-          navigate(ROUTES.THERAPIST_HOME, { replace: true });
-        } else {
-          navigate(ROUTES.ROOT, { replace: true });
-        }
-      }, 300);
+      const role = data.user?.role || localStorage.getItem('role') || '';
+      const normalizedRole = role.toLowerCase();
+      
+      if (normalizedRole === 'parent') {
+        navigate(ROUTES.PARENT_HOME, { replace: true });
+      } else if (normalizedRole === 'doctor' || normalizedRole === 'specialist') {
+        navigate(ROUTES.DOCTOR_HOME, { replace: true });
+      } else if (normalizedRole === 'therapist') {
+        navigate(ROUTES.THERAPIST_HOME, { replace: true });
+      } else {
+        navigate(ROUTES.ROOT, { replace: true });
+      }
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : 'Login failed. Please check your credentials.';
       setAlert({
