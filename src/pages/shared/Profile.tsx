@@ -16,9 +16,9 @@ export const Profile = () => {
   // Phone and National ID may come from user object OR from localStorage fallback
   // (stored during signup as auticare.user.phone.<email>)
   const resolvedPhone = user?.phone ||
-    (user?.email ? localStorage.getItem(`auticare.user.phone.${user.email}`) : null) || '';
+    (user?.email ? localStorage.getItem(`auticare.user.phone.${String(user.email).toLowerCase()}`) : null) || '';
   const resolvedNationalId = user?.nationalId ||
-    (user?.email ? localStorage.getItem(`auticare.user.nationalId.${user.email}`) : null) || '';
+    (user?.email ? localStorage.getItem(`auticare.user.nationalId.${String(user.email).toLowerCase()}`) : null) || '';
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({

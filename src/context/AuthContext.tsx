@@ -347,26 +347,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const newUser = { ...user, ...fields };
     setUser(newUser);
     localStorage.setItem('user', JSON.stringify(newUser));
+    const safeEmail = String(newUser.email).toLowerCase();
+    
     if (fields.phone && newUser.email) {
-      localStorage.setItem(`auticare.user.phone.${newUser.email}`, String(fields.phone));
+      localStorage.setItem(`auticare.user.phone.${safeEmail}`, String(fields.phone));
     }
     if (fields.nationalId && newUser.email) {
-      localStorage.setItem(`auticare.user.nationalId.${newUser.email}`, String(fields.nationalId));
+      localStorage.setItem(`auticare.user.nationalId.${safeEmail}`, String(fields.nationalId));
     }
     if (fields.specialization && newUser.email) {
-      localStorage.setItem(`auticare.user.specialization.${newUser.email}`, String(fields.specialization));
+      localStorage.setItem(`auticare.user.specialization.${safeEmail}`, String(fields.specialization));
     }
     if (fields.yearsOfExperience !== undefined && newUser.email) {
-      localStorage.setItem(`auticare.user.yearsOfExperience.${newUser.email}`, String(fields.yearsOfExperience));
+      localStorage.setItem(`auticare.user.yearsOfExperience.${safeEmail}`, String(fields.yearsOfExperience));
     }
     if (fields.licenseNumber && newUser.email) {
-      localStorage.setItem(`auticare.user.licenseNumber.${newUser.email}`, String(fields.licenseNumber));
+      localStorage.setItem(`auticare.user.licenseNumber.${safeEmail}`, String(fields.licenseNumber));
     }
     if (fields.bio && newUser.email) {
-      localStorage.setItem(`auticare.user.bio.${newUser.email}`, String(fields.bio));
+      localStorage.setItem(`auticare.user.bio.${safeEmail}`, String(fields.bio));
     }
     if (fields.gender && newUser.email) {
-      localStorage.setItem(`auticare.user.gender.${newUser.email}`, String(fields.gender));
+      localStorage.setItem(`auticare.user.gender.${safeEmail}`, String(fields.gender));
     }
   };
 
