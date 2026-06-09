@@ -254,7 +254,7 @@ export const Chat = () => {
       // If it's a new uninitialized chat, start it first
       if (activeChatId.startsWith('new-')) {
         const contactId = activeChatId.replace('new-', '');
-        const newChat = await chatServiceAPI.startChat([myId, contactId]);
+        const newChat = await chatServiceAPI.startChat(contactId);
         activeChatId = newChat.id;
         setSelected(newChat); // update active chat
         // We also need to refresh the conversation list to get the real chat ID
@@ -265,7 +265,7 @@ export const Chat = () => {
       console.log('[Chat] Send success:', result);
 
       // Immediately re-fetch so the sent message appears without waiting for next poll
-      await fetchMessages(selected);
+      await fetchMessages({ ...selected, id: activeChatId });
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } }; message?: string };
       const msg = error?.response?.data?.message || error?.message || 'Failed to send. Please try again.';

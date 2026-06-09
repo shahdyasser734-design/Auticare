@@ -6,9 +6,9 @@ export type { ChatMessage, ChatConversation };
 // No frontend transformation applied to raw message payloads
 
 export const chatServiceAPI = {
-  startChat: async (participantIds: string[]): Promise<ChatConversation> => {
+  startChat: async (contactId: string): Promise<ChatConversation> => {
     const response = await apiClient.post<ChatConversation>('/chat/start', {
-      participantIds,
+      specialistId: Number(contactId),
     });
     return response.data;
   },
