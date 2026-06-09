@@ -125,7 +125,7 @@ export const SpecialistScreeningResults = () => {
 
         const data = await screeningService.getResults(id);
         if (data && data.length > 0) {
-          const sorted = [...data].sort((a, b) => new Date(String((b as Record<string, unknown>).createdAt ?? '')).getTime() - new Date(String((a as Record<string, unknown>).createdAt ?? '')).getTime());
+          const sorted = [...data].sort((a, b) => new Date(String((b as unknown as Record<string, unknown>).createdAt ?? '')).getTime() - new Date(String((a as unknown as Record<string, unknown>).createdAt ?? '')).getTime());
           const raw = sorted[0] as unknown as Record<string, unknown>;
           setResult(normaliseResult(raw, name));
         } else {

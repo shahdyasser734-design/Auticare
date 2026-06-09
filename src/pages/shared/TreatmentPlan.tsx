@@ -228,11 +228,11 @@ export const TreatmentPlan = () => {
         };
         console.log("[TREATMENT PLAN] SENDING CREATE PAYLOAD:", JSON.stringify(createPayload, null, 2));
         try {
-          const res = await treatmentPlansService.createPlan(createPayload as unknown as Record<string, unknown>);
+          const res = await treatmentPlansService.createPlan(createPayload as unknown as Parameters<typeof treatmentPlansService.createPlan>[0]);
           console.log("[TREATMENT PLAN] RECEIVED RESPONSE:", JSON.stringify(res, null, 2));
           savedPlan = res as unknown as TreatmentPlanType;
         } catch (createErr: unknown) {
-          const err = createErr as Record<string, unknown>;
+          const err = createErr as { response?: { data?: unknown }, message?: string };
           console.error("[TREATMENT PLAN] FAILED TO CREATE. Backend response:", err?.response?.data || err?.message || err);
           throw createErr;
         }
