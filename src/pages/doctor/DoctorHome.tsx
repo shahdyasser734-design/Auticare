@@ -121,21 +121,8 @@ export const DoctorHome = () => {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void fetchSpecialistData();
-
-    const fetchOnlyNotifications = async () => {
-      try {
-        const notifData = await notificationService.getNotifications().catch(() => []);
-        setNotifications(notifData.slice(0, 5));
-      } catch (err) {
-        // ignore background poll errors
-      }
-    };
-
-    const interval = setInterval(fetchOnlyNotifications, 15000);
-    return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    void fetchSpecialistData();
   }, []);
 
   const handleUpdateStatus = async (e: React.MouseEvent, booking: Booking, newStatus: Booking['status']) => {
@@ -182,27 +169,13 @@ export const DoctorHome = () => {
   const displayChildren = children.map((c) => ({ ...c, status: 'active' as const }));
 
   const [joiningZoom, setJoiningZoom] = useState<string | null>(null);
-  const [zoomAlert, setZoomAlert] = useState<string | null>(null);
-  const [zoomManualLink, setZoomManualLink] = useState<string | null>(null);
 
   const handleJoinZoom = async (session: Booking) => {
     console.log('[ZOOM] Start Session / Join Zoom handler clicked.');
     setJoiningZoom(session.id);
-    setZoomManualLink(null);
-    setZoomAlert(null);
-
-    // 1. Open window synchronously to bypass popup blocker
-    const newWindow = window.open('about:blank', '_blank', 'noopener,noreferrer');
-    if (!newWindow) {
-      setZoomAlert('Popup blocked by browser. Please allow popups or click the manual link below.');
-      const fallback = session.joinLink || `https://zoom.us/j/${session.id}`;
-      setZoomManualLink(fallback);
-      setJoiningZoom(null);
-      return;
-    }
 
     try {
-      // 2. Fetch or create backend Zoom link
+      // 1. Fetch or create backend Zoom link
       const link = await getOrCreateSessionMeetingLink(session, isDoctor);
 
       if (isDoctor && session.parentId) {
@@ -220,12 +193,12 @@ export const DoctorHome = () => {
         }
       }
 
-      // 3. Update the pre-opened window URL
-      newWindow.location.href = link;
+      // 2. Open the window
+      window.open(link, '_blank', 'noopener,noreferrer');
     } catch (err: any) {
       console.error('[ZOOM] Failed to join Zoom session:', err);
       const fallback = session.joinLink || `https://zoom.us/j/${session.id}`;
-      newWindow.location.href = fallback;
+      window.open(fallback, '_blank', 'noopener,noreferrer');
     } finally {
       setJoiningZoom(null);
     }
@@ -264,31 +237,7 @@ export const DoctorHome = () => {
 
   return (
     <MainLayout>
-      <div className="space-y-8 pb-16 animate-fade-in">
-
-        {/* Dynamic Zoom Alert */}
-        {zoomAlert && (
-          <div className="fixed top-20 right-6 z-50 p-4 bg-orange-500 text-white rounded-2xl shadow-2xl flex items-center gap-3 animate-slide-up">
-            <span className="text-xl">⚠️</span>
-            <span className="text-sm font-medium">{zoomAlert}</span>
-          </div>
-        )}
-
-        {/* Manual Zoom Fallback */}
-        {zoomManualLink && (
-          <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 animate-slide-up">
-             <button 
-               onClick={() => {
-                 window.open(zoomManualLink, '_blank', 'noopener,noreferrer');
-                 setZoomManualLink(null);
-                 setZoomAlert(null);
-               }} 
-               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-xl shadow-2xl font-bold flex items-center gap-3"
-             >
-               🎥 Click here to open Zoom manually
-             </button>
-          </div>
-        )}
+      <div className="space-y-6 pb-20">
 
         {/* ── HERO BANNER ─────────────────────────────────────── */}
         <div className="relative overflow-hidden rounded-3xl shadow-2xl">

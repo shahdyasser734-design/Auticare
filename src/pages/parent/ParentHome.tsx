@@ -79,18 +79,8 @@ export const ParentHome = () => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchDashboard();
 
-    const fetchOnlyNotifications = async () => {
-      try {
-        const notifList = await notificationService.getNotifications().catch(() => []);
-        setNotifications(notifList.slice(0, 4));
-      } catch (err) {
-        // ignore background poll errors
-      }
-    };
-
-    const interval = setInterval(fetchOnlyNotifications, 15000);
-    return () => clearInterval(interval);
-  }, []);
+    void fetchDashboard();
+  }, [activeChildId]);
 
   const handleStartScreening = () => {
     if (activeChildId) {

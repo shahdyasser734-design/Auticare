@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { bookingService, type Booking } from '../services/api/bookings';
+import { useAuth } from './useAuth';
 
 type BookingsContextValue = {
   myBookings: Booking[];
@@ -15,6 +16,7 @@ type BookingsContextValue = {
 const BookingsContext = createContext<BookingsContextValue | undefined>(undefined);
 
 export const BookingsProvider = ({ children }: { children: ReactNode }) => {
+  const { activeChildId } = useAuth();
   const [myBookings, setMyBookings] = useState<Booking[]>([]);
   const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
   const [currentChildId, setCurrentChildId] = useState<string | undefined>(undefined);
@@ -37,11 +39,9 @@ export const BookingsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    const childId = localStorage.getItem('latestChildId') || undefined;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCurrentChildId(childId);
+    setCurrentChildId(activeChildId || undefined);
     void refreshBookings();
-  }, []);
+  }, [activeChildId]);
 
   const addBooking = (b: Booking) => {
     setMyBookings((prev) => [b, ...prev]);

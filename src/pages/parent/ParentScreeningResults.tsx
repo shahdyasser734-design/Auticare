@@ -174,7 +174,7 @@ export const ParentScreeningResults = () => {
     };
 
     void load();
-  }, []);
+  }, [activeChildId]);
 
   // ── Loading ──────────────────────────────────────────────────────────────
   if (loading) {

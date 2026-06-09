@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/useAuth';
 import { MainLayout } from '../../layouts/MainLayout';
 import { Card } from '../../components/common/Card';
 import { treatmentPlansService } from '../../services/api/treatmentPlansService';
@@ -25,6 +26,8 @@ const calcAge = (child: Child): number | null => {
 
 export const TreatmentPlanDetail = () => {
   const { planId } = useParams<{ planId: string }>();
+  const { activeChildId } = useAuth();
+  const navigate = useNavigate();
   const [plan, setPlan] = useState<TreatmentPlan | null>(null);
   const [child, setChild] = useState<Child | null>(null);
   const [sessions, setSessions] = useState<TherapySession[]>([]);
@@ -33,15 +36,22 @@ export const TreatmentPlanDetail = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'sessions' | 'notes'>('overview');
 
   useEffect(() => {
+    // If global activeChildId changes, sync the URL
+    if (activeChildId && planId && activeChildId !== planId) {
+      navigate(`/treatment-plan/${activeChildId}`, { replace: true });
+      return;
+    }
+
     const loadData = async () => {
-      if (!planId) return;
+      const targetId = activeChildId || planId;
+      if (!targetId) return;
       try {
         setLoading(true);
-        const planData = await treatmentPlansService.getPlan(planId);
+        const planData = await treatmentPlansService.getPlan(targetId);
         setPlan(planData as any);
 
         // Fetch sessions in parallel with child data
-        const sessionsPromise = sessionsService.getTreatmentSessions(planId).catch(() => []);
+        const sessionsPromise = sessionsService.getTreatmentSessions(targetId).catch(() => []);
         const childPromise = planData.childId
           ? childrenService.getChild(String(planData.childId)).catch(() => null)
           : Promise.resolve(null);
@@ -66,7 +76,7 @@ export const TreatmentPlanDetail = () => {
     };
 
     loadData();
-  }, [planId]);
+  }, [planId, activeChildId, navigate]);
 
   if (loading) {
     return (

@@ -24,7 +24,6 @@ export const ParentSessions = () => {
   const [selectedSpecialist, setSelectedSpecialist] = useState<Specialist | null>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showSelectorModal, setShowSelectorModal] = useState(false);
-  const [zoomAlert, setZoomAlert] = useState<string | null>(null);
 
   const fetchSessions = async () => {
     setLoading(true);
@@ -93,37 +92,24 @@ export const ParentSessions = () => {
       }
     };
     void loadConnectedSpecialists();
-  }, []);
+  }, [activeChildId]);
 
   const [joiningZoom, setJoiningZoom] = useState<string | null>(null);
-  const [zoomManualLink, setZoomManualLink] = useState<string | null>(null);
 
   const handleJoinZoom = async (session: Booking) => {
     console.log('[ZOOM] Parent Join Zoom handler clicked.');
     setJoiningZoom(session.id);
-    setZoomManualLink(null);
-    setZoomAlert(null);
-
-    // 1. Open window synchronously to bypass popup blocker
-    const newWindow = window.open('about:blank', '_blank', 'noopener,noreferrer');
-    if (!newWindow) {
-      setZoomAlert('Popup blocked by browser. Please allow popups or click the manual link below.');
-      const fallback = session.joinLink || `https://zoom.us/j/${session.id}`;
-      setZoomManualLink(fallback);
-      setJoiningZoom(null);
-      return;
-    }
 
     try {
-      // 2. Fetch or create backend Zoom link
+      // 1. Fetch or create backend Zoom link
       const link = await getOrCreateSessionMeetingLink(session, false);
       
-      // 3. Update the pre-opened window URL
-      newWindow.location.href = link;
+      // 2. Open the window
+      window.open(link, '_blank', 'noopener,noreferrer');
     } catch (err: any) {
       console.error('[ZOOM] Failed to join Zoom session:', err);
       const fallback = session.joinLink || `https://zoom.us/j/${session.id}`;
-      newWindow.location.href = fallback;
+      window.open(fallback, '_blank', 'noopener,noreferrer');
     } finally {
       setJoiningZoom(null);
     }
@@ -132,30 +118,6 @@ export const ParentSessions = () => {
   return (
     <MainLayout>
       <div className="space-y-8">
-        {/* Dynamic Zoom Alert */}
-        {zoomAlert && (
-          <div className="fixed top-20 right-6 z-50 p-4 bg-orange-600 text-white rounded-2xl shadow-xl flex items-center gap-2 animate-bounce">
-            <span>⚠️</span>
-            <span className="font-semibold text-sm">{zoomAlert}</span>
-          </div>
-        )}
-
-        {/* Manual Zoom Fallback */}
-        {zoomManualLink && (
-          <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 animate-slide-up">
-             <button 
-               onClick={() => {
-                 window.open(zoomManualLink, '_blank', 'noopener,noreferrer');
-                 setZoomManualLink(null);
-                 setZoomAlert(null);
-               }} 
-               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-xl shadow-2xl font-bold flex items-center gap-3"
-             >
-               🎥 Click here to open Zoom manually
-             </button>
-          </div>
-        )}
-
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">My Sessions</h1>

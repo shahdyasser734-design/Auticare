@@ -3,21 +3,7 @@ import type { ChatMessage, ChatConversation } from '../../types';
 
 export type { ChatMessage, ChatConversation };
 
-const normalizeMessage = (raw: any): ChatMessage => {
-  if (!raw) return raw;
-  return {
-    ...raw,
-    id: String(raw.id || raw.messageId || ''),
-    chatId: String(raw.chatId || ''),
-    senderId: String(raw.senderId || raw.senderUserId || ''),
-    senderName: raw.senderName || '',
-    senderRole: raw.senderRole || raw.senderType || '',
-    content: raw.content || '',
-    messageType: raw.messageType || 'text',
-    timestamp: raw.timestamp || raw.timeStamp || new Date().toISOString(),
-    isRead: !!raw.isRead,
-  } as ChatMessage;
-};
+// No frontend transformation applied to raw message payloads
 
 export const chatServiceAPI = {
   startChat: async (participantIds: string[]): Promise<ChatConversation> => {
@@ -35,8 +21,7 @@ export const chatServiceAPI = {
   getMessages: async (chatId: string, limit?: number): Promise<ChatMessage[]> => {
     const params = limit ? { limit } : {};
     const response = await apiClient.get<any[]>(`/chat/${chatId}/messages`, { params });
-    const data = response.data ?? [];
-    return data.map(normalizeMessage);
+    return response.data ?? [];
   },
 
   sendMessage: async (
@@ -50,7 +35,7 @@ export const chatServiceAPI = {
       content,
       messageType,
     });
-    return normalizeMessage(response.data);
+    return response.data;
   },
 
   sendZoomLink: async (
@@ -68,7 +53,7 @@ export const chatServiceAPI = {
       confirmedTime: confirmedTime || new Date().toISOString().split('T')[1].substring(0, 5),
       note: note || 'Zoom Session Link'
     });
-    return normalizeMessage(response.data);
+    return response.data;
   },
 
   markAsRead: async (messageId: string): Promise<void> => {
