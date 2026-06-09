@@ -41,6 +41,7 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
     location.pathname !== ROUTES.PARENT_ADD_CHILD &&
     !hasRedirectedToAddChild
   ) {
+    // eslint-disable-next-line
     hasRedirectedToAddChild = true;
     return <Navigate to={ROUTES.PARENT_ADD_CHILD} replace />;
   }
