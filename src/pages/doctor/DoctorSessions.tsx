@@ -197,24 +197,17 @@ export const DoctorSessions = () => {
                         <Button
                           size="sm"
                           onClick={() => handleJoinZoom(session)}
-                          disabled={joiningZoom === session.id || (!isDoctor && !meetingUrl)}
+                          disabled={!isDoctor && !meetingUrl}
                           className={`font-bold rounded-lg cursor-pointer flex items-center gap-1 ${
-                            joiningZoom === session.id || (!isDoctor && !meetingUrl)
+                            (!isDoctor && !meetingUrl)
                               ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
                               : 'bg-blue-600 hover:bg-blue-700 text-white'
                           }`}
                           title={!isDoctor && !meetingUrl ? 'No active meeting available' : ''}
                         >
-                          {joiningZoom === session.id ? (
-                            <>
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              Connecting...
-                            </>
-                          ) : (
-                            <>
-                              🎥 {isDoctor ? 'Start Session' : 'Join Session'}
-                            </>
-                          )}
+                          <>
+                            🎥 {isDoctor ? 'Start Session' : 'Join Session'}
+                          </>
                         </Button>
                       )}
                     </div>

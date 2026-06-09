@@ -462,19 +462,15 @@ export const DoctorHome = () => {
                             <Button
                               size="sm"
                               onClick={() => handleJoinZoom(session)}
-                              disabled={joiningZoom === session.id || (!isDoctor && !meetingUrl)}
+                              disabled={!isDoctor && !meetingUrl}
                               className={`font-bold rounded-xl cursor-pointer flex items-center gap-1.5 ${
-                                joiningZoom === session.id || (!isDoctor && !meetingUrl)
+                                (!isDoctor && !meetingUrl)
                                   ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
                                   : 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-blue-200'
                               }`}
                               title={!isDoctor && !meetingUrl ? 'No active meeting available' : ''}
                             >
-                              {joiningZoom === session.id ? (
-                                <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Connecting...</>
-                              ) : (
-                                <><Video size={14} /> {isDoctor ? 'Start Session' : 'Join Session'}</>
-                              )}
+                              <><Video size={14} /> {isDoctor ? 'Start Session' : 'Join Session'}</>
                             </Button>
                           </div>
                         </div>
@@ -613,18 +609,9 @@ export const DoctorHome = () => {
                           <Button
                             size="sm"
                             onClick={() => handleJoinZoom(session)}
-                            disabled={joiningZoom === session.id}
-                            className={`font-bold rounded-xl cursor-pointer flex items-center gap-1.5 ${
-                              joiningZoom === session.id
-                                ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
-                                : 'bg-blue-600 hover:bg-blue-700 text-white'
-                            }`}
+                            className="font-bold rounded-xl cursor-pointer flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
                           >
-                            {joiningZoom === session.id ? (
-                              <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Joining...</>
-                            ) : (
-                              <><Video size={14} /> {isDoctor ? 'Start' : 'Join'}</>
-                            )}
+                            <><Video size={14} /> {isDoctor ? 'Start' : 'Join'}</>
                           </Button>
                         </div>
                       </div>
