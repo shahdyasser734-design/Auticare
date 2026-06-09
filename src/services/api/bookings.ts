@@ -83,10 +83,14 @@ export const bookingService = {
       .sort((a, b) => new Date(b.dateTime ?? b.createdAt).getTime() - new Date(a.dateTime ?? a.createdAt).getTime());
   },
   getUpcomingBookings: async (): Promise<Booking[]> => {
-    const response = await apiClient.get<Booking[]>('/bookings/upcoming');
+    const response = await apiClient.get<Booking[]>('/bookings/my-bookings');
     return (response.data || [])
       .filter(Boolean)
       .map(normalizeBooking)
+      .filter(b => {
+        const status = (b.status || '').toLowerCase();
+        return status === 'pending' || status === 'approved' || status === 'confirmed';
+      })
       .sort((a, b) => new Date(b.dateTime ?? b.createdAt).getTime() - new Date(a.dateTime ?? a.createdAt).getTime());
   },
   updateBookingStatus: async (id: string, status: Booking['status']): Promise<Booking> => {

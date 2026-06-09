@@ -2,7 +2,6 @@ import { createContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { AuthContextType, User, AuthResponse, UserRole } from '../types';
 import { authService } from '../services/authService';
-import apiClient from '../services/apiClient';
 import { childrenService } from '../services/api/childrenService';
 
 const getErrorMessage = (error: unknown, fallback = 'An error occurred') => {
@@ -60,10 +59,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       
       try {
-        const response = await apiClient.get<Record<string, unknown>>('/profile');
-        const rawUser = response.data;
-        const email = String(rawUser.email ?? '');
-        const role = String(rawUser.role ?? localStorage.getItem('role') ?? 'parent').toLowerCase();
+        const storedUser = localStorage.getItem('user') || '{}';
+        const parsedUser = JSON.parse(storedUser) as User;
+        const role = parsedUser.role.toLowerCase();
 
         if (role === 'parent') {
           try {
@@ -79,106 +77,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         }
         setChildrenLoaded(true);
-
-        const phone = String(
-          rawUser.phone ??
-          rawUser.phoneNumber ??
-          (email ? localStorage.getItem(`auticare.user.phone.${email}`) : '') ??
-          ''
-        );
-        const nationalId = String(
-          rawUser.nationalId ??
-          rawUser.national_id ??
-          (rawUser as any).nationalID ??
-          (email ? localStorage.getItem(`auticare.user.nationalId.${email}`) : '') ??
-          ''
-        );
-        const profileImage = String(
-          rawUser.profileImage ??
-          rawUser.profile_image ??
-          (rawUser as any).profilePictureUrl ??
-          (rawUser as any).profile_picture_url ??
-          (rawUser as any).photoUrl ??
-          (rawUser as any).photo_url ??
-          (rawUser as any).imageUrl ??
-          (rawUser as any).image_url ??
-          (rawUser as any).avatarUrl ??
-          (rawUser as any).avatar_url ??
-          ''
-        );
-
-        const specialization = String(
-          rawUser.specialization ??
-          rawUser.specialty ??
-          (rawUser as any).specialist?.specialization ??
-          (rawUser as any).doctor?.specialization ??
-          (rawUser as any).therapist?.specialization ??
-          (email ? localStorage.getItem(`auticare.user.specialization.${email}`) : '') ??
-          ''
-        );
-        const yearsOfExperience = (rawUser.yearsOfExperience as any) ?? 
-          (rawUser as any).specialist?.yearsOfExperience ??
-          (rawUser as any).doctor?.yearsOfExperience ??
-          (rawUser as any).therapist?.yearsOfExperience ??
-          (email ? (localStorage.getItem(`auticare.user.yearsOfExperience.${email}`) || undefined) : undefined);
-        const licenseNumber = String(
-          rawUser.licenseNumber ??
-          (rawUser as any).specialist?.licenseNumber ??
-          (rawUser as any).doctor?.licenseNumber ??
-          (rawUser as any).therapist?.licenseNumber ??
-          (email ? localStorage.getItem(`auticare.user.licenseNumber.${email}`) : '') ??
-          ''
-        );
-        const bio = String(
-          rawUser.bio ??
-          (rawUser as any).specialist?.bio ??
-          (rawUser as any).doctor?.bio ??
-          (rawUser as any).therapist?.bio ??
-          (email ? localStorage.getItem(`auticare.user.bio.${email}`) : '') ??
-          ''
-        );
-        const gender = String(
-          rawUser.gender ??
-          (email ? localStorage.getItem(`auticare.user.gender.${email}`) : '') ??
-          ''
-        );
-
-        const updatedUser: User = {
-          id: String(rawUser.id ?? rawUser.userId ?? ''),
-          email,
-          name: String(rawUser.name ?? rawUser.fullName ?? (rawUser.firstName ? `${rawUser.firstName} ${rawUser.lastName ?? ''}`.trim() : '')),
-          role: role as UserRole,
-          phone,
-          nationalId,
-          profileImage,
-          createdAt: String(rawUser.createdAt ?? new Date().toISOString()),
-          specialization,
-          specialty: specialization,
-          yearsOfExperience,
-          licenseNumber,
-          bio,
-          gender,
-        };
-        normalizeAndSetUser(updatedUser);
       } catch (err) {
-        console.warn('[AuthContext] Failed to sync profile from backend:', err);
-        const stored = localStorage.getItem('user');
-        if (stored && stored !== 'undefined') {
-          try {
-            const parsed = JSON.parse(stored) as User;
-            if (parsed && parsed.email) {
-              const enriched = { ...parsed };
-              if (!enriched.phone) {
-                enriched.phone = localStorage.getItem(`auticare.user.phone.${parsed.email}`) || '';
-              }
-              if (!enriched.nationalId) {
-                enriched.nationalId = localStorage.getItem(`auticare.user.nationalId.${parsed.email}`) || '';
-              }
-              setUser(enriched);
-              localStorage.setItem('user', JSON.stringify(enriched));
-            }
-          } catch {}
-        }
+        console.warn('[AuthContext] Failed to sync user state:', err);
       } finally {
         setChildrenLoaded(true);
         setLoading(false);
@@ -197,11 +97,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // If it's a login or register endpoint, ignore
       if (url.includes('/auth/login') || url.includes('/auth/register')) return;
       
-      // If the profile endpoint returns 401, the session is truly invalid
+      // Ignore /profile paths if they existed
       if (url.includes('/profile')) {
-        console.warn('[AuthContext] Session expired or invalid during profile sync. Logging out.');
-        logout();
+        return;
       }
+      
+      console.warn('[AuthContext] Session expired or invalid. Logging out.');
+      logout();
     };
     
     window.addEventListener('auth:unauthorized', handleUnauthorized);
@@ -287,23 +189,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const rawData: AuthResponse = await authService.login(email, password);
       
-      // Set token temporarily so apiClient can use it to fetch profile and children
       const tempToken = rawData.token || (rawData as any).accessToken;
       if (tempToken) {
         localStorage.setItem('token', tempToken);
       }
 
-      // Merge rawData with profile data if available
-      let profileData = rawData.user ?? rawData;
-      try {
-        const profileRes = await apiClient.get<Record<string, unknown>>('/profile');
-        if (profileRes.data && Object.keys(profileRes.data).length > 0) {
-          profileData = { ...profileData, ...profileRes.data };
-        }
-      } catch (err) {
-        console.warn('[AuthContext] Failed to fetch profile immediately after login:', err);
-      }
-
+      const profileData = rawData.user ?? rawData;
       const mergedData = { token: tempToken, user: profileData };
       const data = normalizeAuthResponse(mergedData as unknown as AuthResponse);
 
@@ -350,17 +241,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       let profileData = { ...payload, ...(rawData.user ?? rawData) };
-      try {
-        if (tempToken) {
-          const profileRes = await apiClient.get<Record<string, unknown>>('/profile');
-          if (profileRes.data && Object.keys(profileRes.data).length > 0) {
-            profileData = { ...profileData, ...profileRes.data };
-          }
-        }
-      } catch (err) {
-        console.warn('[AuthContext] Failed to fetch profile immediately after signup:', err);
-      }
-
       const mergedData = { token: tempToken, user: profileData };
       const data = normalizeAuthResponse(mergedData as unknown as AuthResponse);
       

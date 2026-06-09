@@ -9,7 +9,7 @@ import { useAuth } from '../../context/useAuth';
 import { childrenService, type Child } from '../../services/api/children';
 import { treatmentPlansService, type TreatmentPlan } from '../../services/api/treatmentPlans';
 import { bookingService } from '../../services/api/bookings';
-import { notesService, type Note } from '../../services/api/notes';
+import { type Note } from '../../services/api/notes';
 import { notificationService, type Notification } from '../../services/api/notifications';
 import { formatDateTime } from '../../utils/dateUtils';
 import {
@@ -54,35 +54,25 @@ export const ParentHome = () => {
         return [] as Child[];
       });
 
-      const [plansArrays, noteList, notifList, upcoming] = await Promise.all([
+      const [plansArrays, notifList, upcoming] = await Promise.all([
         Promise.all(childList.map(c => treatmentPlansService.getChildPlans(c.id).catch(() => []))),
-        notesService.getMyNotes().catch(() => []),
         notificationService.getNotifications().catch(() => []),
         bookingService.getUpcomingBookings().catch(() => []),
       ]);
 
       let finalPlanList = plansArrays.flat();
-      let finalNoteList = noteList;
       let finalUpcoming = upcoming;
 
       if (activeChildId) {
         finalPlanList = finalPlanList.filter(p => p.childId === activeChildId);
-        finalNoteList = finalNoteList.filter(n => n.childId === activeChildId);
         finalUpcoming = finalUpcoming.filter(s => s.childId === activeChildId);
       }
 
       let notifs = notifList.slice(0, 4);
-      if (notifs.length === 0) {
-        notifs = [
-          { id: 'm1', title: 'New session approved', message: 'Your session request has been approved by the specialist', isRead: false, createdAt: new Date().toISOString() } as unknown as typeof notifList[0],
-          { id: 'm2', title: 'Therapist sent a message', message: 'Please check your inbox for an update on the care plan', isRead: false, createdAt: new Date(Date.now() - 3600000).toISOString() } as unknown as typeof notifList[0],
-          { id: 'm3', title: 'Zoom session scheduled', message: 'Your upcoming consultation starts soon', isRead: true, createdAt: new Date(Date.now() - 86400000).toISOString() } as unknown as typeof notifList[0]
-        ];
-      }
 
       setChildren(childList);
       setPlans(finalPlanList);
-      setNotes(finalNoteList);
+      setNotes([]);
       setNotifications(notifs);
       setUpcomingSessions(finalUpcoming.length);
     } catch (err) {

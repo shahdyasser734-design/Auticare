@@ -42,12 +42,15 @@ export const bookingsService = {
   },
 
   getUpcomingBookings: async (): Promise<Booking[]> => {
-    console.log('[BOOKING] Fetching upcoming bookings from API...');
-    const response = await apiClient.get<any>('/bookings/upcoming');
+    console.log('[BOOKING] Fetching upcoming bookings from API (using my-bookings)...');
+    const response = await apiClient.get<any>('/bookings/my-bookings');
     const list = Array.isArray(response.data) ? response.data : 
                  Array.isArray(response.data?.data) ? response.data.data : [];
     console.log('[BOOKING] Fetched upcoming bookings from API:', list.length, 'items');
-    return list.map(normalizeBooking).sort((a: Booking, b: Booking) => 
+    return list.map(normalizeBooking).filter((b: Booking) => {
+      const status = (b.status || '').toLowerCase();
+      return status === 'pending' || status === 'approved' || status === 'confirmed';
+    }).sort((a: Booking, b: Booking) => 
       new Date(b.dateTime ?? b.createdAt).getTime() - new Date(a.dateTime ?? a.createdAt).getTime()
     );
   },
