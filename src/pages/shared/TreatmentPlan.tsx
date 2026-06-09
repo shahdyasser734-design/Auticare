@@ -77,14 +77,14 @@ export const TreatmentPlan = () => {
             gender: 'Unknown',
             dateOfBirth: '',
             status: 'active'
-          } as any);
+          } as unknown as Child);
         }
       }
 
       // 2. Fetch treatment plans for child
       const plans = await treatmentPlansService.getChildPlans(childId);
       if (plans && plans.length > 0) {
-        const activePlan = plans[0] as any; // Cast to any for type compatibility
+        const activePlan = plans[0] as unknown as TreatmentPlanType; // Cast to expected type
         setPlan(activePlan);
         setTitle(activePlan.title);
         setDescription(activePlan.description || '');
@@ -113,9 +113,11 @@ export const TreatmentPlan = () => {
     }
   };
 
+  /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
   useEffect(() => {
     void loadPlanData();
   }, [childId]);
+  /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 
   const handleSavePlan = async () => {
     if (!childId || !title.trim()) return;
@@ -132,12 +134,12 @@ export const TreatmentPlan = () => {
           progress: plan.progressOverview ? JSON.stringify(plan.progressOverview) : '',
           endDate: endDate ? new Date(endDate).toISOString() : null
         };
-        await treatmentPlansService.updatePlan(plan.id, updatePayload as any);
+        await treatmentPlansService.updatePlan(plan.id, updatePayload as unknown as Record<string, unknown>);
         
         // Re-fetch to populate full state
         const plans = await treatmentPlansService.getChildPlans(childId);
         if (plans && plans.length > 0) {
-          savedPlan = plans[0] as any;
+          savedPlan = plans[0] as unknown as TreatmentPlanType;
         } else {
           savedPlan = {
             ...plan,
@@ -146,7 +148,7 @@ export const TreatmentPlan = () => {
             description: description || finalNotes,
             endDate: endDate || undefined,
             updatedAt: new Date().toISOString()
-          } as any;
+          } as unknown as TreatmentPlanType;
         }
       } else {
         // Resolve a valid 32-bit integer specialistId
@@ -226,11 +228,12 @@ export const TreatmentPlan = () => {
         };
         console.log("[TREATMENT PLAN] SENDING CREATE PAYLOAD:", JSON.stringify(createPayload, null, 2));
         try {
-          const res = await treatmentPlansService.createPlan(createPayload as any);
+          const res = await treatmentPlansService.createPlan(createPayload as unknown as Record<string, unknown>);
           console.log("[TREATMENT PLAN] RECEIVED RESPONSE:", JSON.stringify(res, null, 2));
-          savedPlan = res as any;
-        } catch (createErr: any) {
-          console.error("[TREATMENT PLAN] FAILED TO CREATE. Backend response:", createErr?.response?.data || createErr?.message || createErr);
+          savedPlan = res as unknown as TreatmentPlanType;
+        } catch (createErr: unknown) {
+          const err = createErr as Record<string, unknown>;
+          console.error("[TREATMENT PLAN] FAILED TO CREATE. Backend response:", err?.response?.data || err?.message || err);
           throw createErr;
         }
       }
