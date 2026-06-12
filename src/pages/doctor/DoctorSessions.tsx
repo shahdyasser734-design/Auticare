@@ -199,15 +199,29 @@ export const DoctorSessions = () => {
                       )}
 
                       {(session.status !== 'pending' && session.status !== 'rejected') && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleJoinZoom(session)}
-                          className="font-bold rounded-lg cursor-pointer flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white"
-                        >
-                          <>
-                            🎥 {isDoctor ? 'Start Session' : 'Join Session'}
-                          </>
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handleJoinZoom(session)}
+                            className="font-bold rounded-lg cursor-pointer flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white"
+                          >
+                            <>
+                              🎥 {isDoctor ? 'Start Session' : 'Join Session'}
+                            </>
+                          </Button>
+                          {activeTab === 'upcoming' && session.status !== 'completed' && session.status !== 'cancelled' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={async () => {
+                                await handleUpdateStatus(session.id, 'completed');
+                                alert('Session marked as completed.');
+                              }}
+                            >
+                              Mark Completed
+                            </Button>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>

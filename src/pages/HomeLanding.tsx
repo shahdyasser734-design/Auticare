@@ -453,7 +453,7 @@ export const HomeLanding = () => {
         {/* PROGRESS PREVIEW */}
         <section className="py-16 lg:py-24 px-4 sm:px-6 lg:px-8 relative">
           <div className="max-w-7xl mx-auto">
-            <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:standard-card/5 backdrop-blur-xl p-8 sm:p-12 dark:shadow-none overflow-hidden relative">
+            <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 backdrop-blur-xl p-8 sm:p-12 dark:shadow-none overflow-hidden relative">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-50/50 via-transparent to-purple-50/50 dark:from-blue-500/5 dark:to-purple-500/5" />
               <div className="relative z-10 grid lg:grid-cols-2 gap-12 items-center">
                 <div>
@@ -467,21 +467,21 @@ export const HomeLanding = () => {
                     Visual dashboards and clear milestones help families track therapeutic progress. Celebrate every breakthrough, no matter how small.
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="rounded-lg bg-slate-50 dark:standard-card/10 p-4 text-center">
+                    <div className="rounded-lg bg-slate-50 dark:bg-white/10 p-4 text-center">
                       <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-300">94%</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Completion Rate</p>
                     </div>
-                    <div className="rounded-lg bg-slate-50 dark:standard-card/10 p-4 text-center">
+                    <div className="rounded-lg bg-slate-50 dark:bg-white/10 p-4 text-center">
                       <p className="text-2xl font-bold text-blue-600 dark:text-blue-300">12 wks</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Avg. Improvement</p>
                     </div>
-                    <div className="rounded-lg bg-slate-50 dark:standard-card/10 p-4 text-center">
+                    <div className="rounded-lg bg-slate-50 dark:bg-white/10 p-4 text-center">
                       <p className="text-2xl font-bold text-purple-600 dark:text-purple-300">3.2x</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Engagement ↑</p>
                     </div>
                   </div>
                 </div>
-                <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:standard-card/5 p-6 h-80 flex items-center justify-center -inner">
+                <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-6 h-80 flex items-center justify-center -inner">
                   <div className="text-center text-slate-500 dark:text-slate-400">
                     <div className="w-32 h-32 rounded-full border-4 border-blue-500/20 mx-auto mb-4 flex items-center justify-center shadow-lg bg-white dark:bg-navy-900">
                       <div className="text-center">

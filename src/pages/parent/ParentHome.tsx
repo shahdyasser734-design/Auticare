@@ -68,7 +68,8 @@ export const ParentHome = () => {
         finalUpcoming = finalUpcoming.filter(s => String(s.childId) === String(activeChildId));
       }
 
-      setChildren(childList);
+      const uniqueChildren = Array.from(new Map(childList.map(c => [c.id, c])).values());
+      setChildren(uniqueChildren);
       setPlans(finalPlanList);
       setNotes([]);
       setUpcomingSessions(finalUpcoming.length);

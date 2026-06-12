@@ -123,15 +123,19 @@ export const ParentScreeningResults = () => {
   const [hasProgress, setHasProgress] = useState(false);
 
   useEffect(() => {
-    if (!authInitialized || !activeChildId) {
-      console.log('Screening Results: Waiting for authInitialized and activeChildId...', { authInitialized, activeChildId });
+    const params = new URLSearchParams(window.location.search);
+    const queryChildId = params.get('childId');
+    const idToUse = queryChildId || activeChildId;
+
+    if (!authInitialized || !idToUse) {
+      console.log('Screening Results: Waiting for authInitialized and childId...', { authInitialized, idToUse });
       return;
     }
 
     const load = async () => {
       setLoading(true);
       try {
-        const id = activeChildId;
+        const id = idToUse;
         setChildId(id);
 
         console.log('Screening Results: Fetching data for activeChildId:', id);

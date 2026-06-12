@@ -43,7 +43,8 @@ export const AddChild = () => {
     setPreviewUrl(URL.createObjectURL(file));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e?: React.FormEvent | React.MouseEvent) => {
+    e?.preventDefault();
     if (!canSubmit) {
       setError('Please complete all required child details before starting the screening.');
       return;
