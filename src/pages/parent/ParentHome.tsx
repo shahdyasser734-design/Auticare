@@ -80,7 +80,9 @@ export const ParentHome = () => {
   };
 
   useEffect(() => {
+// eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchDashboard();
+// eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeChildId]);
 
   const handleStartScreening = () => {

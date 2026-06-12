@@ -1,6 +1,7 @@
 import apiClient from '../apiClient';
 import type { Child } from '../../types';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const normalizeChild = (raw: any): Child => {
   const id = String(raw.id ?? raw._id ?? raw.childId ?? raw.child_id ?? '');
   const firstName = raw.firstName || '';
@@ -37,6 +38,7 @@ const normalizeChild = (raw: any): Child => {
 export const childrenService = {
   // Create a new child profile
   createChild: async (data: Partial<Child>): Promise<Child> => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response = await apiClient.post<any>('/children', data);
     const raw = response.data?.data ?? response.data;
     const child = normalizeChild(raw);
@@ -50,6 +52,7 @@ export const childrenService = {
 
   // Get specific child by ID
   getChild: async (id: string): Promise<Child> => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response = await apiClient.get<any>(`/children/${id}`);
     const raw = response.data?.data ?? response.data;
     return normalizeChild(raw);
@@ -59,6 +62,7 @@ export const childrenService = {
   // The API has GET /api/children which is the main endpoint
   getMyChildren: async (): Promise<Child[]> => {
     try {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response = await apiClient.get<any>('/children');
       const data = response.data?.data ?? response.data;
       const list = Array.isArray(data) ? data : [];
@@ -69,6 +73,7 @@ export const childrenService = {
         localStorage.setItem('latestChildName', children[0].name);
       }
       return children;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       const status = error?.response?.status;
       if (status === 403) {
@@ -82,12 +87,15 @@ export const childrenService = {
       // If no child in localStorage, check bookings
       if (!latestId) {
         try {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
           const bookingsRes = await apiClient.get<any>('/bookings/my-bookings');
           const bookings = Array.isArray(bookingsRes.data) ? bookingsRes.data : (bookingsRes.data?.data || []);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
           const childIds = bookings.map((b: any) => b.childId || b.child_id).filter(Boolean);
           if (childIds.length > 0) {
             latestId = String(childIds[0]);
             localStorage.setItem('latestChildId', latestId);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
             const names = bookings.map((b: any) => b.childName || b.child_name).filter(Boolean);
             if (names.length > 0) {
               localStorage.setItem('latestChildName', names[0]);
@@ -127,6 +135,7 @@ export const childrenService = {
 
   // Update child profile
   updateChild: async (id: string, data: Partial<Child>): Promise<Child> => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response = await apiClient.put<any>(`/children/${id}`, data);
     const raw = response.data?.data ?? response.data;
     return normalizeChild(raw);

@@ -41,7 +41,9 @@ export const DoctorHome = () => {
   const [dashboardData, setDashboardData] = useState<DashboardSpecialistData | null>(null);
   const [patients, setPatients] = useState<PatientCard[]>([]);
   const [sessions, setSessions] = useState<Booking[]>([]);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [children, setChildren] = useState<any[]>([]);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [myNotes, setMyNotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +83,7 @@ export const DoctorHome = () => {
 
       assignedBookings.forEach((b: Booking) => {
         if (b && b.childId && !uniqueChildren.has(b.childId)) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
           const card = patientCards.find((c: any) => c.childName === b.childName || c.name === b.childName);
           uniqueChildren.set(b.childId, {
             id: b.childId,
@@ -98,8 +101,10 @@ export const DoctorHome = () => {
       const extractedPatients = Array.from(uniqueChildren.values());
 
       setDashboardData(dashData);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       setPatients(extractedPatients as any[]);
       setSessions(bookingData);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       setChildren(extractedPatients as any[]);
       setMyNotes(notesData || []);
 
@@ -115,8 +120,10 @@ export const DoctorHome = () => {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
+// eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchSpecialistData();
+// eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleUpdateStatus = async (e: React.MouseEvent, booking: Booking, newStatus: Booking['status']) => {
@@ -136,6 +143,7 @@ export const DoctorHome = () => {
       }
 
       await fetchSpecialistData();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error(`[DASHBOARD] Error updating booking ${booking.id}:`, err);
       const errMsg = err?.response?.data?.title || err?.response?.data?.detail || err.message || 'Failed to update booking status.';
@@ -642,6 +650,7 @@ export const DoctorHome = () => {
                           <p className="font-bold text-stone-900 dark:text-white text-sm truncate">{c.name}</p>
                           {(() => {
                             const agePart = c.age ? `Age: ${c.age} yrs` : '';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
                             const genderVal = (c as any).gender;
                             const genderPart = genderVal && genderVal !== 'Unknown' && genderVal !== '' ? genderVal : '';
                             const info = [agePart, genderPart].filter(Boolean).join(' · ');

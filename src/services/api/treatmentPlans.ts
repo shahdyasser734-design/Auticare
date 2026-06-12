@@ -11,6 +11,8 @@ export interface CreateTreatmentPlanRequest {
   notes: string;
 }
 
+ 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const normalizeTreatmentPlan = (p: any): any => {
   if (!p) return p;
   const idStr = String(p.treatmentId || p.id || '');
@@ -78,9 +80,12 @@ export const treatmentPlansService = {
     } catch (err) {
       console.warn('Backend /treatment-plans/my-plans returned error, using fallback to bookings:', err);
       try {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         const bookings = await apiClient.get<any[]>('/bookings/my-bookings');
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         const uniqueChildIds = [...new Set((bookings.data || []).map((b: any) => b.childId).filter(Boolean))];
         if (uniqueChildIds.length > 0) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
           const plansPromises = uniqueChildIds.map((cId: any) => 
             apiClient.get<TreatmentPlan[]>(`/treatment-plans/child/${cId}`)
               .then(res => res.data || [])

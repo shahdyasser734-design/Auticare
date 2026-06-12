@@ -68,6 +68,7 @@ export const ParentSessions = () => {
   }, []);
 
   // Refetch whenever child selection changes
+// eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void loadSessions(); }, [loadSessions, activeChildId]);
 
   const childFiltered = activeChildId

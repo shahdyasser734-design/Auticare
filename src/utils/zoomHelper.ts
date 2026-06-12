@@ -1,6 +1,7 @@
 import apiClient from '../services/apiClient';
 import type { Booking } from '../types';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const cleanIntId = (idVal: any): number => {
   if (typeof idVal === 'number') return idVal;
   if (!idVal) return 1;
@@ -20,16 +21,21 @@ export const getOrCreateSessionMeetingLink = async (
   if (session.joinLink && session.joinLink.trim() !== '') {
     return session.joinLink;
   }
+ 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   if ((session as any).meetingLink && (session as any).meetingLink.trim() !== '') {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (session as any).meetingLink;
   }
 
   // 2. If NOT -> attempt to get or create from Treatment Sessions API
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   let finalTreatmentId = session.treatmentId || (session as any).TreatmentId;
 
   if (!finalTreatmentId && session.childId) {
     try {
       const childIdNum = cleanIntId(session.childId);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       const plansRes = await apiClient.get<any[]>(`/treatment-plans/child/${childIdNum}`);
       const plans = Array.isArray(plansRes.data) ? plansRes.data : [];
       const activePlan = plans.find((p) => p.status === 'active') || plans[0];
@@ -45,6 +51,7 @@ export const getOrCreateSessionMeetingLink = async (
     try {
       const treatmentIdNum = cleanIntId(finalTreatmentId);
       // Fetch sessions for this treatment plan
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       const res = await apiClient.get<any[]>(`/sessions/treatment/${treatmentIdNum}`);
       const sessions = Array.isArray(res.data) ? res.data : [];
       

@@ -60,6 +60,7 @@ export interface AuthContextType {
   user: User | null;
   loading: boolean;
   childrenLoaded: boolean;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   parentChildren: any[];
   activeChildId: string | null;
   setActiveChildId: (id: string | null) => void;

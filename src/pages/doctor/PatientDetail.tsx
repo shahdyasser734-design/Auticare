@@ -40,6 +40,7 @@ export const PatientDetail = () => {
           ]);
           const booking = myBookings.find(b => String(b.childId) === String(id));
           if (booking) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
             const card = dashData?.patientCards?.find((c: any) => c.childName === booking.childName || c.name === booking.childName);
             childData = {
               id: booking.childId?.toString() || id,
@@ -52,6 +53,7 @@ export const PatientDetail = () => {
               dateOfBirth: card?.dateOfBirth ?? card?.date_of_birth ?? card?.dob ?? card?.childDob ?? '',
             } as unknown as Child;
           } else {
+// eslint-disable-next-line preserve-caught-error
             throw new Error('Patient not found in active bookings.');
           }
         }

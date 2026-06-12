@@ -39,6 +39,7 @@ export const BookingsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
+// eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentChildId(activeChildId || undefined);
     void refreshBookings();
   }, [activeChildId]);

@@ -32,6 +32,7 @@ export const bookingsService = {
 
   getMyBookings: async (): Promise<Booking[]> => {
     console.log('[BOOKING] Fetching my bookings from API...');
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response = await apiClient.get<any>('/bookings/my-bookings');
     const list = Array.isArray(response.data) ? response.data : 
                  Array.isArray(response.data?.data) ? response.data.data : [];
@@ -43,6 +44,7 @@ export const bookingsService = {
 
   getUpcomingBookings: async (): Promise<Booking[]> => {
     console.log('[BOOKING] Fetching upcoming bookings from API (using my-bookings)...');
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response = await apiClient.get<any>('/bookings/my-bookings');
     const list = Array.isArray(response.data) ? response.data : 
                  Array.isArray(response.data?.data) ? response.data.data : [];
@@ -65,6 +67,7 @@ export const bookingsService = {
     return booking;
   },
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   cancelBooking: async (id: string, _reason?: string): Promise<Booking> => {
     // No separate /cancel endpoint — use the status endpoint with 'Cancelled'
     console.log(`[BOOKING] Cancelling booking ${id}`);

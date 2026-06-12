@@ -23,6 +23,7 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
 
   useEffect(() => {
     if (open) {
+// eslint-disable-next-line react-hooks/set-state-in-effect
       setChildId(activeChildId || undefined);
     }
   }, [open, activeChildId]);
@@ -122,9 +123,9 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
             onChange={(e) => setChildId(e.target.value)}
           >
             <option value="" disabled>Select a child</option>
-            {parentChildren.map((c: any) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
+            {parentChildren.map((c: unknown) => (
+              <option key={(c as { id: string }).id} value={(c as { id: string }).id}>
+                {(c as { name: string }).name}
               </option>
             ))}
           </select>

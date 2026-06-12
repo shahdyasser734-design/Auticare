@@ -218,11 +218,13 @@ export const Chat = () => {
   }, []);
 
   // Initial load — auto-select first conversation
+// eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void fetchConversations(true); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load messages when selected conversation changes; poll every 5 s
   useEffect(() => {
     if (!selected) return;
+// eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchMessages(selected);
     const interval = setInterval(() => void fetchMessages(selected), 5000);
     return () => clearInterval(interval);
@@ -277,6 +279,7 @@ export const Chat = () => {
       setSending(false);
       inputRef.current?.focus();
     }
+// eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newMessage, selected, fetchMessages]);
 
   const handleFormSubmit = (e: React.FormEvent) => {

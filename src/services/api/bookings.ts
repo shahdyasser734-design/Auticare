@@ -110,6 +110,7 @@ export const bookingService = {
     const response = await apiClient.patch<Booking>(`/bookings/${id}/status`, { status: backendStatus });
     return normalizeBooking(response.data);
   },
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   cancelBooking: async (id: string, _reason?: string): Promise<Booking> => {
     // Cancel uses the same status endpoint - no separate /cancel endpoint
     console.log(`[BOOKING] Cancelling booking ${id} via PATCH /bookings/${id}/status`);

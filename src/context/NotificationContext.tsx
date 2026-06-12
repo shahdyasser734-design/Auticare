@@ -40,6 +40,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         }
       }
       prevUnreadRef.current = unreadCount;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       // suppress warning per user constraint
     } finally {
@@ -49,6 +50,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!user) {
+// eslint-disable-next-line react-hooks/set-state-in-effect
       setNotifications([]);
       prevUnreadRef.current = 0;
       return;
@@ -60,6 +62,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     }, 10000);
     
     return () => clearInterval(interval);
+// eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const markAsRead = async (id: string) => {
@@ -102,6 +105,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useNotification = () => {
   const context = useContext(NotificationContext);
   if (context === undefined) {

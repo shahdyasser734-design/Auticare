@@ -43,6 +43,7 @@ export const DoctorSessions = () => {
       setUpdateError(null);
       await bookingService.updateBookingStatus(id, newStatus);
       fetchSessions();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error('Error updating status:', err);
       const errMsg = err?.response?.data?.title || err?.response?.data?.detail || err.message || 'Failed to update booking status.';

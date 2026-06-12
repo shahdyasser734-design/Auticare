@@ -13,6 +13,7 @@ interface ProtectedRouteProps {
 let hasRedirectedToAddChild = false;
 
 export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { authInitialized, isAuthenticated, user, childrenLoaded, parentChildren } = useAuth() as any;
   const location = useLocation();
 

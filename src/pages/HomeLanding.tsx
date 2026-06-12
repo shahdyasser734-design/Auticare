@@ -345,11 +345,11 @@ export const HomeLanding = () => {
                   style={{ animationDelay: `${idx * 100}ms` }}
                 >
                   <div className="relative aspect-[4/3] lg:aspect-[16/9] w-full overflow-hidden">
-                    {(service as any).cssBackground ? (
+                    {(service as unknown as { cssBackground?: string }).cssBackground ? (
                       // CSS background-image approach for crisp, sharp rendering
                       <div
                         className="absolute inset-0 w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-700"
-                        style={{ backgroundImage: `url(${(service as any).cssBackground})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+                        style={{ backgroundImage: `url(${(service as unknown as { cssBackground?: string }).cssBackground})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
                       />
                     ) : (
                       <img

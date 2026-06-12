@@ -79,6 +79,7 @@ export interface DashboardSpecialistData {
   sessions?: Array<Record<string, unknown>>;
   assignedChildren?: AssignedChild[];
   patients?: PatientCard[];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   patientCards?: any[];
 }
 

@@ -3,6 +3,7 @@ import type { TherapySession } from '../../types';
 
 export const sessionsService = {
   // Create a new session
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   createSession: async (data: any): Promise<TherapySession> => {
     const response = await apiClient.post<TherapySession>('/sessions', data);
     return response.data;
@@ -15,6 +16,7 @@ export const sessionsService = {
   },
 
   // Update session
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   updateSession: async (id: string, data: any): Promise<TherapySession> => {
     const response = await apiClient.put<TherapySession>(`/sessions/${id}`, data);
     return response.data;

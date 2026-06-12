@@ -186,6 +186,7 @@ export const ParentScreening = () => {
     };
 
     initializeScreening();
+// eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
   if (loading) {

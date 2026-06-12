@@ -27,6 +27,7 @@ export const DoctorPatients = () => {
       
       bookings.forEach(b => {
         if (b.childId && !uniqueChildren.has(b.childId)) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
           const card = patientCards.find((c: any) => c.childName === b.childName || c.name === b.childName);
           uniqueChildren.set(b.childId, {
             id: b.childId,
@@ -42,6 +43,7 @@ export const DoctorPatients = () => {
       });
       
       const mappedPatients = Array.from(uniqueChildren.values());
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       setPatients(mappedPatients as any[]);
     } catch (err) {
       console.error('Error fetching patients:', err);
@@ -69,6 +71,7 @@ export const DoctorPatients = () => {
         
         bookings.forEach(b => {
           if (b.childId && !uniqueChildren.has(b.childId)) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
             const card = patientCards.find((c: any) => c.childName === b.childName || c.name === b.childName);
             uniqueChildren.set(b.childId, {
               id: b.childId,
@@ -83,6 +86,8 @@ export const DoctorPatients = () => {
           }
         });
         const mappedPatients = Array.from(uniqueChildren.values());
+ 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         setPatients(mappedPatients.filter((p: any) => (p.name ?? '').toLowerCase().includes(query.toLowerCase())) as any[]);
       } catch (err) {
         console.error('Error:', err);

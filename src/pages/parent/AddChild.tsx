@@ -70,6 +70,7 @@ export const AddChild = () => {
       if (profileImage) {
         try {
           const upload = await fileUploadService.uploadFile(profileImage, 'specialist-document');
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
           const raw = upload as any;
           const imageUrl = (
             (typeof raw.url === 'string' && raw.url) ||

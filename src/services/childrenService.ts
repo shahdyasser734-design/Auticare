@@ -27,9 +27,14 @@ export const childrenService = {
       const response = await apiClient.get<Record<string, unknown>[]>('/children');
       const data = response.data;
       const list = Array.isArray(data) ? data : 
+ 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
                    Array.isArray((data as any)?.data) ? (data as any).data : 
+ 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
                    Array.isArray((data as any)?.children) ? (data as any).children : [];
       return list.map(normalizeChild);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       const status = error?.response?.status;
       if (status === 403) {

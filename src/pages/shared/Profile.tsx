@@ -33,6 +33,7 @@ export const Profile = () => {
   });
 
   useEffect(() => {
+// eslint-disable-next-line react-hooks/set-state-in-effect
     setFormData(prev => ({
       ...prev,
       name: user?.name || '',

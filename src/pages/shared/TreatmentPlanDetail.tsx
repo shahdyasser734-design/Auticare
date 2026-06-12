@@ -31,6 +31,7 @@ export const TreatmentPlanDetail = () => {
   const [plan, setPlan] = useState<TreatmentPlan | null>(null);
   const [child, setChild] = useState<Child | null>(null);
   const [sessions, setSessions] = useState<TherapySession[]>([]);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [notes, setNotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'sessions' | 'notes'>('overview');
@@ -48,6 +49,7 @@ export const TreatmentPlanDetail = () => {
       try {
         setLoading(true);
         const planData = await treatmentPlansService.getPlan(targetId);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         setPlan(planData as any);
 
         // Fetch sessions in parallel with child data

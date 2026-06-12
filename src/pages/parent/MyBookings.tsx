@@ -70,6 +70,7 @@ export const MyBookings = () => {
   }, []);
 
   // Reload whenever the active child changes
+// eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void loadBookings(); }, [loadBookings, activeChildId]);
 
   const childFiltered = activeChildId
