@@ -16,7 +16,7 @@ type BookingsContextValue = {
 const BookingsContext = createContext<BookingsContextValue | undefined>(undefined);
 
 export const BookingsProvider = ({ children }: { children: ReactNode }) => {
-  const { activeChildId } = useAuth();
+  const { activeChildId, isAuthenticated } = useAuth();
   const [myBookings, setMyBookings] = useState<Booking[]>([]);
   const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
   const [currentChildId, setCurrentChildId] = useState<string | undefined>(undefined);
@@ -41,8 +41,14 @@ export const BookingsProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
 // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentChildId(activeChildId || undefined);
-    void refreshBookings();
-  }, [activeChildId]);
+    if (isAuthenticated) {
+      void refreshBookings();
+    } else {
+      setMyBookings([]);
+      setUpcomingBookings([]);
+      setLoading(false);
+    }
+  }, [activeChildId, isAuthenticated]);
 
   const addBooking = (b: Booking) => {
     setMyBookings((prev) => [b, ...prev]);
