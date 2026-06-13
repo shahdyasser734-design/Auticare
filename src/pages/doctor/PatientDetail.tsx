@@ -199,11 +199,23 @@ export const PatientDetail = () => {
                 </div>
               ) : (
                 plans.map((p) => (
-                  <div key={p.id} className="p-4 bg-primary-50/50 dark:bg-primary-950/20 rounded-xl border border-primary-100/50 dark:border-primary-500/20">
-                    <p className="font-bold text-slate-900 dark:text-white">{p.title}</p>
-                    <p className="text-xs text-slate-600 dark:text-slate-350 truncate mt-1">{p.description}</p>
-                    <div className="flex justify-between items-center mt-3 text-xs">
-                      <span className="text-slate-500 dark:text-slate-400 font-semibold">Status: <span className="capitalize text-primary-700 dark:text-primary-300 font-bold">{p.status}</span></span>
+                  <div key={p.id} className="p-4 bg-primary-50/50 dark:bg-primary-950/20 rounded-xl border border-primary-100/50 dark:border-primary-500/20 flex flex-col gap-2">
+                    <div>
+                      <p className="font-bold text-slate-900 dark:text-white break-words">{p.title || 'Development and Clinical Treatment Plan'}</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-350 line-clamp-2 mt-1 break-words">
+                        {p.description || 'Comprehensive multi-disciplinary intervention plan.'}
+                      </p>
+                    </div>
+                    <div className="flex justify-between items-center mt-2 text-xs border-t border-primary-100/50 dark:border-white/5 pt-3">
+                      <span className="text-slate-500 dark:text-slate-400 font-semibold">
+                        Status: <span className="capitalize text-primary-700 dark:text-primary-300 font-bold">{p.status || p.progress || 'active'}</span>
+                      </span>
+                      <button 
+                        onClick={() => navigate(`/treatment-plan/${id}`)}
+                        className="text-primary-600 dark:text-primary-400 hover:text-primary-800 font-bold underline cursor-pointer px-2 py-1 bg-white/50 dark:bg-slate-900/50 rounded-lg shadow-sm border border-primary-100 dark:border-primary-900/30 transition-all hover:shadow-md"
+                      >
+                        Edit Treatment Plan
+                      </button>
                     </div>
                   </div>
                 ))
