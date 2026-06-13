@@ -47,6 +47,8 @@ export const normalizeTreatmentPlan = (p: any): any => {
     startDate: p.startDate || p.createdAt || '',
     endDate: p.endDate || undefined,
     notes: notesVal,
+    goal: p.goal || goalsArray.join('\n') || '',
+    progress: p.progress || p.status || 'active',
     createdAt: p.createdAt || '',
     updatedAt: p.updatedAt || p.createdAt || ''
   };

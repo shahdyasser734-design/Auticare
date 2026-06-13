@@ -25,6 +25,7 @@ export const TreatmentPlan = () => {
 
   const isDoctor = user?.role === 'doctor';
   const isParent = user?.role === 'parent';
+  const isTherapist = user?.role === 'therapist';
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -100,8 +101,8 @@ export const TreatmentPlan = () => {
         setDescription(activePlan.description || '');
         setStartDate(activePlan.startDate ? activePlan.startDate.split('T')[0] : '');
         setEndDate(activePlan.endDate ? activePlan.endDate.split('T')[0] : '');
-        setGoals(activePlan.goals || []);
-        setStatus(activePlan.status || 'active');
+        setGoals(activePlan.goal ? activePlan.goal.split('\n') : (activePlan.goals || []));
+        setStatus(activePlan.progress || activePlan.status || 'active');
         
         if (isDoctor) {
           setEditMode(true);
@@ -344,7 +345,7 @@ export const TreatmentPlan = () => {
               className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold flex items-center gap-2 rounded-2xl shadow-lg shadow-primary-500/20"
             >
               <Edit size={16} />
-              {plan ? 'Modify Treatment Plan' : 'Create Treatment Plan'}
+              {plan ? 'Edit Treatment Plan' : 'Create Treatment Plan'}
             </Button>
           )}
         </div>
@@ -656,11 +657,43 @@ export const TreatmentPlan = () => {
                   </p>
                   {isDoctor && (
                     <Button onClick={() => setEditMode(true)} className="rounded-2xl">
-                      Create Treatment Plan Now
+                      Create Treatment Plan
                     </Button>
                   )}
                 </Card>
               ) : (
+                !isDoctor ? (
+                  <Card className="border border-slate-200 dark:border-white/10 shadow-lg rounded-3xl p-6 md:p-8">
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+                      <FileText className="text-primary-600" size={24} />
+                      Treatment Plan Details
+                    </h2>
+                    <div className="space-y-6">
+                      <div>
+                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">Goal</p>
+                        <p className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap">{plan.goal || plan.goals?.join('\n') || 'No goals specified'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">Notes</p>
+                        <p className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap">{plan.notes || 'No notes specified'}</p>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4 border-t border-slate-200 dark:border-white/10">
+                        <div>
+                          <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Progress</p>
+                          <Badge variant="secondary" className="capitalize">{plan.progress || plan.status || 'Active'}</Badge>
+                        </div>
+                        <div>
+                          <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Start Date</p>
+                          <p className="font-semibold text-slate-800 dark:text-slate-200">{plan.startDate ? new Date(plan.startDate).toLocaleDateString() : 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">End Date</p>
+                          <p className="font-semibold text-slate-800 dark:text-slate-200">{plan.endDate ? new Date(plan.endDate).toLocaleDateString() : 'Continuous'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ) : (
                 <div className="space-y-6">
                   {/* Title & Timeline Summary */}
                   <Card className="border border-slate-200 dark:border-white/10 shadow-lg rounded-3xl p-6 md:p-8 bg-gradient-to-r from-primary-50/30 to-transparent">
@@ -779,6 +812,7 @@ export const TreatmentPlan = () => {
                     </div>
                   </Card>
                 </div>
+                )
               )}
             </div>
           </div>
