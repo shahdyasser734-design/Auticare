@@ -17,7 +17,7 @@ export const TopNav = ({ onMenuClick }: TopNavProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { theme, toggleTheme, isDark } = useTheme();
-  const { unreadCount, newestUnreadMsg, clearNewestMsg } = useNotification();
+  const { unreadCount, newestUnreadMsg, clearNewestMsg, chatUnreadCount } = useNotification();
 
   useEffect(() => {
     if (newestUnreadMsg) {
@@ -84,7 +84,7 @@ export const TopNav = ({ onMenuClick }: TopNavProps) => {
           {/* Chat Icon */}
           <button
             onClick={() => navigate(ROUTES.CHAT)}
-            className={`p-2 rounded-xl transition-colors cursor-pointer ${
+            className={`relative p-2 rounded-xl transition-colors cursor-pointer ${
               isDark 
                 ? 'text-slate-100 hover:bg-white/10' 
                 : 'text-slate-900 hover:bg-slate-100'
@@ -92,6 +92,11 @@ export const TopNav = ({ onMenuClick }: TopNavProps) => {
             aria-label="Open chat"
           >
             <MessageSquare size={22} />
+            {chatUnreadCount > 0 && (
+              <span className="absolute top-0.5 right-0.5 px-1.5 py-0.5 text-[9px] font-bold bg-orange-500 text-white rounded-full leading-none flex items-center justify-center min-w-[14px]">
+                {chatUnreadCount}
+              </span>
+            )}
           </button>
 
           {/* Enhanced Theme Toggle */}

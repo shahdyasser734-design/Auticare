@@ -68,7 +68,8 @@ export const ParentHome = () => {
         finalUpcoming = finalUpcoming.filter(s => String(s.childId) === String(activeChildId));
       }
 
-      const uniqueChildren = Array.from(new Map(childList.map(c => [c.id, c])).values());
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const uniqueChildren = Array.from(new Map(childList.map(c => [((c as any).childId || c.id), c])).values());
       setChildren(uniqueChildren);
       setPlans(finalPlanList);
       setNotes([]);

@@ -203,7 +203,7 @@ export const ParentScreening = () => {
   if (error && questions.length === 0) {
     return (
       <ScreeningLayout confirmExit={confirmExit}>
-        <div className="bg-white dark:standard-card/5 backdrop-blur-sm p-8 text-center max-w-md dark:shadow-none">
+        <div className="bg-white dark:bg-navy-800 backdrop-blur-sm p-8 text-center max-w-md dark:shadow-none rounded-2xl">
           <div className="text-orange-500 text-4xl mb-4">⚠️</div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Oops!</h2>
           <p className="text-slate-600 dark:text-slate-400 mb-6">{error}</p>
@@ -307,11 +307,11 @@ export const ParentScreening = () => {
           </div>
         )}
 
-        <div className="w-full mt-8 flex justify-between items-center bg-white dark:standard-card/5 backdrop-blur-sm p-4 dark:shadow-none">
+        <div className="w-full mt-8 flex justify-between items-center bg-white dark:bg-navy-800 backdrop-blur-sm p-4 dark:shadow-none rounded-xl">
           <Button
             onClick={handlePrevious}
             disabled={currentPage === 1 || submitting}
-            className="bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-white/10 dark:hover:bg-white/15 dark:text-white border border-slate-300 dark:border-white/15 shadow-none disabled:opacity-30"
+            className="bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-navy-700 dark:hover:bg-navy-600 dark:text-white border border-slate-300 dark:border-white/10 shadow-none disabled:opacity-30"
           >
             ← Previous
           </Button>

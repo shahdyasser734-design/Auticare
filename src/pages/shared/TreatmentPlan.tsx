@@ -83,8 +83,17 @@ export const TreatmentPlan = () => {
 
       // 2. Fetch treatment plans for child
       const plans = await treatmentPlansService.getChildPlans(childId);
+      let activePlan = null;
+
       if (plans && plans.length > 0) {
-        const activePlan = plans[0] as unknown as TreatmentPlanType; // Cast to expected type
+        if (isParent) {
+          activePlan = plans.find((p: any) => p.status === 'active' || p.status === 'completed') as unknown as TreatmentPlanType;
+        } else {
+          activePlan = plans[0] as unknown as TreatmentPlanType;
+        }
+      }
+
+      if (activePlan) {
         setPlan(activePlan);
         setTitle(activePlan.title);
         setDescription(activePlan.description || '');
@@ -92,6 +101,10 @@ export const TreatmentPlan = () => {
         setEndDate(activePlan.endDate ? activePlan.endDate.split('T')[0] : '');
         setGoals(activePlan.goals || []);
         setStatus(activePlan.status || 'active');
+        
+        if (isDoctor) {
+          setEditMode(true);
+        }
         
         // Fetch specialist details who authored the plan
         if (activePlan.doctorId) {
@@ -105,6 +118,9 @@ export const TreatmentPlan = () => {
       } else {
         // If no plan and not specialist, child doesn't have one yet
         setPlan(null);
+        if (isDoctor) {
+          setEditMode(true);
+        }
       }
     } catch (err) {
       console.error('Error loading treatment plan:', err);
@@ -127,14 +143,14 @@ export const TreatmentPlan = () => {
       const finalNotes = notes.trim() || description.trim() || 'Development and Clinical Treatment Plan';
       
       if (plan?.id) {
-        // Update plan expects UpdateTreatmentPlanRequest
+        // Update plan expects Partial<CreateTreatmentPlanRequest>
         const updatePayload = {
+          startDate: startDate ? new Date(startDate).toISOString() : new Date().toISOString(),
+          endDate: endDate ? new Date(endDate).toISOString() : null,
           goal: goals.length > 0 ? goals.join('\n') : 'Development Plan',
-          notes: finalNotes,
-          progress: plan.progressOverview ? JSON.stringify(plan.progressOverview) : '',
-          endDate: endDate ? new Date(endDate).toISOString() : null
+          notes: finalNotes
         };
-        await treatmentPlansService.updatePlan(plan.id, updatePayload as unknown as Record<string, unknown>);
+        await treatmentPlansService.updatePlan(plan.id, updatePayload as unknown as Partial<import('../../services/api/treatmentPlans').CreateTreatmentPlanRequest>);
         
         // Re-fetch to populate full state
         const plans = await treatmentPlansService.getChildPlans(childId);

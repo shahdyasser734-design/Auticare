@@ -13,15 +13,19 @@ interface NotificationContextType {
   markAllAsRead: () => Promise<void>;
   newestUnreadMsg: string | null;
   clearNewestMsg: () => void;
+  chatUnreadCount: number;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+
+import { chatServiceAPI } from '../services/api/chatService';
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [newestUnreadMsg, setNewestUnreadMsg] = useState<string | null>(null);
+  const [chatUnreadCount, setChatUnreadCount] = useState(0);
   
   const prevUnreadRef = useRef<number>(0);
 
@@ -33,13 +37,26 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       setNotifications(list);
       
       const unreadCount = list.filter(n => !n.isRead).length;
-      if (unreadCount > prevUnreadRef.current && unreadCount > 0) {
+      if (unreadCount > 0) {
         const newest = list.find(n => !n.isRead);
         if (newest) {
-          setNewestUnreadMsg(newest.message || 'You have a new notification!');
+          const seenAlerts = JSON.parse(localStorage.getItem('seenAlerts') || '[]');
+          if (!seenAlerts.includes(newest.id)) {
+            setNewestUnreadMsg(newest.message || 'You have a new notification!');
+            seenAlerts.push(newest.id);
+            localStorage.setItem('seenAlerts', JSON.stringify(seenAlerts));
+          }
         }
       }
       prevUnreadRef.current = unreadCount;
+
+      try {
+        const chats = await chatServiceAPI.getMyChats();
+        const cUnread = chats.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
+        setChatUnreadCount(cUnread);
+      } catch(e) {
+        // ignore chat fetch errors
+      }
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       // suppress warning per user constraint
@@ -98,7 +115,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       markAsRead,
       markAllAsRead,
       newestUnreadMsg,
-      clearNewestMsg
+      clearNewestMsg,
+      chatUnreadCount
     }}>
       {children}
     </NotificationContext.Provider>

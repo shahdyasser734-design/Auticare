@@ -325,7 +325,7 @@ export const ParentScreeningResults = () => {
               </div>
 
               {/* Recommendation */}
-              <div className="bg-white/60 dark:standard-card/5 p-5">
+              <div className="bg-white/60 dark:bg-navy-800 rounded-xl p-5">
                 <p className="text-sm font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
                   Recommendation
                 </p>

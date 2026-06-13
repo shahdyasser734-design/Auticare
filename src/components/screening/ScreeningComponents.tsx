@@ -135,7 +135,7 @@ export const ScreeningQuestion = ({
   questionNumber,
 }: ScreeningQuestionProps) => {
   return (
-    <div className="relative bg-slate-100 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl p-8 md:p-12 space-y-8 w-full max-w-2xl border border-slate-300 dark:border-white/15 shadow-xl dark:shadow-2xl dark:shadow-slate-950/80 overflow-hidden">
+    <div className="relative bg-slate-100 dark:bg-navy-800 backdrop-blur-md rounded-3xl p-8 md:p-12 space-y-8 w-full max-w-2xl border border-slate-300 dark:border-white/10 shadow-xl dark:shadow-2xl dark:shadow-navy-950/80 overflow-hidden">
       {/* Subtle glow background */}
       <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-orange-500/8 blur-3xl pointer-events-none" />
       <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-cyan-500/8 blur-3xl pointer-events-none" />
@@ -165,8 +165,8 @@ export const ScreeningQuestion = ({
               className={clsx(
                 'w-full p-5 rounded-2xl border-2 transition-all duration-300 text-left flex items-center gap-4 group',
                 isSelected
-                  ? 'border-orange-600 bg-orange-300 dark:bg-orange-600/30 shadow-lg shadow-orange-500/30 dark:shadow-orange-500/20'
-                  : 'border-slate-300 dark:border-white/15 bg-white dark:bg-slate-800 hover:border-orange-600/60 hover:bg-orange-100 dark:hover:bg-slate-700/60'
+                  ? 'border-orange-600 bg-orange-300 dark:bg-orange-600/40 shadow-lg shadow-orange-500/30 dark:shadow-orange-500/20'
+                  : 'border-slate-300 dark:border-white/10 bg-white dark:bg-navy-900 hover:border-orange-600/60 hover:bg-orange-100 dark:hover:bg-navy-700'
               )}
             >
               {/* Letter badge */}
@@ -175,7 +175,7 @@ export const ScreeningQuestion = ({
                   'flex-shrink-0 w-9 h-9 rounded-xl border-2 flex items-center justify-center text-sm font-bold transition-all duration-300',
                   isSelected
                     ? 'border-orange-600 bg-orange-600 text-white shadow-md shadow-orange-500/40'
-                    : 'border-slate-400 dark:border-white/25 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 group-hover:border-orange-600/70 group-hover:text-orange-600 dark:group-hover:text-orange-400'
+                    : 'border-slate-400 dark:border-white/20 bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 group-hover:border-orange-600/70 group-hover:text-orange-600 dark:group-hover:text-orange-400'
                 )}
               >
                 {isSelected ? '✓' : letter}

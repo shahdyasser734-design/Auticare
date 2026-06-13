@@ -269,7 +269,7 @@ export const SpecialistScreeningResults = () => {
               </div>
 
               {/* Recommendation */}
-              <div className="bg-white/60 dark:standard-card/5 p-5">
+              <div className="bg-white/60 dark:bg-navy-800 p-5 rounded-xl">
                 <p className="text-sm font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
                   Recommendation
                 </p>
