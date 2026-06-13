@@ -66,7 +66,13 @@ export const childrenService = {
       const response = await apiClient.get<any>('/children');
       const data = response.data?.data ?? response.data;
       const list = Array.isArray(data) ? data : [];
-      const children = list.map(normalizeChild);
+      const rawChildren = list.map(normalizeChild);
+      const children = rawChildren.filter(
+        (child, index, self) =>
+          index === self.findIndex((c: any) =>
+            (c.id || c.childId) === ((child as any).id || (child as any).childId)
+          )
+      );
       // Persist first child ID if we got results
       if (children.length > 0 && children[0].id) {
         localStorage.setItem('latestChildId', children[0].id);

@@ -3,8 +3,10 @@ import { MainLayout } from '../../layouts/MainLayout';
 import { chatServiceAPI } from '../../services/api/chatService';
 import type { ChatConversation, ChatMessage } from '../../types';
 import { Send, MessageSquare, Phone, Video, Link as LinkIcon } from 'lucide-react';
+import { useNotification } from '../../context/NotificationContext';
 
 export const ChatPage = () => {
+  const { clearChatUnread } = useNotification();
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<ChatConversation | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -36,13 +38,19 @@ export const ChatPage = () => {
       try {
         const data = await chatServiceAPI.getMessages(selectedConversation.id);
         setMessages(data);
+        if (selectedConversation.unreadCount > 0) {
+          await chatServiceAPI.markChatAsRead(selectedConversation.id);
+          if (clearChatUnread) {
+            clearChatUnread(selectedConversation.unreadCount);
+          }
+        }
       } catch (err) {
         console.error('Error loading messages:', err);
       }
     };
 
     loadMessages();
-  }, [selectedConversation]);
+  }, [selectedConversation, clearChatUnread]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;

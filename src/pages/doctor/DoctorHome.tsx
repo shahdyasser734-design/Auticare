@@ -35,7 +35,7 @@ export const DoctorHome = () => {
   const { user } = useAuth();
   const isDoctor = user?.role === 'doctor';
   
-  const { unreadCount: totalUnreadCount, notifications: allNotifications } = useNotification();
+  const { unreadCount: totalUnreadCount, notifications: allNotifications, chatUnreadCount } = useNotification();
   const notifications = allNotifications.slice(0, 5);
 
   const [dashboardData, setDashboardData] = useState<DashboardSpecialistData | null>(null);
@@ -163,6 +163,7 @@ export const DoctorHome = () => {
     upcomingSessions: confirmedSessions.length,
     pendingRequests: pendingBookings.length,
     completedSessions: (sessions || []).filter((s) => s && s.status === 'completed').length,
+    unreadMessages: chatUnreadCount,
   };
 
   const stats = isDoctor ? createDoctorStats(computedDashboardData) : createTherapistStats(computedDashboardData);

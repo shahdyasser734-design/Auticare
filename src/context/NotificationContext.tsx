@@ -14,6 +14,7 @@ interface NotificationContextType {
   newestUnreadMsg: string | null;
   clearNewestMsg: () => void;
   chatUnreadCount: number;
+  clearChatUnread: (countToClear: number) => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -25,8 +26,16 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [newestUnreadMsg, setNewestUnreadMsg] = useState<string | null>(null);
-  const [chatUnreadCount, setChatUnreadCount] = useState(0);
+  const [chatUnreadCount, setChatUnreadCount] = useState(() => Number(localStorage.getItem('chatUnreadCount') || '0'));
   
+  const clearChatUnread = (countToClear: number) => {
+    setChatUnreadCount(prev => {
+      const newCount = Math.max(0, prev - countToClear);
+      localStorage.setItem('chatUnreadCount', String(newCount));
+      return newCount;
+    });
+  };
+
   const prevUnreadRef = useRef<number>(0);
 
   const fetchNotifications = async () => {
@@ -40,11 +49,12 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       if (unreadCount > 0) {
         const newest = list.find(n => !n.isRead);
         if (newest) {
-          const seenAlerts = JSON.parse(localStorage.getItem('seenAlerts') || '[]');
-          if (!seenAlerts.includes(newest.id)) {
+          const lastSeenId = Number(localStorage.getItem('lastSeenNotificationId') || '0');
+          const currentId = Number(newest.id);
+          
+          if (currentId > lastSeenId) {
             setNewestUnreadMsg(newest.message || 'You have a new notification!');
-            seenAlerts.push(newest.id);
-            localStorage.setItem('seenAlerts', JSON.stringify(seenAlerts));
+            localStorage.setItem('lastSeenNotificationId', String(currentId));
           }
         }
       }
@@ -54,10 +64,10 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         const chats = await chatServiceAPI.getMyChats();
         const cUnread = chats.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
         setChatUnreadCount(cUnread);
+        localStorage.setItem('chatUnreadCount', String(cUnread));
       } catch(e) {
         // ignore chat fetch errors
       }
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       // suppress warning per user constraint
     } finally {
@@ -116,7 +126,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       markAllAsRead,
       newestUnreadMsg,
       clearNewestMsg,
-      chatUnreadCount
+      chatUnreadCount,
+      clearChatUnread
     }}>
       {children}
     </NotificationContext.Provider>

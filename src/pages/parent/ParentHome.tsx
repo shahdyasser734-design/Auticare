@@ -62,17 +62,24 @@ export const ParentHome = () => {
 
       let finalPlanList = plansArrays.flat().filter(p => p.status === 'active');
       let finalUpcoming = upcoming;
+      let fetchedNotes: Note[] = [];
 
       if (activeChildId) {
         finalPlanList = finalPlanList.filter(p => String(p.childId) === String(activeChildId));
         finalUpcoming = finalUpcoming.filter(s => String(s.childId) === String(activeChildId));
+        fetchedNotes = await notesService.getChildNotes(activeChildId).catch(() => []);
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const uniqueChildren = Array.from(new Map(childList.map(c => [((c as any).childId || c.id), c])).values());
+      const uniqueChildren = childList.filter(
+        (child, index, self) =>
+          index === self.findIndex((c: any) =>
+            (c.id || c.childId) === ((child as any).id || (child as any).childId)
+          )
+      );
       setChildren(uniqueChildren);
       setPlans(finalPlanList);
-      setNotes([]);
+      setNotes(fetchedNotes);
       setUpcomingSessions(finalUpcoming.length);
     } catch (err) {
       console.error('Error fetching parent dashboard:', err);

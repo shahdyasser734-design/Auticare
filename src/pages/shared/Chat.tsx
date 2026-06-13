@@ -7,6 +7,7 @@ import { chatServiceAPI, type ChatConversation, type ChatMessage } from '../../s
 import { bookingService } from '../../services/api/bookings';
 import { useAuth } from '../../context/useAuth';
 import { MessageSquare, Send, Loader2, RefreshCw, ChevronLeft } from 'lucide-react';
+import { useNotification } from '../../context/NotificationContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -87,6 +88,7 @@ const isZoomMsg = (msg: ChatMessage) =>
 
 export const Chat = () => {
   const { user } = useAuth();
+  const { clearChatUnread } = useNotification();
   const location = useLocation();
   const myId = String(user?.id ?? '');
 
@@ -210,12 +212,20 @@ export const Chat = () => {
       const raw = await chatServiceAPI.getMessages(conv.id);
       const data = Array.isArray(raw) ? raw : [];
       setMessages(data);
+      
+      if (conv.unreadCount && conv.unreadCount > 0) {
+        await chatServiceAPI.markChatAsRead(conv.id);
+        if (clearChatUnread) {
+          clearChatUnread(conv.unreadCount);
+        }
+        conv.unreadCount = 0;
+      }
     } catch (err) {
       console.error('[Chat] fetchMessages error:', err);
     } finally {
       setLoadingMessages(false);
     }
-  }, []);
+  }, [clearChatUnread]);
 
   // Initial load — auto-select first conversation
 // eslint-disable-next-line react-hooks/set-state-in-effect
