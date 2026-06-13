@@ -210,12 +210,20 @@ export const PatientDetail = () => {
                       <span className="text-slate-500 dark:text-slate-400 font-semibold">
                         Status: <span className="capitalize text-primary-700 dark:text-primary-300 font-bold">{p.status || p.progress || 'active'}</span>
                       </span>
-                      <button 
-                        onClick={() => navigate(`/treatment-plan/${id}`)}
-                        className="text-primary-600 dark:text-primary-400 hover:text-primary-800 font-bold underline cursor-pointer px-2 py-1 bg-white/50 dark:bg-slate-900/50 rounded-lg shadow-sm border border-primary-100 dark:border-primary-900/30 transition-all hover:shadow-md"
-                      >
-                        Edit Treatment Plan
-                      </button>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => navigate(`/treatment-plan/${id}`)}
+                          className="text-primary-600 dark:text-primary-400 hover:text-primary-800 font-bold underline cursor-pointer px-2 py-1 bg-white/50 dark:bg-slate-900/50 rounded-lg shadow-sm border border-primary-100 dark:border-primary-900/30 transition-all hover:shadow-md"
+                        >
+                          Edit Treatment Plan
+                        </button>
+                        <button 
+                          onClick={() => navigate(`/treatment-plan/${id}?action=new`)}
+                          className="text-green-600 dark:text-green-400 hover:text-green-800 font-bold underline cursor-pointer px-2 py-1 bg-green-50/50 dark:bg-green-900/30 rounded-lg shadow-sm border border-green-200 dark:border-green-900/30 transition-all hover:shadow-md"
+                        >
+                          Update Treatment Plan
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))

@@ -82,14 +82,19 @@ export const TreatmentPlan = () => {
       }
 
       // 2. Fetch treatment plans for child
-      const plans = await treatmentPlansService.getChildPlans(childId);
+      const searchParams = new URLSearchParams(window.location.search);
+      const isNewAction = searchParams.get('action') === 'new';
+      
       let activePlan = null;
-
-      if (plans && plans.length > 0) {
-        if (isParent) {
-          activePlan = plans.find((p: any) => p.status === 'active' || p.status === 'completed') as unknown as TreatmentPlanType;
-        } else {
-          activePlan = plans[0] as unknown as TreatmentPlanType;
+      
+      if (!isNewAction) {
+        const plans = await treatmentPlansService.getChildPlans(childId);
+        if (plans && plans.length > 0) {
+          if (isParent) {
+            activePlan = plans.find((p: any) => p.status === 'active' || p.status === 'completed') as unknown as TreatmentPlanType;
+          } else {
+            activePlan = plans[0] as unknown as TreatmentPlanType;
+          }
         }
       }
 
@@ -484,40 +489,14 @@ export const TreatmentPlan = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-6 border-t">
-                {plan && (
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    <Button variant="outline" onClick={async () => {
-                      if (!child?.parentId) return alert('No parent linked to this child.');
-                      await apiClient.post('/notifications', {
-                        userId: child.parentId,
-                        title: 'Treatment Plan Summary',
-                        message: `Dr. ${user?.name || 'Specialist'} has shared a plan update.`,
-                        type: 'treatment-plan'
-                      });
-                      alert('Sent to Parent successfully!');
-                    }} className="flex-1 sm:flex-none">
-                      Send to Parent
-                    </Button>
-                    <Button variant="outline" onClick={async () => {
-                      await apiClient.post('/notifications', {
-                        userId: 'therapist',
-                        title: 'Treatment Plan Assignment',
-                        message: `Dr. ${user?.name || 'Specialist'} has shared a plan update.`,
-                        type: 'treatment-plan'
-                      });
-                      alert('Sent to Therapist successfully!');
-                    }} className="flex-1 sm:flex-none">
-                      Send to Therapist
-                    </Button>
-                  </div>
-                )}
+              <div className="flex flex-col sm:flex-row justify-end items-center gap-3 pt-6 border-t">
                 <div className="flex justify-end gap-3 w-full sm:w-auto">
                   <Button variant="outline" onClick={() => navigate(-1)} disabled={saving}>
                     Cancel
                   </Button>
-                  <Button onClick={handleSavePlan} disabled={saving} className="bg-green-600 hover:bg-green-700 text-white font-semibold">
-                    {saving ? 'Saving Pathway...' : plan ? 'Update Treatment Plan' : 'Create Treatment Plan'}
+                  <Button onClick={handleSavePlan} disabled={saving} className="bg-green-600 hover:bg-green-700 text-white font-semibold flex items-center gap-2">
+                    <Sparkles size={16} />
+                    {saving ? 'Publishing...' : 'Publish Treatment Plan'}
                   </Button>
                 </div>
               </div>
