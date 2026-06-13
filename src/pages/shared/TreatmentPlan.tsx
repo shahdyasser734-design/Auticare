@@ -35,19 +35,13 @@ export const TreatmentPlan = () => {
   const [publishError, setPublishError] = useState<string | null>(null);
   
   // Treatment Plan states
+  // Treatment Plan states
   const [plan, setPlan] = useState<TreatmentPlanType | null>(null);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [goal, setGoal] = useState('');
+  const [notes, setNotes] = useState('');
+  const [progress, setProgress] = useState<'active' | 'completed' | 'paused'>('active');
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState('');
-  const [goals, setGoals] = useState<string[]>([]);
-  const [newGoal, setNewGoal] = useState('');
-  const [homeActivities, setHomeActivities] = useState<string[]>([]);
-  const [newActivity, setNewActivity] = useState('');
-  const [recommendations, setRecommendations] = useState('');
-  const [notes, setNotes] = useState('');
-  const [status, setStatus] = useState<'active' | 'completed' | 'paused'>('active');
-  const [assignedTherapists, setAssignedTherapists] = useState<string[]>([]);
 
 
   // File uploads
@@ -96,12 +90,11 @@ export const TreatmentPlan = () => {
 
       if (activePlan) {
         setPlan(activePlan);
-        setTitle(activePlan.title);
-        setDescription(activePlan.description || '');
+        setGoal(activePlan.goal || activePlan.goals?.join('\n') || '');
+        setNotes(activePlan.notes || '');
         setStartDate(activePlan.startDate ? activePlan.startDate.split('T')[0] : '');
         setEndDate(activePlan.endDate ? activePlan.endDate.split('T')[0] : '');
-        setGoals(activePlan.goal ? activePlan.goal.split('\n') : (activePlan.goals || []));
-        setStatus((activePlan.progress || activePlan.status || 'active') as 'active' | 'completed' | 'paused');
+        setProgress((activePlan.progress || activePlan.status || 'active') as 'active' | 'completed' | 'paused');
         
         if (isDoctor) {
           setEditMode(true);
@@ -137,36 +130,27 @@ export const TreatmentPlan = () => {
   /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 
   const handleSavePlan = async () => {
-    if (!childId || !title.trim()) return;
+    if (!childId) return;
     setSaving(true);
     try {
       let savedPlan: TreatmentPlanType;
-      const finalNotes = notes.trim() || description.trim() || 'Development and Clinical Treatment Plan';
-      const finalGoal = goals.length > 0 ? goals.join('\n') : 'Development Plan';
       
+      const finalGoal = goal.trim() || '';
+      const finalNotes = notes.trim() || '';
+      const finalEndDate = endDate ? new Date(endDate).toISOString() : null;
+
       if (plan?.id) {
         const updatePayload = {
           goal: finalGoal,
           notes: finalNotes,
-          progress: status,
-          endDate: endDate ? new Date(endDate).toISOString() : null
+          progress: progress,
+          endDate: finalEndDate
         };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await treatmentPlansService.updatePlan(plan.id, updatePayload as any);
         
-        const plans = await treatmentPlansService.getChildPlans(childId);
-        if (plans && plans.length > 0) {
-          savedPlan = plans[0] as unknown as TreatmentPlanType;
-        } else {
-          savedPlan = {
-            ...plan,
-            goals,
-            notes: finalNotes,
-            description: description || finalNotes,
-            endDate: endDate || undefined,
-            updatedAt: new Date().toISOString()
-          } as unknown as TreatmentPlanType;
-        }
+        console.log('[DEBUG] PUT Payload:', { planId: plan.id, payload: updatePayload });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const res = await treatmentPlansService.updatePlan(plan.id, updatePayload as any);
+        savedPlan = res as unknown as TreatmentPlanType;
       } else {
         let finalSpecialistId: number | null = null;
         
@@ -186,27 +170,23 @@ export const TreatmentPlan = () => {
           console.warn('[TREATMENT PLAN] Failed to get specialist from bookings:', err);
         }
         
-        if (!finalSpecialistId && user?.id) {
-          const specIdFromUser = parseInt(user.id, 10);
-          if (!isNaN(specIdFromUser) && specIdFromUser > 0) {
-            finalSpecialistId = specIdFromUser;
-          }
-        }
-        
         if (!finalSpecialistId) {
-          finalSpecialistId = 1;
+          finalSpecialistId = 1; // Fallback
         }
         
-        const childIdNum = parseInt(childId, 10);
+        const childIdNum = parseInt(childId, 10) || 0;
         
         const createPayload = {
           childId: childIdNum,
           specialistId: finalSpecialistId,
           startDate: new Date().toISOString(),
-          endDate: endDate ? new Date(endDate).toISOString() : null,
+          endDate: finalEndDate,
           goal: finalGoal,
           notes: finalNotes
         };
+        
+        console.log('[DEBUG] POST Payload:', { childId, specialistId: finalSpecialistId, payload: createPayload });
+        
         try {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const res = await treatmentPlansService.createPlan(createPayload as any);
@@ -270,25 +250,7 @@ export const TreatmentPlan = () => {
     }
   };
 
-  const handleAddGoal = () => {
-    if (!newGoal.trim()) return;
-    setGoals([...goals, newGoal.trim()]);
-    setNewGoal('');
-  };
 
-  const handleRemoveGoal = (index: number) => {
-    setGoals(goals.filter((_, i) => i !== index));
-  };
-
-  const handleAddActivity = () => {
-    if (!newActivity.trim()) return;
-    setHomeActivities([...homeActivities, newActivity.trim()]);
-    setNewActivity('');
-  };
-
-  const handleRemoveActivity = (index: number) => {
-    setHomeActivities(homeActivities.filter((_, i) => i !== index));
-  };
 
 
   const handleFileUpload = async (file: File | null) => {
@@ -335,10 +297,7 @@ export const TreatmentPlan = () => {
               onClick={() => {
                 setEditMode(true);
                 if (plan) {
-                  setHomeActivities(homeActivities.length ? homeActivities : ['Sensory integration activities', 'Daily schedules with visual supports']);
-                  setAssignedTherapists(assignedTherapists.length ? assignedTherapists : ['Sarah Jenkins (Speech Therapist)', 'Michael Chang (Occupational Therapist)']);
-                  setRecommendations(recommendations || 'Regular occupational therapy twice a week. Consistent structure at home.');
-                  setNotes(notes || 'Child shows high engagement during visual activities.');
+                  // Plan data already prefilled in states
                 }
               }}
               className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold flex items-center gap-2 rounded-2xl shadow-lg shadow-primary-500/20"
@@ -408,23 +367,14 @@ export const TreatmentPlan = () => {
               </div>
 
               <div className="space-y-4">
-                <Input
-                  label="Plan Title"
-                  placeholder="e.g. Behavioral & Sensory Development Plan"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                  fullWidth
-                />
-
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Description Summary (Optional)</label>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Goal</label>
                   <textarea
-                    placeholder="e.g. Custom clinical pathway focusing on language stimulation, joint attention milestones, and behavioral routines..."
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Enter treatment goals..."
+                    value={goal}
+                    onChange={(e) => setGoal(e.target.value)}
                     className="w-full p-4 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none dark:bg-slate-900 dark:border-white/10 dark:text-white text-sm"
-                    rows={3}
+                    rows={4}
                   />
                 </div>
 
@@ -446,10 +396,10 @@ export const TreatmentPlan = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Status</label>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Progress</label>
                   <select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value as 'active' | 'completed' | 'paused')}
+                    value={progress}
+                    onChange={(e) => setProgress(e.target.value as 'active' | 'completed' | 'paused')}
                     className="w-full p-3.5 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 shadow-sm outline-none focus:border-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white text-sm"
                   >
                     <option value="active">Active</option>
@@ -458,76 +408,14 @@ export const TreatmentPlan = () => {
                   </select>
                 </div>
 
-                {/* Dynamic Goals Editor */}
                 <div className="border-t pt-5">
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Goals Configuration</label>
-                  <div className="flex gap-2 mb-3">
-                    <Input
-                      placeholder="Add new development target (e.g. increase response to name by 80%)"
-                      value={newGoal}
-                      onChange={(e) => setNewGoal(e.target.value)}
-                      onKeyPress={(e) => { if (e.key === 'Enter') handleAddGoal(); }}
-                      fullWidth
-                    />
-                    <Button onClick={handleAddGoal} className="px-4 shrink-0 rounded-2xl">
-                      <Plus size={18} />
-                    </Button>
-                  </div>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {goals.map((goal, idx) => (
-                      <div key={idx} className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950/40 rounded-xl border border-slate-100">
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{goal}</span>
-                        <button onClick={() => handleRemoveGoal(idx)} className="text-red-500 hover:text-red-700 p-1">
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Dynamic Home Activities Editor */}
-                <div className="border-t pt-5">
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Assigned Home Activities</label>
-                  <div className="flex gap-2 mb-3">
-                    <Input
-                      placeholder="Add daily routine / home homework"
-                      value={newActivity}
-                      onChange={(e) => setNewActivity(e.target.value)}
-                      onKeyPress={(e) => { if (e.key === 'Enter') handleAddActivity(); }}
-                      fullWidth
-                    />
-                    <Button onClick={handleAddActivity} className="px-4 shrink-0 rounded-2xl">
-                      <Plus size={18} />
-                    </Button>
-                  </div>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {homeActivities.map((act, idx) => (
-                      <div key={idx} className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950/40 rounded-xl border border-slate-100">
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{act}</span>
-                        <button onClick={() => handleRemoveActivity(idx)} className="text-red-500 hover:text-red-700 p-1">
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Recommendations */}
-                <div className="border-t pt-5">
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Recommendations & Notes</label>
-                  <textarea
-                    placeholder="Input direct clinical guidelines for parents and therapists..."
-                    value={recommendations}
-                    onChange={(e) => setRecommendations(e.target.value)}
-                    className="w-full p-4 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none dark:bg-slate-900 dark:border-white/10 dark:text-white text-sm mb-4"
-                    rows={3}
-                  />
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Notes</label>
                   <textarea
                     placeholder="Add personal internal consultation notes..."
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     className="w-full p-4 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none dark:bg-slate-900 dark:border-white/10 dark:text-white text-sm"
-                    rows={2}
+                    rows={4}
                   />
                 </div>
 
@@ -555,7 +443,7 @@ export const TreatmentPlan = () => {
                 <Button variant="outline" onClick={() => setEditMode(false)} disabled={saving}>
                   Cancel
                 </Button>
-                <Button onClick={handleSavePlan} disabled={saving || !title.trim()} className="bg-green-600 hover:bg-green-700 text-white font-semibold">
+                <Button onClick={handleSavePlan} disabled={saving} className="bg-green-600 hover:bg-green-700 text-white font-semibold">
                   {saving ? 'Saving Pathway...' : 'Publish Treatment Plan'}
                 </Button>
               </div>
@@ -637,7 +525,7 @@ export const TreatmentPlan = () => {
                     <div className="p-3 bg-green-50/50 dark:bg-green-950/20 rounded-2xl border border-green-200/50 flex justify-between items-center text-xs">
                       <span className="text-slate-600 dark:text-slate-300 font-semibold">Active Timeline</span>
                       <Badge variant="success">
-                        <span className="capitalize">{status}</span>
+                        <span className="capitalize">{plan.progress || plan.status || 'Active'}</span>
                       </Badge>
                     </div>
                   </div>
@@ -661,7 +549,6 @@ export const TreatmentPlan = () => {
                   )}
                 </Card>
               ) : (
-                !isDoctor ? (
                   <Card className="border border-slate-200 dark:border-white/10 shadow-lg rounded-3xl p-6 md:p-8">
                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
                       <FileText className="text-primary-600" size={24} />
@@ -694,126 +581,6 @@ export const TreatmentPlan = () => {
                       </div>
                     </div>
                   </Card>
-                ) : (
-                <div className="space-y-6">
-                  {/* Title & Timeline Summary */}
-                  <Card className="border border-slate-200 dark:border-white/10 shadow-lg rounded-3xl p-6 md:p-8 bg-gradient-to-r from-primary-50/30 to-transparent">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="space-y-2">
-                        <h2 className="text-3xl font-bold text-slate-900 dark:text-white">{title}</h2>
-                        <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{description}</p>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 pt-6 border-t border-slate-200 dark:border-white/10">
-                      <div>
-                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Creation Date</p>
-                        <p className="font-bold text-slate-800 dark:text-slate-200">{plan.createdAt ? new Date(plan.createdAt).toLocaleDateString() : new Date().toLocaleDateString()}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Start Date</p>
-                        <p className="font-bold text-slate-800 dark:text-slate-200">{startDate ? new Date(startDate).toLocaleDateString() : 'N/A'}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">End Date</p>
-                        <p className="font-bold text-slate-800 dark:text-slate-200">{endDate ? new Date(endDate).toLocaleDateString() : 'Continuous evaluation'}</p>
-                      </div>
-                    </div>
-                  </Card>
-
-                  {/* Goals Checklist */}
-                  <Card className="border border-slate-200 dark:border-white/10 shadow-md rounded-3xl p-6 space-y-4">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="text-primary-600" size={22} />
-                      <h3 className="font-bold text-xl text-slate-900 dark:text-white">Active Goals</h3>
-                    </div>
-                    <div className="grid gap-3 pt-2">
-                      {goals.length === 0 ? (
-                        <p className="text-slate-500 text-sm">No structured goals configured.</p>
-                      ) : (
-                        goals.map((goal, idx) => (
-                          <div key={idx} className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-100 dark:border-white/5 transition-all hover:border-primary-200">
-                            <span className="w-6 h-6 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
-                              {idx + 1}
-                            </span>
-                            <p className="text-slate-700 dark:text-slate-300 text-sm font-medium">{goal}</p>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </Card>
-
-                  {/* Assigned Therapists */}
-                  <Card className="border border-slate-200 dark:border-white/10 shadow-md rounded-3xl p-6 space-y-4">
-                    <div className="flex items-center gap-2">
-                      <User className="text-purple-500" size={22} />
-                      <h3 className="font-bold text-xl text-slate-900 dark:text-white">Assigned Specialists & Therapists</h3>
-                    </div>
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      {assignedTherapists.length === 0 ? (
-                        assignedTherapists.concat(['Sarah Jenkins (Speech Therapist)', 'Michael Chang (Occupational Therapist)']).map((therapist, idx) => (
-                          <Badge key={idx} variant="secondary">
-                            {therapist}
-                          </Badge>
-                        ))
-                      ) : (
-                        assignedTherapists.map((therapist, idx) => (
-                          <Badge key={idx} variant="secondary">
-                            {therapist}
-                          </Badge>
-                        ))
-                      )}
-                    </div>
-                  </Card>
-
-                  {/* Home Activities */}
-                  <Card className="border border-slate-200 dark:border-white/10 shadow-md rounded-3xl p-6 space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Activity className="text-orange-500" size={22} />
-                      <h3 className="font-bold text-xl text-slate-900 dark:text-white">Home Activities & Routines</h3>
-                    </div>
-                    <div className="grid gap-3 pt-2">
-                      {homeActivities.length === 0 ? (
-                        homeActivities.concat(['Structured visual timers', 'Speech stimulation cards daily']).map((activity, idx) => (
-                          <div key={idx} className="p-4 bg-orange-50/30 dark:bg-orange-950/10 border border-orange-100/50 rounded-2xl flex gap-3 items-center">
-                            <span className="text-lg">🏡</span>
-                            <p className="text-slate-700 dark:text-slate-300 text-sm font-semibold">{activity}</p>
-                          </div>
-                        ))
-                      ) : (
-                        homeActivities.map((activity, idx) => (
-                          <div key={idx} className="p-4 bg-orange-50/30 dark:bg-orange-950/10 border border-orange-100/50 rounded-2xl flex gap-3 items-center">
-                            <span className="text-lg">🏡</span>
-                            <p className="text-slate-700 dark:text-slate-300 text-sm font-semibold">{activity}</p>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </Card>
-
-                  {/* Recommendations & Notes */}
-                  <Card className="border border-slate-200 dark:border-white/10 shadow-md rounded-3xl p-6 space-y-4">
-                    <div className="flex items-center gap-2">
-                      <FileText className="text-cyan-500" size={22} />
-                      <h3 className="font-bold text-xl text-slate-900 dark:text-white">Recommendations & Notes</h3>
-                    </div>
-                    <div className="bg-slate-50 dark:bg-slate-900/40 rounded-2xl p-5 border border-slate-100 dark:border-white/5 space-y-4">
-                      <div>
-                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Clinical Recommendations</p>
-                        <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
-                          {recommendations || plan.description || 'No direct clinical recommendation recorded. Continue current activities.'}
-                        </p>
-                      </div>
-                      {notes && (
-                        <div className="pt-4 border-t border-slate-200 dark:border-white/5">
-                          <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Clinical Note</p>
-                          <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium">{notes}</p>
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-                </div>
-                )
               )}
             </div>
           </div>
