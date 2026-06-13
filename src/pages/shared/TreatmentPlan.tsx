@@ -25,7 +25,6 @@ export const TreatmentPlan = () => {
 
   const isDoctor = user?.role === 'doctor';
   const isParent = user?.role === 'parent';
-  const isTherapist = user?.role === 'therapist';
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -102,7 +101,7 @@ export const TreatmentPlan = () => {
         setStartDate(activePlan.startDate ? activePlan.startDate.split('T')[0] : '');
         setEndDate(activePlan.endDate ? activePlan.endDate.split('T')[0] : '');
         setGoals(activePlan.goal ? activePlan.goal.split('\n') : (activePlan.goals || []));
-        setStatus(activePlan.progress || activePlan.status || 'active');
+        setStatus((activePlan.progress || activePlan.status || 'active') as 'active' | 'completed' | 'paused');
         
         if (isDoctor) {
           setEditMode(true);
@@ -680,7 +679,9 @@ export const TreatmentPlan = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4 border-t border-slate-200 dark:border-white/10">
                         <div>
                           <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Progress</p>
-                          <Badge variant="secondary" className="capitalize">{plan.progress || plan.status || 'Active'}</Badge>
+                          <div className="capitalize inline-block">
+                            <Badge variant="secondary">{plan.progress || plan.status || 'Active'}</Badge>
+                          </div>
                         </div>
                         <div>
                           <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Start Date</p>

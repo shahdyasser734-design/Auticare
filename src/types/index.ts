@@ -236,6 +236,8 @@ export interface TreatmentPlan {
   progressOverview?: ProgressItem[];
   createdAt: string;
   updatedAt: string;
+  goal?: string;
+  progress?: string;
 }
 
 export interface ProgressItem {
