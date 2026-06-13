@@ -8,12 +8,16 @@ export interface Note {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  senderRole?: string;
+  receiverRole?: string;
 }
 
 export interface CreateNoteRequest {
   title: string;
   content: string;
   childId: string;
+  senderRole?: string;
+  receiverRole?: string;
 }
 
 export const notesService = {

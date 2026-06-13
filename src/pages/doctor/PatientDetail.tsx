@@ -12,6 +12,8 @@ import { notesService, type Note } from '../../services/api/notes';
 import { NoteCard } from '../../components/notes/NoteCard';
 import { treatmentPlansService, type TreatmentPlan } from '../../services/api/treatmentPlans';
 import type { ScreeningResult } from '../../types';
+import { useAuth } from '../../context/useAuth';
+import apiClient from '../../services/apiClient';
 
 export const PatientDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +25,10 @@ export const PatientDetail = () => {
   const [newNote, setNewNote] = useState('');
   const [savingNote, setSavingNote] = useState(false);
   const [plans, setPlans] = useState<TreatmentPlan[]>([]);
+  const { user } = useAuth();
+  
+  // Default selected receiver based on role
+  const [selectedReceiverRole, setSelectedReceiverRole] = useState(user?.role === 'therapist' ? 'doctor' : 'parent');
 
   useEffect(() => {
     const fetchPatientData = async () => {
@@ -64,9 +70,17 @@ export const PatientDetail = () => {
           treatmentPlansService.getChildPlans(id).catch(() => []),
         ]);
         
+        // Filter notes strictly based on role: User must be sender or receiver, or legacy notes without roles.
+        const filteredNotes = notesData.filter((note: Note) => 
+          !note.senderRole || 
+          !note.receiverRole || 
+          note.senderRole === user?.role || 
+          note.receiverRole === user?.role
+        );
+        
         setPatient(childData);
         setScreeningResults(Array.isArray(resultsData) ? resultsData : [resultsData]);
-        setNotes(notesData);
+        setNotes(filteredNotes);
         setPlans(plansData);
       } catch (err) {
         console.error('Error fetching patient data:', err);
@@ -85,9 +99,23 @@ export const PatientDetail = () => {
         title: 'Session Note',
         content: newNote,
         childId: id,
+        senderRole: user?.role,
+        receiverRole: selectedReceiverRole
       });
       setNotes([addedNote, ...notes]);
       setNewNote('');
+
+      // Send notification to the target recipient
+      try {
+        await apiClient.post('/notifications', {
+          userId: selectedReceiverRole === 'parent' ? patient?.parentId || '' : selectedReceiverRole,
+          title: 'New Session Note',
+          message: `${user?.name || 'A specialist'} has sent you a new note regarding ${patientName}.`,
+          type: 'notes'
+        });
+      } catch (err) {
+        console.warn('Failed to dispatch note notification', err);
+      }
     } catch (err) {
       console.error('Error saving note:', err);
     } finally {
@@ -107,7 +135,7 @@ export const PatientDetail = () => {
           <Avatar name={patientName} size="xl" />
           <div>
             <h1 className="text-4xl font-bold text-slate-900 dark:text-white">{patientName}</h1>
-            {screeningResults.length > 0 && screeningResults[0].riskLevel && (
+            {screeningResults.length > 0 && screeningResults[0].riskLevel && screeningResults[0].riskLevel.toLowerCase() !== 'unknown' && (
               <div className="mt-2 mb-1">
                 <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold uppercase ${
                   screeningResults[0].riskLevel.toLowerCase() === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300' :
@@ -119,12 +147,14 @@ export const PatientDetail = () => {
               </div>
             )}
             <p className="text-slate-700 dark:text-slate-300 mt-1">
-              {patient.age ? `Age: ${patient.age}` : (screeningResults.length === 0 ? 'Age: Not Provided' : null)}
-              {patient.gender && patient.gender.toLowerCase() !== 'unknown' ? (
-                (patient.age || screeningResults.length === 0 ? ' • ' : '') + `Gender: ${patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1).toLowerCase()}`
-              ) : (
-                screeningResults.length === 0 ? ' • Gender: Not Provided' : null
-              )}
+              {(() => {
+                const infoParts = [];
+                if (patient.age) infoParts.push(`Age: ${patient.age}`);
+                if (patient.gender && patient.gender.toLowerCase() !== 'unknown') {
+                  infoParts.push(`Gender: ${patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1).toLowerCase()}`);
+                }
+                return infoParts.join(' • ');
+              })()}
             </p>
           </div>
         </div>
@@ -254,6 +284,25 @@ export const PatientDetail = () => {
         {/* Add New Note */}
         <Card>
           <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">Add Session Note</h3>
+          <div className="flex flex-col sm:flex-row gap-4 mb-4">
+            <div className="w-full sm:w-1/3">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Send Note To</label>
+              <select
+                value={selectedReceiverRole}
+                onChange={(e) => setSelectedReceiverRole(e.target.value)}
+                className="w-full p-2.5 border border-slate-300 dark:border-white/10 rounded-xl standard-card text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm bg-white dark:bg-slate-900"
+              >
+                {user?.role === 'doctor' && <option value="parent">Parent</option>}
+                {user?.role === 'doctor' && <option value="therapist">Therapist</option>}
+                
+                {user?.role === 'therapist' && <option value="doctor">Doctor</option>}
+                {user?.role === 'therapist' && <option value="parent">Parent</option>}
+                
+                {user?.role === 'parent' && <option value="doctor">Doctor</option>}
+                {user?.role === 'parent' && <option value="therapist">Therapist</option>}
+              </select>
+            </div>
+          </div>
           <textarea
             value={newNote}
             onChange={(e) => setNewNote(e.target.value)}
@@ -267,7 +316,7 @@ export const PatientDetail = () => {
             disabled={!newNote.trim() || savingNote}
             isLoading={savingNote}
           >
-            Save Note
+            Save & Send Note
           </Button>
         </Card>
       </div>

@@ -129,7 +129,7 @@ export const DoctorPatients = () => {
                       <Avatar name={patientName} size="lg" />
                       <div>
                         <h3 className="font-bold text-slate-900 dark:text-white">{patientName}</h3>
-                        {patient.riskLevel && (
+                        {patient.riskLevel && patient.riskLevel.toLowerCase() !== 'unknown' && (
                           <div className="mb-1">
                             <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                               patient.riskLevel.toLowerCase() === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
@@ -140,13 +140,11 @@ export const DoctorPatients = () => {
                             </span>
                           </div>
                         )}
-                        {patient.age ? (
+                        {patient.age && (
                           <p className="text-sm text-slate-650 dark:text-slate-400">
                             Age: {patient.age}
                           </p>
-                        ) : !patient.riskLevel ? (
-                          <p className="text-sm text-slate-500 italic">Age: Not Provided</p>
-                        ) : null}
+                        )}
                         {patient.gender && patient.gender.toLowerCase() !== 'unknown' && (
                           <p className="text-sm text-slate-650 dark:text-slate-400 capitalize">
                             Gender: {patient.gender}

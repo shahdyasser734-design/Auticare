@@ -653,7 +653,8 @@ export const DoctorHome = () => {
                             const agePart = c.age ? `Age: ${c.age} yrs` : '';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             const genderVal = (c as any).gender;
-                            const genderPart = genderVal && genderVal !== 'Unknown' && genderVal !== '' ? genderVal : '';
+                            const isUnknown = !genderVal || genderVal.toString().toLowerCase() === 'unknown' || genderVal === '';
+                            const genderPart = !isUnknown ? genderVal : '';
                             const info = [agePart, genderPart].filter(Boolean).join(' · ');
                             return info ? (
                               <p className="text-stone-400 dark:text-slate-500 text-[11px] mt-0.5 capitalize">{info}</p>

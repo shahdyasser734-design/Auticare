@@ -42,7 +42,17 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return;
     try {
       const data = await notificationService.getNotifications();
-      const list = Array.isArray(data) ? data : [];
+      const rawList = Array.isArray(data) ? data : [];
+      let list = rawList;
+
+      if (user.role === 'doctor') {
+        list = rawList.filter(n => ['treatment-plan', 'message', 'notes', 'system', 'session'].includes(n.type));
+      } else if (user.role === 'therapist') {
+        list = rawList.filter(n => ['session', 'treatment-plan', 'message', 'notes', 'system'].includes(n.type));
+      } else if (user.role === 'parent') {
+        list = rawList.filter(n => ['booking', 'treatment-plan', 'message', 'notes', 'system', 'screening', 'session', 'reminder'].includes(n.type));
+      }
+
       setNotifications(list);
       
       const unreadCount = list.filter(n => !n.isRead).length;
