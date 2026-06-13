@@ -28,7 +28,6 @@ export const TreatmentPlan = () => {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [editMode, setEditMode] = useState(false);
   const [child, setChild] = useState<Child | null>(null);
   const [specialist, setSpecialist] = useState<Specialist | null>(null);
   const [publishSuccess, setPublishSuccess] = useState(false);
@@ -96,10 +95,6 @@ export const TreatmentPlan = () => {
         setEndDate(activePlan.endDate ? activePlan.endDate.split('T')[0] : '');
         setProgress((activePlan.progress || activePlan.status || 'active') as 'active' | 'completed' | 'paused');
         
-        if (isDoctor) {
-          setEditMode(true);
-        }
-        
         // Fetch specialist details who authored the plan
         if (activePlan.doctorId) {
           try {
@@ -110,11 +105,8 @@ export const TreatmentPlan = () => {
           }
         }
       } else {
-        // If no plan and not specialist, child doesn't have one yet
+        // If no plan, child doesn't have one yet
         setPlan(null);
-        if (isDoctor) {
-          setEditMode(true);
-        }
       }
     } catch (err) {
       console.error('Error loading treatment plan:', err);
@@ -197,7 +189,6 @@ export const TreatmentPlan = () => {
       }
 
       setPlan(savedPlan);
-      setEditMode(false);
       setPublishSuccess(true);
       setTimeout(() => setPublishSuccess(false), 5000);
       
@@ -291,21 +282,6 @@ export const TreatmentPlan = () => {
             <ArrowLeft size={16} />
             Back to previous page
           </button>
-
-          {isDoctor && !editMode && (
-            <Button
-              onClick={() => {
-                setEditMode(true);
-                if (plan) {
-                  // Plan data already prefilled in states
-                }
-              }}
-              className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold flex items-center gap-2 rounded-2xl shadow-lg shadow-primary-500/20"
-            >
-              <Edit size={16} />
-              {plan ? 'Edit Treatment Plan' : 'Create Treatment Plan'}
-            </Button>
-          )}
         </div>
 
         {/* Success Banner */}
@@ -354,7 +330,7 @@ export const TreatmentPlan = () => {
         )}
 
         {/* Unified Layout */}
-        {editMode ? (
+        {isDoctor ? (
           /* Create & Edit Plan Mode (For Specialists) - Centered layout properly */
           <div className="max-w-4xl mx-auto w-full space-y-6">
             <Card className="border border-slate-200 dark:border-white/10 shadow-xl rounded-3xl p-6 md:p-8 space-y-6">
@@ -440,11 +416,11 @@ export const TreatmentPlan = () => {
               </div>
 
               <div className="flex justify-end gap-3 pt-6 border-t">
-                <Button variant="outline" onClick={() => setEditMode(false)} disabled={saving}>
+                <Button variant="outline" onClick={() => navigate(-1)} disabled={saving}>
                   Cancel
                 </Button>
                 <Button onClick={handleSavePlan} disabled={saving} className="bg-green-600 hover:bg-green-700 text-white font-semibold">
-                  {saving ? 'Saving Pathway...' : 'Publish Treatment Plan'}
+                  {saving ? 'Saving Pathway...' : plan ? 'Update Treatment Plan' : 'Create Treatment Plan'}
                 </Button>
               </div>
             </Card>
@@ -542,11 +518,6 @@ export const TreatmentPlan = () => {
                   <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto mb-6">
                     A detailed clinical treatment plan hasn't been designed for this child profile yet.
                   </p>
-                  {isDoctor && (
-                    <Button onClick={() => setEditMode(true)} className="rounded-2xl">
-                      Create Treatment Plan
-                    </Button>
-                  )}
                 </Card>
               ) : (
                   <Card className="border border-slate-200 dark:border-white/10 shadow-lg rounded-3xl p-6 md:p-8">
