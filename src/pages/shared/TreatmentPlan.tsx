@@ -34,10 +34,16 @@ export const TreatmentPlan = () => {
   const [publishError, setPublishError] = useState<string | null>(null);
   
   // Treatment Plan states
-  // Treatment Plan states
   const [plan, setPlan] = useState<TreatmentPlanType | null>(null);
-  const [goal, setGoal] = useState('');
-  const [notes, setNotes] = useState('');
+  
+  // Advanced fields
+  const [clinicalAssessment, setClinicalAssessment] = useState('');
+  const [diagnosisSummary, setDiagnosisSummary] = useState('');
+  const [smartGoals, setSmartGoals] = useState('');
+  const [interventionPlan, setInterventionPlan] = useState('');
+  const [progressTracking, setProgressTracking] = useState('');
+  const [generalNotes, setGeneralNotes] = useState('');
+
   const [progress, setProgress] = useState<'active' | 'completed' | 'paused'>('active');
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState('');
@@ -89,8 +95,27 @@ export const TreatmentPlan = () => {
 
       if (activePlan) {
         setPlan(activePlan);
-        setGoal(activePlan.goal || activePlan.goals?.join('\n') || '');
-        setNotes(activePlan.notes || '');
+        try {
+          const parsedGoal = JSON.parse(activePlan.goal || '{}');
+          setSmartGoals(parsedGoal.smartGoals || '');
+          setInterventionPlan(parsedGoal.interventionPlan || '');
+        } catch {
+          setSmartGoals(activePlan.goal || activePlan.goals?.join('\n') || '');
+          setInterventionPlan('');
+        }
+
+        try {
+          const parsedNotes = JSON.parse(activePlan.notes || '{}');
+          setClinicalAssessment(parsedNotes.clinicalAssessment || '');
+          setDiagnosisSummary(parsedNotes.diagnosisSummary || '');
+          setProgressTracking(parsedNotes.progressTracking || '');
+          setGeneralNotes(parsedNotes.generalNotes || '');
+        } catch {
+          setGeneralNotes(activePlan.notes || '');
+          setClinicalAssessment('');
+          setDiagnosisSummary('');
+          setProgressTracking('');
+        }
         setStartDate(activePlan.startDate ? activePlan.startDate.split('T')[0] : '');
         setEndDate(activePlan.endDate ? activePlan.endDate.split('T')[0] : '');
         setProgress((activePlan.progress || activePlan.status || 'active') as 'active' | 'completed' | 'paused');
@@ -127,8 +152,8 @@ export const TreatmentPlan = () => {
     try {
       let savedPlan: TreatmentPlanType;
       
-      const finalGoal = goal.trim() || '';
-      const finalNotes = notes.trim() || '';
+      const finalGoal = JSON.stringify({ smartGoals, interventionPlan });
+      const finalNotes = JSON.stringify({ clinicalAssessment, diagnosisSummary, progressTracking, generalNotes });
       const finalEndDate = endDate ? new Date(endDate).toISOString() : null;
 
       if (plan?.id) {
@@ -344,13 +369,57 @@ export const TreatmentPlan = () => {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Goal</label>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Clinical Assessment</label>
                   <textarea
-                    placeholder="Enter treatment goals..."
-                    value={goal}
-                    onChange={(e) => setGoal(e.target.value)}
+                    placeholder="Enter clinical assessment details..."
+                    value={clinicalAssessment}
+                    onChange={(e) => setClinicalAssessment(e.target.value)}
                     className="w-full p-4 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none dark:bg-slate-900 dark:border-white/10 dark:text-white text-sm"
-                    rows={4}
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Diagnosis Summary</label>
+                  <textarea
+                    placeholder="Enter diagnosis summary..."
+                    value={diagnosisSummary}
+                    onChange={(e) => setDiagnosisSummary(e.target.value)}
+                    className="w-full p-4 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none dark:bg-slate-900 dark:border-white/10 dark:text-white text-sm"
+                    rows={2}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">SMART Goals</label>
+                  <textarea
+                    placeholder="Enter SMART goals..."
+                    value={smartGoals}
+                    onChange={(e) => setSmartGoals(e.target.value)}
+                    className="w-full p-4 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none dark:bg-slate-900 dark:border-white/10 dark:text-white text-sm"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Intervention Plan</label>
+                  <textarea
+                    placeholder="Enter intervention plan..."
+                    value={interventionPlan}
+                    onChange={(e) => setInterventionPlan(e.target.value)}
+                    className="w-full p-4 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none dark:bg-slate-900 dark:border-white/10 dark:text-white text-sm"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Progress Tracking</label>
+                  <textarea
+                    placeholder="Enter progress tracking metrics..."
+                    value={progressTracking}
+                    onChange={(e) => setProgressTracking(e.target.value)}
+                    className="w-full p-4 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none dark:bg-slate-900 dark:border-white/10 dark:text-white text-sm"
+                    rows={2}
                   />
                 </div>
 
@@ -385,13 +454,13 @@ export const TreatmentPlan = () => {
                 </div>
 
                 <div className="border-t pt-5">
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Notes</label>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Notes / Comments</label>
                   <textarea
                     placeholder="Add personal internal consultation notes..."
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
+                    value={generalNotes}
+                    onChange={(e) => setGeneralNotes(e.target.value)}
                     className="w-full p-4 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none dark:bg-slate-900 dark:border-white/10 dark:text-white text-sm"
-                    rows={4}
+                    rows={3}
                   />
                 </div>
 
@@ -415,13 +484,42 @@ export const TreatmentPlan = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-6 border-t">
-                <Button variant="outline" onClick={() => navigate(-1)} disabled={saving}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSavePlan} disabled={saving} className="bg-green-600 hover:bg-green-700 text-white font-semibold">
-                  {saving ? 'Saving Pathway...' : plan ? 'Update Treatment Plan' : 'Create Treatment Plan'}
-                </Button>
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-6 border-t">
+                {plan && (
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <Button variant="outline" onClick={async () => {
+                      if (!child?.parentId) return alert('No parent linked to this child.');
+                      await apiClient.post('/notifications', {
+                        userId: child.parentId,
+                        title: 'Treatment Plan Summary',
+                        message: `Dr. ${user?.name || 'Specialist'} has shared a plan update.`,
+                        type: 'treatment-plan'
+                      });
+                      alert('Sent to Parent successfully!');
+                    }} className="flex-1 sm:flex-none">
+                      Send to Parent
+                    </Button>
+                    <Button variant="outline" onClick={async () => {
+                      await apiClient.post('/notifications', {
+                        userId: 'therapist',
+                        title: 'Treatment Plan Assignment',
+                        message: `Dr. ${user?.name || 'Specialist'} has shared a plan update.`,
+                        type: 'treatment-plan'
+                      });
+                      alert('Sent to Therapist successfully!');
+                    }} className="flex-1 sm:flex-none">
+                      Send to Therapist
+                    </Button>
+                  </div>
+                )}
+                <div className="flex justify-end gap-3 w-full sm:w-auto">
+                  <Button variant="outline" onClick={() => navigate(-1)} disabled={saving}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSavePlan} disabled={saving} className="bg-green-600 hover:bg-green-700 text-white font-semibold">
+                    {saving ? 'Saving Pathway...' : plan ? 'Update Treatment Plan' : 'Create Treatment Plan'}
+                  </Button>
+                </div>
               </div>
             </Card>
           </div>
@@ -527,12 +625,28 @@ export const TreatmentPlan = () => {
                     </h2>
                     <div className="space-y-6">
                       <div>
-                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">Goal</p>
-                        <p className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap">{plan.goal || plan.goals?.join('\n') || 'No goals specified'}</p>
+                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">Clinical Assessment</p>
+                        <p className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap">{clinicalAssessment || 'No clinical assessment specified'}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">Notes</p>
-                        <p className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap">{plan.notes || 'No notes specified'}</p>
+                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">Diagnosis Summary</p>
+                        <p className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap">{diagnosisSummary || 'No diagnosis summary specified'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">SMART Goals</p>
+                        <p className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap">{smartGoals || 'No SMART goals specified'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">Intervention Plan</p>
+                        <p className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap">{interventionPlan || 'No intervention plan specified'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">Progress Tracking</p>
+                        <p className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap">{progressTracking || 'No progress tracking metrics specified'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">Notes / Comments</p>
+                        <p className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap">{generalNotes || 'No notes specified'}</p>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4 border-t border-slate-200 dark:border-white/10">
                         <div>
