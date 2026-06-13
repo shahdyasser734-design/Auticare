@@ -8,7 +8,7 @@ import { Avatar } from '../../components/common/Avatar';
 import { ROUTES } from '../../utils/constants';
 import { useAuth } from '../../context/useAuth';
 import { useNotification } from '../../context/NotificationContext';
-import { childrenService, type Child } from '../../services/api/children';
+import { childrenService, dedupeChildren, type Child } from '../../services/api/children';
 import { treatmentPlansService, type TreatmentPlan } from '../../services/api/treatmentPlans';
 import { bookingService } from '../../services/api/bookings';
 import { formatDateTime } from '../../utils/dateUtils';
@@ -16,7 +16,7 @@ import { notesService, type Note } from '../../services/api/notes';
 import {
   Loader2, Plus, FileText, Activity, MessageSquare, Calendar,
   ClipboardCheck, Bell, ChevronRight, Sparkles, Heart, Star,
-  BookOpen, Users, ShieldCheck, User
+  BookOpen, Users, ShieldCheck, User, Trash2
 } from 'lucide-react';
 
 export const ParentHome = () => {
@@ -29,6 +29,7 @@ export const ParentHome = () => {
   const [notes, setNotes] = useState<Note[]>([]);
   const [upcomingSessions, setUpcomingSessions] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [childToDelete, setChildToDelete] = useState<string | null>(null);
 
   const fetchDashboard = async () => {
     try {
@@ -71,12 +72,7 @@ export const ParentHome = () => {
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const uniqueChildren = childList.filter(
-        (child, index, self) =>
-          index === self.findIndex((c: any) =>
-            (c.id || c.childId) === ((child as any).id || (child as any).childId)
-          )
-      );
+      const uniqueChildren = dedupeChildren(childList);
       setChildren(uniqueChildren);
       setPlans(finalPlanList);
       setNotes(fetchedNotes);
@@ -99,6 +95,29 @@ export const ParentHome = () => {
       navigate(`${ROUTES.PARENT_SCREENING}?childId=${activeChildId}`);
     } else {
       navigate(ROUTES.PARENT_ADD_CHILD);
+    }
+  };
+
+  const handleDeleteChild = async (id: string) => {
+    try {
+      await childrenService.deleteChild(id);
+      
+      const newChildren = children.filter(c => {
+        const cId = String((c as any).childId || c.id);
+        return cId !== String(id);
+      });
+      setChildren(newChildren);
+      
+      const latestId = localStorage.getItem('latestChildId');
+      if (latestId === String(id)) {
+        localStorage.removeItem('latestChildId');
+        localStorage.removeItem('latestChildName');
+      }
+      
+      setChildToDelete(null);
+      void fetchDashboard();
+    } catch (err) {
+      console.error('Error deleting child:', err);
     }
   };
 
@@ -417,6 +436,13 @@ export const ParentHome = () => {
                         >
                           Care Plan
                         </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => setChildToDelete(uniqueId)}
+                          className="rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold cursor-pointer text-[10px] py-1 px-2.5 shadow-sm mt-1"
+                        >
+                          <Trash2 size={12} className="inline-block mr-1" /> Delete
+                        </Button>
                       </div>
                     </div>
                   );
@@ -573,6 +599,35 @@ export const ParentHome = () => {
           </div>
         </div>
       </div>
+
+      {childToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-stone-200 dark:border-slate-700">
+            <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4 mx-auto">
+              <Trash2 className="text-red-600 dark:text-red-400" size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-center text-stone-900 dark:text-white mb-2">Delete Child Profile</h3>
+            <p className="text-stone-500 dark:text-slate-400 text-center mb-6">
+              Are you sure you want to delete this child? This action cannot be undone and will remove all associated data.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button
+                variant="outline"
+                onClick={() => setChildToDelete(null)}
+                className="flex-1 rounded-xl text-stone-700 border-stone-300 dark:text-slate-300 dark:border-slate-600 hover:bg-stone-50 dark:hover:bg-slate-700"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => handleDeleteChild(childToDelete)}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-md"
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 };

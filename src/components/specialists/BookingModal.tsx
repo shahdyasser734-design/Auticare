@@ -4,6 +4,7 @@ import { Modal } from '../common/Modal';
 import { bookingService, type BookingRequest } from '../../services/api/bookings';
 import type { Specialist } from '../../types';
 import { useAuth } from '../../context/useAuth';
+import { dedupeChildren } from '../../services/api/children';
 
 interface BookingModalProps {
   open: boolean;
@@ -123,7 +124,7 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
             onChange={(e) => setChildId(e.target.value)}
           >
             <option value="" disabled>Select a child</option>
-            {parentChildren.map((c: unknown) => (
+            {dedupeChildren(parentChildren).map((c: unknown) => (
               <option key={(c as { id: string }).id} value={(c as { id: string }).id}>
                 {(c as { name: string }).name}
               </option>

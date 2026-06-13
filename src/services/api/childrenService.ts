@@ -35,6 +35,18 @@ const normalizeChild = (raw: any): Child => {
   };
 };
 
+export const dedupeChildren = (children: any[]) => {
+  const map = new Map();
+  children.forEach((child) => {
+    const id = child.id || child.childId;
+    if (!id) return;
+    if (!map.has(id)) {
+      map.set(id, child);
+    }
+  });
+  return Array.from(map.values());
+};
+
 export const childrenService = {
   // Create a new child profile
   createChild: async (data: Partial<Child>): Promise<Child> => {
@@ -67,12 +79,7 @@ export const childrenService = {
       const data = response.data?.data ?? response.data;
       const list = Array.isArray(data) ? data : [];
       const rawChildren = list.map(normalizeChild);
-      const children = rawChildren.filter(
-        (child, index, self) =>
-          index === self.findIndex((c: any) =>
-            (c.id || c.childId) === ((child as any).id || (child as any).childId)
-          )
-      );
+      const children = dedupeChildren(rawChildren);
       // Persist first child ID if we got results
       if (children.length > 0 && children[0].id) {
         localStorage.setItem('latestChildId', children[0].id);
