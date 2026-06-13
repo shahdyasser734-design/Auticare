@@ -12,7 +12,7 @@ import { specialistsService } from '../../services/api/specialistsService';
 import { FileUpload } from '../../components/common/FileUpload';
 import { fileUploadService } from '../../services/api/fileUploadService';
 import { childrenService } from '../../services/api/children';
-import { Activity, Plus, Trash2, CheckCircle2, User, FileText, BarChart3, Edit, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
+import { User, FileText, BarChart3, Edit, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import type { Child, TreatmentPlan as TreatmentPlanType, Specialist } from '../../types';
 import apiClient from '../../services/apiClient';
 
@@ -515,10 +515,10 @@ export const TreatmentPlan = () => {
                     <div>
                       <div className="flex justify-between text-xs font-semibold mb-1 text-slate-600 dark:text-slate-400">
                         <span>Goal Completion</span>
-                        <span>{goals.length > 0 ? Math.round((goals.length - 1) / goals.length * 100) : 0}%</span>
+                        <span>{plan.progress === 'completed' ? 100 : plan.progress === 'active' ? 50 : 0}%</span>
                       </div>
                       <div className="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
-                        <div className="bg-green-500 h-full rounded-full" style={{ width: `${goals.length > 0 ? Math.round((goals.length - 1) / goals.length * 100) : 0}%` }} />
+                        <div className="bg-green-500 h-full rounded-full" style={{ width: `${plan.progress === 'completed' ? 100 : plan.progress === 'active' ? 50 : 0}%` }} />
                       </div>
                     </div>
 
