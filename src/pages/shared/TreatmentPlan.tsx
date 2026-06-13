@@ -14,6 +14,7 @@ import { fileUploadService } from '../../services/api/fileUploadService';
 import { childrenService } from '../../services/api/children';
 import { Activity, Plus, Trash2, CheckCircle2, User, FileText, BarChart3, Edit, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import type { Child, TreatmentPlan as TreatmentPlanType, Specialist } from '../../types';
+import apiClient from '../../services/apiClient';
 
 
 
@@ -141,18 +142,18 @@ export const TreatmentPlan = () => {
     try {
       let savedPlan: TreatmentPlanType;
       const finalNotes = notes.trim() || description.trim() || 'Development and Clinical Treatment Plan';
+      const finalGoal = goals.length > 0 ? goals.join('\n') : 'Development Plan';
       
       if (plan?.id) {
-        // Update plan expects Partial<CreateTreatmentPlanRequest>
         const updatePayload = {
-          startDate: startDate ? new Date(startDate).toISOString() : new Date().toISOString(),
-          endDate: endDate ? new Date(endDate).toISOString() : null,
-          goal: goals.length > 0 ? goals.join('\n') : 'Development Plan',
-          notes: finalNotes
+          goal: finalGoal,
+          notes: finalNotes,
+          progress: status,
+          endDate: endDate ? new Date(endDate).toISOString() : null
         };
-        await treatmentPlansService.updatePlan(plan.id, updatePayload as unknown as Partial<import('../../services/api/treatmentPlans').CreateTreatmentPlanRequest>);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await treatmentPlansService.updatePlan(plan.id, updatePayload as any);
         
-        // Re-fetch to populate full state
         const plans = await treatmentPlansService.getChildPlans(childId);
         if (plans && plans.length > 0) {
           savedPlan = plans[0] as unknown as TreatmentPlanType;
@@ -167,98 +168,78 @@ export const TreatmentPlan = () => {
           } as unknown as TreatmentPlanType;
         }
       } else {
-        // Resolve a valid 32-bit integer specialistId
-        // The backend requires a proper int32 ID that matches a specialist in the DB
         let finalSpecialistId: number | null = null;
         
         try {
-          // Strategy 1: Match current user against the specialists list to get their actual int32 ID
-          const specs = await specialistsService.getSpecialists();
-          console.log('[TREATMENT PLAN] Fetched', specs.length, 'specialists for ID matching');
-          console.log('[TREATMENT PLAN] Current user email:', user?.email, 'name:', user?.name);
+          const bookings = await bookingsService.getMyBookings();
+          const relevantBooking = bookings.find(b => 
+            String(b.childId) === childId && b.specialistId
+          ) || bookings.find(b => b.specialistId);
           
-          const currentSpec = specs.find(s => 
-            (user?.email && s.email && s.email.toLowerCase() === user.email.toLowerCase()) || 
-            (user?.name && s.name && s.name.toLowerCase() === user.name.toLowerCase())
-          );
-          
-          if (currentSpec) {
-            const specIdNum = parseInt(String(currentSpec.id), 10);
-            if (!isNaN(specIdNum) && specIdNum > 0 && specIdNum <= 2147483647) {
-              finalSpecialistId = specIdNum;
-              console.log('[TREATMENT PLAN] Matched specialist by email/name. ID:', finalSpecialistId);
+          if (relevantBooking?.specialistId) {
+            const specIdFromBooking = parseInt(String(relevantBooking.specialistId), 10);
+            if (!isNaN(specIdFromBooking) && specIdFromBooking > 0) {
+              finalSpecialistId = specIdFromBooking;
             }
           }
         } catch (err) {
-          console.warn('[TREATMENT PLAN] Failed to fetch specialist list:', err);
+          console.warn('[TREATMENT PLAN] Failed to get specialist from bookings:', err);
         }
         
-        // Strategy 2: Get specialist ID from existing bookings (which have correct integer IDs)
-        if (!finalSpecialistId) {
-          try {
-            const bookings = await bookingsService.getMyBookings();
-            const relevantBooking = bookings.find(b => 
-              String(b.childId) === childId && b.specialistId
-            ) || bookings.find(b => b.specialistId);
-            
-            if (relevantBooking?.specialistId) {
-              const specIdFromBooking = parseInt(String(relevantBooking.specialistId), 10);
-              if (!isNaN(specIdFromBooking) && specIdFromBooking > 0 && specIdFromBooking <= 2147483647) {
-                finalSpecialistId = specIdFromBooking;
-                console.log('[TREATMENT PLAN] Got specialist ID from booking:', finalSpecialistId);
-              }
-            }
-          } catch (err) {
-            console.warn('[TREATMENT PLAN] Failed to get specialist from bookings:', err);
-          }
-        }
-        
-        // Strategy 3: Fallback to the authenticated user's ID
         if (!finalSpecialistId && user?.id) {
           const specIdFromUser = parseInt(user.id, 10);
           if (!isNaN(specIdFromUser) && specIdFromUser > 0) {
             finalSpecialistId = specIdFromUser;
-            console.log('[TREATMENT PLAN] Got specialist ID from user.id:', finalSpecialistId);
           }
         }
         
-        // Strategy 4: Last resort - use 1 (this will likely fail validation, but logs will show why)
         if (!finalSpecialistId) {
           finalSpecialistId = 1;
-          console.warn('[TREATMENT PLAN] Could not resolve real specialist ID. Using fallback ID=1. This may cause API errors.');
         }
         
-        // Create plan expects CreateTreatmentPlanRequest
         const childIdNum = parseInt(childId, 10);
-        if (isNaN(childIdNum) || childIdNum <= 0) {
-          throw new Error(`Invalid childId: "${childId}". Expected a valid integer.`);
-        }
         
         const createPayload = {
           childId: childIdNum,
           specialistId: finalSpecialistId,
-          startDate: startDate ? new Date(startDate).toISOString() : new Date().toISOString(),
+          startDate: new Date().toISOString(),
           endDate: endDate ? new Date(endDate).toISOString() : null,
-          goal: goals.length > 0 ? goals.join('\n') : 'Development Plan',
+          goal: finalGoal,
           notes: finalNotes
         };
-        console.log("[TREATMENT PLAN] SENDING CREATE PAYLOAD:", JSON.stringify(createPayload, null, 2));
         try {
-          const res = await treatmentPlansService.createPlan(createPayload as unknown as Parameters<typeof treatmentPlansService.createPlan>[0]);
-          console.log("[TREATMENT PLAN] RECEIVED RESPONSE:", JSON.stringify(res, null, 2));
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const res = await treatmentPlansService.createPlan(createPayload as any);
           savedPlan = res as unknown as TreatmentPlanType;
-        } catch (createErr: unknown) {
-          const err = createErr as { response?: { data?: unknown }, message?: string };
-          console.error("[TREATMENT PLAN] FAILED TO CREATE. Backend response:", err?.response?.data || err?.message || err);
+        } catch (createErr) {
           throw createErr;
         }
       }
-
 
       setPlan(savedPlan);
       setEditMode(false);
       setPublishSuccess(true);
       setTimeout(() => setPublishSuccess(false), 5000);
+      
+      try {
+        // Notification to parent
+        await apiClient.post('/notifications', {
+          userId: child?.parentId || '',
+          title: 'Treatment Plan Published',
+          message: `Dr. ${user?.name || 'Specialist'} has published a new clinical plan for ${child?.name || 'your child'}.`,
+          type: 'treatment-plan'
+        });
+        
+        // Notification to therapist (mock generic or specific if therapist ID is known)
+        await apiClient.post('/notifications', {
+          userId: 'therapist', // Backend handles routing or broadcasting to therapists
+          title: 'Treatment Plan Assigned',
+          message: `A new treatment plan has been assigned to you for ${child?.name || 'Patient'}.`,
+          type: 'treatment-plan'
+        });
+      } catch (err) {
+        console.warn('Failed to dispatch notifications', err);
+      }
       
       // Load current user profile details as author if new
       if (!specialist && user) {

@@ -374,9 +374,12 @@ export const ParentHome = () => {
                 </div>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {children.map((c) => (
+                  {children.map((c) => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const uniqueId = (c as any).childId || c.id;
+                    return (
                     <div
-                      key={c.id}
+                      key={uniqueId}
                       className="p-4 bg-stone-50 dark:bg-slate-900/40 rounded-2xl border border-stone-100 dark:border-white/5 flex justify-between items-center gap-4 hover:border-indigo-200 dark:hover:border-indigo-800/40 hover:shadow-sm transition-all duration-300"
                     >
                       <div className="flex items-center gap-3">
@@ -394,7 +397,7 @@ export const ParentHome = () => {
                       <div className="flex flex-col gap-1.5 shrink-0">
                         <Button
                           size="sm"
-                          onClick={() => navigate(`${ROUTES.PARENT_SCREENING}?childId=${c.id}`)}
+                          onClick={() => navigate(`${ROUTES.PARENT_SCREENING}?childId=${uniqueId}`)}
                           className="rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold cursor-pointer text-[10px] py-1 px-2.5 shadow-sm"
                         >
                           Screen
@@ -402,14 +405,15 @@ export const ParentHome = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => navigate(`/treatment-plan/${c.id}`)}
+                          onClick={() => navigate(`/treatment-plan/${uniqueId}`)}
                           className="rounded-lg cursor-pointer text-[10px] py-1 px-2.5 font-bold"
                         >
                           Care Plan
                         </Button>
                       </div>
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               )}
             </Card>
