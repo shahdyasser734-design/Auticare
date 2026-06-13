@@ -12,7 +12,7 @@ import { childrenService, type Child } from '../../services/api/children';
 import { treatmentPlansService, type TreatmentPlan } from '../../services/api/treatmentPlans';
 import { bookingService } from '../../services/api/bookings';
 import { formatDateTime } from '../../utils/dateUtils';
-import { type Note } from '../../services/api/notes';
+import { notesService, type Note } from '../../services/api/notes';
 import {
   Loader2, Plus, FileText, Activity, MessageSquare, Calendar,
   ClipboardCheck, Bell, ChevronRight, Sparkles, Heart, Star,
