@@ -12,7 +12,7 @@ import { specialistsService } from '../../services/api/specialistsService';
 import { FileUpload } from '../../components/common/FileUpload';
 import { fileUploadService } from '../../services/api/fileUploadService';
 import { childrenService } from '../../services/api/children';
-import { User, FileText, BarChart3, Edit, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
+import { User, FileText, BarChart3, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import type { Child, TreatmentPlan as TreatmentPlanType, Specialist } from '../../types';
 import apiClient from '../../services/apiClient';
 
