@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/useAuth';
 import { MainLayout } from '../../layouts/MainLayout';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
@@ -11,6 +12,7 @@ import type { Child } from '../../services/api/children';
 
 export const DoctorPatients = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [patients, setPatients] = useState<Child[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -155,7 +157,7 @@ export const DoctorPatients = () => {
 
                     <Button
                       fullWidth
-                      onClick={() => navigate(`/doctor/patients/${patient.id}`)}
+                      onClick={() => navigate(`/${user?.role || 'doctor'}/patients/${patient.id}`)}
                     >
                       View Details
                     </Button>

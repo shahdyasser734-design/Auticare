@@ -553,7 +553,7 @@ export const DoctorHome = () => {
                         )}
                         {booking.childId && (
                           <button
-                            onClick={() => navigate(`/doctor/patients/${booking.childId}`)}
+                            onClick={() => navigate(`/${user?.role}/patients/${booking.childId}`)}
                             className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer flex items-center gap-1"
                           >
                             🔎 Review Patient Profile <ChevronRight size={11} />

@@ -55,8 +55,10 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
   }
 
   if (requiredRole) {
-    const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
-    if (!roles.includes(user?.role || '')) {
+    const userRole = String(user?.role || '').toLowerCase();
+    const roles = (Array.isArray(requiredRole) ? requiredRole : [requiredRole]).map(r => String(r).toLowerCase());
+    if (!roles.includes(userRole)) {
+      console.warn(`[ProtectedRoute] Access Denied. User role '${userRole}' not in required roles [${roles.join(', ')}]`);
       return <Navigate to="/unauthorized" replace />;
     }
   }
