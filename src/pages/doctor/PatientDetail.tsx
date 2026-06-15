@@ -40,7 +40,6 @@ export const PatientDetail = () => {
           childData = await childrenService.getChild(id);
         } catch (childErr) {
           console.warn('Could not fetch child profile directly (possibly 403), falling back to bookings search.', childErr);
-          // Fallback: search my bookings to extract basic child info
           const [myBookings, dashData] = await Promise.all([
             bookingService.getMyBookings(),
             dashboardService.getSpecialistDashboard().catch(() => null)
@@ -62,6 +61,16 @@ export const PatientDetail = () => {
           } else {
             // eslint-disable-next-line preserve-caught-error
             throw new Error('Patient not found in active bookings.');
+          }
+        }
+
+        // Enforce ownership: If user is a therapist, they must be assigned to the patient
+        if (user?.role === 'therapist') {
+          const myBookings = await bookingService.getMyBookings();
+          const isAssigned = myBookings.some(b => String(b.childId) === String(id));
+          if (!isAssigned) {
+            navigate('/unauthorized', { replace: true });
+            return;
           }
         }
 
