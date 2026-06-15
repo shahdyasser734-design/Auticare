@@ -180,14 +180,6 @@ export const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-        <Route
-          path={ROUTES.DOCTOR_PATIENTS_DETAIL}
-          element={
-            <ProtectedRoute requiredRole={ROLES.DOCTOR}>
-              <PatientDetail />
-            </ProtectedRoute>
-          }
-        />
 
         {/* Therapist Routes */}
         <Route
@@ -214,10 +206,11 @@ export const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+        {/* Shared Routes */}
         <Route
-          path="/therapist/patients/:id"
+          path="/specialist/patients/:id"
           element={
-            <ProtectedRoute requiredRole={ROLES.THERAPIST}>
+            <ProtectedRoute requiredRole={[ROLES.DOCTOR, ROLES.THERAPIST]}>
               <PatientDetail />
             </ProtectedRoute>
           }
@@ -225,13 +218,11 @@ export const AppRoutes = () => {
         <Route
           path="/specialist/screening-results/:id"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole={[ROLES.DOCTOR, ROLES.THERAPIST]}>
               <SpecialistScreeningResults />
             </ProtectedRoute>
           }
         />
-
-        {/* Shared Routes */}
         <Route
           path={ROUTES.TREATMENT_PLAN}
           element={

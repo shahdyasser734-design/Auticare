@@ -157,7 +157,7 @@ export const DoctorPatients = () => {
 
                     <Button
                       fullWidth
-                      onClick={() => navigate(`/${user?.role || 'doctor'}/patients/${patient.id}`)}
+                      onClick={() => navigate(`/specialist/patients/${patient.id}`)}
                     >
                       View Details
                     </Button>

@@ -64,15 +64,14 @@ export const ROUTES = {
   DOCTOR_HOME: '/doctor',
   DOCTOR_SESSIONS: '/doctor/sessions',
   DOCTOR_PATIENTS: '/doctor/patients',
-  DOCTOR_PATIENTS_DETAIL: '/doctor/patients/:id',
 
   // Therapist routes
   THERAPIST_HOME: '/therapist',
   THERAPIST_SESSIONS: '/therapist/sessions',
   THERAPIST_PATIENTS: '/therapist/patients',
-  THERAPIST_PATIENTS_DETAIL: '/therapist/patients/:id',
 
   // Shared routes
+  SPECIALIST_PATIENTS_DETAIL: '/specialist/patients/:id',
   CHAT: '/chat',
   NOTIFICATIONS: '/notifications',
   SETTINGS: '/settings',
