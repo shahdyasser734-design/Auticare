@@ -26,7 +26,6 @@ import { AddChild } from '../pages/parent/AddChild';
 import { DoctorHome } from '../pages/doctor/DoctorHome';
 import { DoctorSessions } from '../pages/doctor/DoctorSessions';
 import { DoctorPatients } from '../pages/doctor/DoctorPatients';
-import { PatientDetail } from '../pages/doctor/PatientDetail';
 import { SpecialistScreeningResults } from '../pages/doctor/SpecialistScreeningResults';
 
 // Therapist Pages
@@ -38,6 +37,7 @@ import { Notifications } from '../pages/shared/Notifications';
 import { Settings } from '../pages/shared/Settings';
 import { Profile } from '../pages/shared/Profile';
 import { TreatmentPlan } from '../pages/shared/TreatmentPlan';
+import { PatientDetails } from '../pages/shared/PatientDetails';
 import { Unauthorized } from '../pages/auth/Unauthorized';
 import { HomeLanding } from '../pages/HomeLanding';
 
@@ -206,7 +206,7 @@ export const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-        {/* ── Unified Patient Detail ─────────────────────────────────────────
+        {/* ── Unified Patient Detail ──────────────────────────────────────────
              Single route, no role restriction. Any authenticated user who
              arrives here gets the page. Role only controls UI actions inside.
              Old paths (/cases/:id, /specialist/patients/:id) are kept as
@@ -215,7 +215,7 @@ export const AppRoutes = () => {
           path="/patients/:id"
           element={
             <ProtectedRoute>
-              <PatientDetail />
+              <PatientDetails />
             </ProtectedRoute>
           }
         />
@@ -223,7 +223,7 @@ export const AppRoutes = () => {
           path="/cases/:id"
           element={
             <ProtectedRoute>
-              <PatientDetail />
+              <PatientDetails />
             </ProtectedRoute>
           }
         />
@@ -231,7 +231,7 @@ export const AppRoutes = () => {
           path="/specialist/patients/:id"
           element={
             <ProtectedRoute>
-              <PatientDetail />
+              <PatientDetails />
             </ProtectedRoute>
           }
         />
