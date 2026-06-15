@@ -125,18 +125,6 @@ const applyAutoCompletion = (bookings: Booking[]): Booking[] => {
           // Fire-and-forget background patch to synchronize backend state
           apiClient.patch(`/bookings/${b.id}/status`, { status: 'Completed' })
             .catch(err => console.warn(`[AUTO-COMPLETE] Failed to patch booking ${b.id}:`, err));
-          
-          if (b.parentId) {
-            const titlePrefix = b.specialistType === 'doctor' ? 'Dr. ' : 'Therapist ';
-            const specialistFullName = `${titlePrefix}${b.specialistName || 'Specialist'}`;
-            localNotificationManager.emitNotification(
-              b.parentId,
-              'session',
-              'Session Completed',
-              `Your session with ${specialistFullName} has been completed.`,
-              b.id
-            );
-          }
             
           // Update in-memory for immediate UI accuracy
           return { ...b, status: 'completed' as Booking['status'] };
@@ -166,13 +154,11 @@ export const bookingService = {
       );
     }
     if (normalized.parentId) {
-      const titlePrefix = normalized.specialistType === 'doctor' ? 'Dr. ' : 'Therapist ';
-      const specialistFullName = `${titlePrefix}${normalized.specialistName || 'Specialist'}`;
       localNotificationManager.emitNotification(
         normalized.parentId,
         'booking',
         'Session Requested',
-        `Booking request sent to ${specialistFullName}.`,
+        `Your session request with ${normalized.specialistName || 'the specialist'} has been submitted successfully.`,
         normalized.id
       );
     }
@@ -229,15 +215,13 @@ export const bookingService = {
 
     // Emit notifications based on status updates
     if (normalized.parentId) {
-      const titlePrefix = normalized.specialistType === 'doctor' ? 'Dr. ' : 'Therapist ';
-      const specialistFullName = `${titlePrefix}${normalized.specialistName || 'Specialist'}`;
       const lowerStatus = (normalized.status || '').toLowerCase();
       if (lowerStatus === 'confirmed' || lowerStatus === 'approved') {
         localNotificationManager.emitNotification(
           normalized.parentId,
           'session',
           'Session Approved',
-          `${specialistFullName} approved your session booking.`,
+          `Your session request with ${normalized.specialistName} has been approved.`,
           normalized.id
         );
       } else if (lowerStatus === 'cancelled' || lowerStatus === 'rejected') {
@@ -245,7 +229,7 @@ export const bookingService = {
           normalized.parentId,
           'session',
           'Session Cancelled',
-          `${specialistFullName} cancelled or rejected your session request.`,
+          `Your session request with ${normalized.specialistName} has been cancelled/rejected.`,
           normalized.id
         );
       } else if (lowerStatus === 'completed') {
@@ -253,7 +237,7 @@ export const bookingService = {
           normalized.parentId,
           'session',
           'Session Completed',
-          `Your session with ${specialistFullName} has been completed.`,
+          `Your session with ${normalized.specialistName} has been marked as completed.`,
           normalized.id
         );
       }
@@ -305,13 +289,11 @@ export const bookingService = {
     const normalized = normalizeBooking(response.data);
 
     if (normalized.parentId) {
-      const titlePrefix = normalized.specialistType === 'doctor' ? 'Dr. ' : 'Therapist ';
-      const specialistFullName = `${titlePrefix}${normalized.specialistName || 'Specialist'}`;
       localNotificationManager.emitNotification(
         normalized.parentId,
         'session',
         'Session Cancelled',
-        `Your session with ${specialistFullName} has been cancelled.`,
+        `Your session request with ${normalized.specialistName} has been cancelled.`,
         normalized.id
       );
     }

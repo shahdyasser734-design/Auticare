@@ -137,7 +137,7 @@ export interface Session {
 export interface Specialist {
   id: string;
   name: string;
-  type: 'doctor' | 'therapist' | 'unknown';
+  type: 'doctor' | 'therapist';
   specialization: string;
   yearsOfExperience: number;
   yearsExperience?: number; // Backend field

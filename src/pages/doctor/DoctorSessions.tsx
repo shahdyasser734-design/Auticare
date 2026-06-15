@@ -5,7 +5,6 @@ import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
 import { bookingService, type Booking } from '../../services/api/bookings';
-import { localNotificationManager } from '../../services/api/localNotificationManager';
 import { useAuth } from '../../context/useAuth';
 
 import { Loader2 } from 'lucide-react';
@@ -72,19 +71,6 @@ export const DoctorSessions = () => {
     if (!url && tab) {
       tab.close();
       alert('No Zoom meeting link is available for this session.');
-      return;
-    }
-
-    if (session.parentId) {
-      const titlePrefix = isDoctor ? 'Dr. ' : 'Therapist ';
-      const specialistFullName = `${titlePrefix}${user?.name || 'Specialist'}`.trim();
-      localNotificationManager.emitNotification(
-        session.parentId,
-        'session',
-        'Session Started',
-        `Your session with ${specialistFullName} has started.`,
-        session.id
-      );
     }
   };
 

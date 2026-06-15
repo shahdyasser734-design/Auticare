@@ -62,10 +62,9 @@ export const Therapists = () => {
         setLoading(true);
         const data = await specialistsService.getSpecialists('therapist');
         // Handle various API response formats
-        const rawTherapistList = Array.isArray(data) ? data : 
+        const therapistList = Array.isArray(data) ? data : 
                              Array.isArray((data as Record<string, unknown>)?.data) ? (data as Record<string, Specialist[]>).data : 
                              Array.isArray((data as Record<string, unknown>)?.specialists) ? (data as Record<string, Specialist[]>).specialists : [];
-        const therapistList = rawTherapistList.filter(s => s.type === 'therapist');
         setTherapists(therapistList);
       } catch (err) {
         console.error('Failed to load therapists:', err);

@@ -20,42 +20,35 @@ interface RawSpecialist {
   bio?: unknown;
   about?: unknown;
   role?: unknown;
-  profileImageUrl?: unknown;
-  profile_image_url?: unknown;
-  avatar?: unknown;
-  userRole?: unknown;
-  accountType?: unknown;
-  specialistType?: unknown;
-  appUser?: unknown;
-  user?: unknown;
-  account?: unknown;
-  profile?: unknown;
-  specialistRole?: unknown;
-  roles?: unknown;
 }
 
 export const normalizeSpecialist = (raw: Record<string, unknown>): Specialist => {
   const r = raw as RawSpecialist;
   const specId = String(r.id ?? r.specialistId ?? '');
   
-  const nestedUser = (raw.appUser || raw.user || raw.account || raw.profile || {}) as Record<string, unknown>;
-  const roleStr = String(raw.role ?? raw.Role ?? raw.userRole ?? raw.UserRole ?? raw.accountType ?? raw.AccountType ?? raw.specialistRole ?? raw.SpecialistRole ?? raw.specialistType ?? raw.SpecialistType ?? raw.type ?? raw.Type ?? nestedUser.role ?? nestedUser.Role ?? nestedUser.userRole ?? nestedUser.UserRole ?? nestedUser.accountType ?? nestedUser.type ?? nestedUser.Type ?? nestedUser.specialistType ?? '').toLowerCase();
-  const typeStr = String(raw.type ?? raw.Type ?? raw.specialistType ?? raw.SpecialistType ?? nestedUser.type ?? nestedUser.Type ?? nestedUser.specialistType ?? '').toLowerCase();
+  // Determine type based on explicit backend 'role' or 'type', otherwise fallback to specialization/title
+  let calculatedType: 'doctor' | 'therapist' = 'doctor';
   
-  const rolesArr = Array.isArray(r.roles) ? r.roles : Array.isArray(nestedUser.roles) ? nestedUser.roles : [];
-  const hasTherapistRole = rolesArr.some(role => String(role).toLowerCase() === 'therapist');
-  const hasDoctorRole = rolesArr.some(role => String(role).toLowerCase() === 'doctor');
-
-  let calculatedType: 'doctor' | 'therapist' | 'unknown';
-
-  if (roleStr === 'therapist' || typeStr === 'therapist' || hasTherapistRole) {
+  const rawRole = String(r.role ?? '').toLowerCase();
+  const rawType = String(r.type ?? '').toLowerCase();
+  
+  if (rawRole === 'therapist' || rawType === 'therapist') {
     calculatedType = 'therapist';
-  } else if (roleStr === 'doctor' || typeStr === 'doctor' || hasDoctorRole) {
+  } else if (rawRole === 'doctor' || rawType === 'doctor') {
     calculatedType = 'doctor';
   } else {
-    // DO NOT INFER FROM BIO OR SPECIALIZATION. The role MUST come from the signup selection.
-    // Map missing roles to 'unknown' to strictly separate them from Doctors.
-    calculatedType = 'unknown';
+    const specialization = String(r.specialization ?? '').toLowerCase();
+    
+    const therapyFields = ['speech', 'behavioral', 'occupational', 'aba', 'physical', 'therapist', 'therapy'];
+    const medicalFields = ['neurologist', 'psychiatrist', 'pediatrician', 'developmental', 'clinical psychologist', 'doctor'];
+    
+    if (therapyFields.some(keyword => specialization.includes(keyword))) {
+      calculatedType = 'therapist';
+    } else if (medicalFields.some(keyword => specialization.includes(keyword))) {
+      calculatedType = 'doctor';
+    } else {
+      calculatedType = 'doctor'; // Default
+    }
   }
 
   const typeValue = calculatedType;
@@ -69,7 +62,7 @@ export const normalizeSpecialist = (raw: Record<string, unknown>): Specialist =>
     rating: Number(r.rating ?? 0),
     reviewCount: Number(r.reviewCount ?? r.reviews ?? 0),
     availableSlots: Array.isArray(r.availableSlots) ? r.availableSlots : [],
-    profileImage: String(r.profileImage ?? r.profileImageUrl ?? r.profile_image_url ?? r.avatar ?? ''),
+    profileImage: String(r.profileImage ?? ''),
     licenseNumber: String(r.licenseNumber ?? ''),
     certifications: Array.isArray(r.certifications) ? r.certifications : [],
     email: String(r.email ?? ''),
@@ -82,7 +75,6 @@ export const specialistsService = {
   getSpecialists: async (type?: 'doctor' | 'therapist'): Promise<Specialist[]> => {
     const queryParams = new URLSearchParams();
     queryParams.append('PageSize', '100');
-    queryParams.append('_t', Date.now().toString()); // Cache buster for real-time sync after signup
     if (type) {
       queryParams.append('type', type);
     }

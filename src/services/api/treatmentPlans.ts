@@ -11,7 +11,6 @@ export interface CreateTreatmentPlanRequest {
   endDate?: string | null;
   goal: string;
   notes: string;
-  specialistFullName?: string;
 }
 
  
@@ -66,12 +65,11 @@ export const treatmentPlansService = {
       const childId = String(data.childId);
       const child = await childrenService.getChild(childId);
       if (child?.parentId) {
-        const doctorName = data.specialistFullName || normalized.specialistName || 'Your doctor';
         localNotificationManager.emitNotification(
           child.parentId,
           'treatment-plan',
           'New Treatment Plan',
-          `${doctorName} uploaded a new treatment plan for your child.`,
+          'A new treatment plan has been published for your child.',
           normalized.id
         );
       }
@@ -102,17 +100,18 @@ export const treatmentPlansService = {
     const normalized = normalizeTreatmentPlan(response.data);
 
     try {
-      const childId = String(normalized.childId);
-      const child = await childrenService.getChild(childId);
-      if (child?.parentId) {
-        const doctorName = data.specialistFullName || normalized.specialistName || 'Your doctor';
-        localNotificationManager.emitNotification(
-          child.parentId,
-          'treatment-plan',
-          'Treatment Plan Updated',
-          `${doctorName} updated your child's treatment plan.`,
-          normalized.id
-        );
+      if (data.childId) {
+        const childId = String(data.childId);
+        const child = await childrenService.getChild(childId);
+        if (child?.parentId) {
+          localNotificationManager.emitNotification(
+            child.parentId,
+            'treatment-plan',
+            'Treatment Plan Updated',
+            'A treatment plan for your child has been updated.',
+            normalized.id
+          );
+        }
       }
     } catch {
       // Ignored

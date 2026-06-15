@@ -1,7 +1,7 @@
 // UI-only component; relies on the project's JSX runtime (no React symbol needed)
 
 export type Availability = 'online' | 'offline' | 'busy';
-export type SpecialistType = 'doctor' | 'therapist' | 'unknown';
+export type SpecialistType = 'doctor' | 'therapist';
 
 export type Specialist = {
   id: number;

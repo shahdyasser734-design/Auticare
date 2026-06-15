@@ -3,9 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { MainLayout } from '../../layouts/MainLayout';
 import { Card } from '../../components/common/Card';
 import { Avatar } from '../../components/common/Avatar';
-import { chatServiceAPI } from '../../services/api/chatService';
-import type { ChatConversation, ChatMessage } from '../../types';
-import { localNotificationManager } from '../../services/api/localNotificationManager';
+import { chatServiceAPI, type ChatConversation, type ChatMessage } from '../../services/api/chatService';
 import { bookingService } from '../../services/api/bookings';
 import { useAuth } from '../../context/useAuth';
 import { MessageSquare, Send, Loader2, RefreshCw, ChevronLeft } from 'lucide-react';
@@ -277,19 +275,6 @@ export const Chat = () => {
 
       const result = await chatServiceAPI.sendMessage(activeChatId, content, 'text');
       console.log('[Chat] Send success:', result);
-
-      const recipientId = selected.participantIds?.find(id => String(id) !== String(user?.id));
-      if (recipientId) {
-        const titlePrefix = user?.role === 'doctor' ? 'Dr. ' : (user?.role === 'therapist' ? 'Therapist ' : '');
-        const senderFullName = `${titlePrefix}${user?.name || 'User'}`.trim();
-        localNotificationManager.emitNotification(
-          recipientId,
-          'message',
-          'New Message',
-          `${senderFullName} sent you a new message.`,
-          activeChatId
-        );
-      }
 
       // Immediately re-fetch so the sent message appears without waiting for next poll
       await fetchMessages({ ...selected, id: activeChatId });

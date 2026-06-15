@@ -10,7 +10,6 @@ import { useAuth } from '../../context/useAuth';
 import { dashboardService, type DashboardSpecialistData, type PatientCard } from '../../services/api/dashboard';
 import { bookingService, type Booking } from '../../services/api/bookings';
 import { useNotification } from '../../context/NotificationContext';
-import { localNotificationManager } from '../../services/api/localNotificationManager';
 import { notesService } from '../../services/api/notes';
 import { NoteCard } from '../../components/notes/NoteCard';
 
@@ -178,19 +177,6 @@ export const DoctorHome = () => {
     if (!url && tab) {
       tab.close();
       alert('No Zoom meeting link is available for this session.');
-      return;
-    }
-
-    if (session.parentId) {
-      const titlePrefix = isDoctor ? 'Dr. ' : 'Therapist ';
-      const specialistFullName = `${titlePrefix}${user?.name || 'Specialist'}`.trim();
-      localNotificationManager.emitNotification(
-        session.parentId,
-        'session',
-        'Session Started',
-        `Your session with ${specialistFullName} has started.`,
-        session.id
-      );
     }
   };
 

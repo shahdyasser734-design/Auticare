@@ -209,7 +209,7 @@ export const PatientDetail = () => {
           <Card>
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex justify-between items-center">
               <span>Treatment Plans</span>
-              {plans.length === 0 && user?.role === 'doctor' && (
+              {plans.length === 0 && (
                 <button
                   onClick={() => navigate(`/treatment-plan/${id}`)}
                   className="text-xs text-primary-600 dark:text-primary-450 hover:text-primary-750 font-bold underline cursor-pointer"
@@ -222,11 +222,9 @@ export const PatientDetail = () => {
               {plans.length === 0 ? (
                 <div className="text-center py-6">
                   <p className="text-slate-500 dark:text-slate-400 mb-4">No treatment plan configured</p>
-                  {user?.role === 'doctor' && (
-                    <Button size="sm" onClick={() => navigate(`/treatment-plan/${id}`)}>
-                      Design Plan
-                    </Button>
-                  )}
+                  <Button size="sm" onClick={() => navigate(`/treatment-plan/${id}`)}>
+                    Design Plan
+                  </Button>
                 </div>
               ) : (
                 plans.map((p) => (
@@ -242,29 +240,18 @@ export const PatientDetail = () => {
                         Status: <span className="capitalize text-primary-700 dark:text-primary-300 font-bold">{p.status || p.progress || 'active'}</span>
                       </span>
                       <div className="flex gap-2">
-                        {user?.role === 'doctor' ? (
-                          <>
-                            <button
-                              onClick={() => navigate(`/treatment-plan/${id}`)}
-                              className="text-primary-600 dark:text-primary-400 hover:text-primary-800 font-bold underline cursor-pointer px-2 py-1 bg-white/50 dark:bg-slate-900/50 rounded-lg shadow-sm border border-primary-100 dark:border-primary-900/30 transition-all hover:shadow-md"
-                            >
-                              Edit Treatment Plan
-                            </button>
-                            <button
-                              onClick={() => navigate(`/treatment-plan/${id}?action=new`)}
-                              className="text-primary-600 dark:text-primary-400 hover:text-primary-800 font-bold underline cursor-pointer px-2 py-1 bg-white/50 dark:bg-slate-900/50 rounded-lg shadow-sm border border-primary-100 dark:border-primary-900/30 transition-all hover:shadow-md"
-                            >
-                              New Version
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            onClick={() => navigate(`/treatment-plan/${id}`)}
-                            className="text-primary-600 dark:text-primary-400 hover:text-primary-800 font-bold underline cursor-pointer px-2 py-1 bg-white/50 dark:bg-slate-900/50 rounded-lg shadow-sm border border-primary-100 dark:border-primary-900/30 transition-all hover:shadow-md"
-                          >
-                            View Full Plan
-                          </button>
-                        )}
+                        <button
+                          onClick={() => navigate(`/treatment-plan/${id}`)}
+                          className="text-primary-600 dark:text-primary-400 hover:text-primary-800 font-bold underline cursor-pointer px-2 py-1 bg-white/50 dark:bg-slate-900/50 rounded-lg shadow-sm border border-primary-100 dark:border-primary-900/30 transition-all hover:shadow-md"
+                        >
+                          Edit Treatment Plan
+                        </button>
+                        <button
+                          onClick={() => navigate(`/treatment-plan/${id}?action=new`)}
+                          className="text-green-600 dark:text-green-400 hover:text-green-800 font-bold underline cursor-pointer px-2 py-1 bg-green-50/50 dark:bg-green-900/30 rounded-lg shadow-sm border border-green-200 dark:border-green-900/30 transition-all hover:shadow-md"
+                        >
+                          Update Treatment Plan
+                        </button>
                       </div>
                     </div>
                   </div>

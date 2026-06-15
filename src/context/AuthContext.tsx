@@ -35,7 +35,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const normalizeAndSetUser = (currentUser: User | null) => {
     if (!currentUser) return;
     const normalizedRole = ((currentUser.role || '') as string).toLowerCase();
-    const userWithRole = { ...currentUser, role: normalizedRole } as User;
+    const mappedRole = normalizedRole === 'specialist' ? 'doctor' : normalizedRole;
+    const userWithRole = { ...currentUser, role: mappedRole } as User;
     setUser(userWithRole);
     localStorage.setItem('user', JSON.stringify(userWithRole));
     localStorage.setItem('userId', String(userWithRole.id));
@@ -173,24 +174,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       ''
     );
 
-    let resolvedRole = String(rawUser.role ?? data.role ?? localStorage.getItem('role') ?? 'parent').trim().toLowerCase();
-    
-    if (resolvedRole === 'specialist') {
-      const backupRole = String(rawUser.type ?? rawUser.specialistType ?? rawUser.userRole ?? '').trim().toLowerCase();
-      if (backupRole === 'therapist' || backupRole === 'doctor') {
-        resolvedRole = backupRole;
-      } else {
-        // Last resort: check if localStorage has a valid therapist/doctor role
-        const localRole = String(localStorage.getItem('role') ?? '').toLowerCase();
-        resolvedRole = (localRole === 'therapist' || localRole === 'doctor') ? localRole : 'doctor';
-      }
-    }
-
     const user: User = {
       id: String(rawUser.id ?? rawUser.userId ?? data.userId ?? ''),
       email,
       name: String(rawUser.name ?? data.fullName ?? rawUser.fullName ?? (rawUser.firstName ? `${rawUser.firstName} ${rawUser.lastName ?? ''}`.trim() : '')),
-      role: resolvedRole as UserRole,
+      role: String(rawUser.role ?? data.role ?? localStorage.getItem('role') ?? 'parent').trim().toLowerCase() as UserRole,
       phone,
       nationalId,
       profileImage,

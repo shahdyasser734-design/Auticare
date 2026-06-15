@@ -122,10 +122,7 @@ export const SignupForm = () => {
         fullName: formData.name,
         email: formData.email,
         password: formData.password,
-        role: formData.role.charAt(0).toUpperCase() + formData.role.slice(1), // strictly 'Doctor' or 'Therapist'
-        type: formData.role.charAt(0).toUpperCase() + formData.role.slice(1),
-        userRole: formData.role.charAt(0).toUpperCase() + formData.role.slice(1),
-        specialistType: formData.role.charAt(0).toUpperCase() + formData.role.slice(1),
+        role: (formData.role as string).charAt(0).toUpperCase() + (formData.role as string).slice(1),
         phone: formData.phone,
         nationalId: formData.nationalId,
       };

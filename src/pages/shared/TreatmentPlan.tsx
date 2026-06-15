@@ -196,8 +196,7 @@ export const TreatmentPlan = () => {
           startDate: new Date().toISOString(),
           endDate: finalEndDate,
           goal: finalGoal,
-          notes: finalNotes,
-          specialistFullName: (user?.role === 'doctor' ? 'Dr. ' : 'Therapist ') + (user?.name || 'Specialist')
+          notes: finalNotes
         };
         
         console.log('[DEBUG] POST Payload:', { childId, specialistId: finalSpecialistId, payload: createPayload });
