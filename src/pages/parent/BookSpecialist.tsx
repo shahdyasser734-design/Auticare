@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { MainLayout } from '../../layouts/MainLayout';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
+import clsx from 'clsx';
 
 import { specialistsService, type Specialist } from '../../services/api/specialists';
 import { LoadingSpinner } from '../../components/common/Loading';
@@ -106,6 +107,7 @@ export const BookSpecialist = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState<'doctors' | 'therapists'>('doctors');
 
   const filteredSpecialists = useMemo(() => {
     return specialists.filter(s =>
@@ -152,7 +154,7 @@ export const BookSpecialist = () => {
 
         <div className="max-w-7xl mx-auto space-y-8">
 
-          {/* Search Controls */}
+          {/* Search + Tab Controls */}
           <div className="space-y-6">
             <div>
               <input
@@ -163,6 +165,34 @@ export const BookSpecialist = () => {
                 className="w-full px-6 py-4 rounded-2xl border border-slate-300 bg-white shadow-sm placeholder-slate-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder-slate-500 dark:focus:border-orange-400 dark:focus:ring-orange-500/20"
               />
             </div>
+
+            {/* Custom Tab Control */}
+            <div className="flex flex-col sm:flex-row justify-center gap-3">
+              <div className="standard-card p-1.5 inline-flex relative">
+                <div 
+                  className="absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-slate-900 dark:bg-orange-500 rounded-xl transition-all duration-300 ease-out"
+                  style={{ left: activeTab === 'doctors' ? '6px' : 'calc(50% + 3px)' }}
+                />
+                 <button
+                  className={clsx(
+                    "relative z-10 px-6 py-3 rounded-xl font-bold text-sm transition-colors duration-300 min-w-[140px]",
+                    activeTab === 'doctors' ? "text-white" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  )}
+                  onClick={() => { setActiveTab('doctors'); setSearchTerm(''); }}
+                >
+                  👨‍⚕️ Doctors
+                </button>
+                <button
+                  className={clsx(
+                    "relative z-10 px-6 py-3 rounded-xl font-bold text-sm transition-colors duration-300 min-w-[140px]",
+                    activeTab === 'therapists' ? "text-white" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  )}
+                  onClick={() => { setActiveTab('therapists'); setSearchTerm(''); }}
+                >
+                  🧑‍🏫 Therapists
+                </button>
+              </div>
+            </div>
           </div>
 
           {successMessage && (
@@ -171,77 +201,72 @@ export const BookSpecialist = () => {
             </div>
           )}
 
-          {/* Doctors Section */}
-          <div className="mb-12">
-            <h2 className="text-3xl font-bold text-navy-900 dark:text-white mb-6">Doctors</h2>
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <LoadingSpinner />
-              </div>
-            ) : doctors.length === 0 ? (
-              <div className="text-center py-8 standard-card">
-                <div className="w-16 h-16 bg-blue-50 dark:bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-                  👨‍⚕️
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Doctors Found</h3>
-                <p className="text-slate-500 dark:text-slate-400">
-                  {searchTerm 
-                    ? `No results match "${searchTerm}". Try a different search term.`
-                    : `We couldn't find any doctors at the moment. Please check back later.`}
-                </p>
-              </div>
-            ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {doctors.map(specialist => (
-                  <SpecialistCard 
-                    key={specialist.id} 
-                    data={specialist} 
-                    type="doctor"
-                    onBook={(item) => {
-                      setSelectedSpecialist(item);
-                      setIsModalOpen(true);
-                      setSuccessMessage('');
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Therapists Section */}
+          {/* Specialists List */}
           <div>
-            <h2 className="text-3xl font-bold text-navy-900 dark:text-white mb-6">Therapists</h2>
             {loading ? (
-              <div className="flex justify-center py-8">
+              <div className="flex justify-center py-16">
                 <LoadingSpinner />
               </div>
-            ) : therapists.length === 0 ? (
-              <div className="text-center py-8 standard-card">
-                <div className="w-16 h-16 bg-blue-50 dark:bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-                  🧑‍🏫
+            ) : activeTab === 'doctors' ? (
+              /* Doctors Section */
+              doctors.length === 0 ? (
+                <div className="text-center py-16 standard-card">
+                  <div className="w-20 h-20 bg-blue-50 dark:bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                    👨‍⚕️
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Doctors Found</h3>
+                  <p className="text-slate-500 dark:text-slate-400">
+                    {searchTerm 
+                      ? `No results match "${searchTerm}". Try a different search term.`
+                      : `We couldn't find any doctors at the moment. Please check back later.`}
+                  </p>
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Therapists Found</h3>
-                <p className="text-slate-500 dark:text-slate-400">
-                  {searchTerm 
-                    ? `No results match "${searchTerm}". Try a different search term.`
-                    : `We couldn't find any therapists at the moment. Please check back later.`}
-                </p>
-              </div>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {doctors.map(specialist => (
+                    <SpecialistCard 
+                      key={specialist.id} 
+                      data={specialist} 
+                      type="doctor"
+                      onBook={(item) => {
+                        setSelectedSpecialist(item);
+                        setIsModalOpen(true);
+                        setSuccessMessage('');
+                      }}
+                    />
+                  ))}
+                </div>
+              )
             ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {therapists.map(specialist => (
-                  <SpecialistCard 
-                    key={specialist.id} 
-                    data={specialist} 
-                    type="therapist"
-                    onBook={(item) => {
-                      setSelectedSpecialist(item);
-                      setIsModalOpen(true);
-                      setSuccessMessage('');
-                    }}
-                  />
-                ))}
-              </div>
+              /* Therapists Section */
+              therapists.length === 0 ? (
+                <div className="text-center py-16 standard-card">
+                  <div className="w-20 h-20 bg-blue-50 dark:bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                    🧑‍🏫
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Therapists Found</h3>
+                  <p className="text-slate-500 dark:text-slate-400">
+                    {searchTerm 
+                      ? `No results match "${searchTerm}". Try a different search term.`
+                      : `We couldn't find any therapists at the moment. Please check back later.`}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {therapists.map(specialist => (
+                    <SpecialistCard 
+                      key={specialist.id} 
+                      data={specialist} 
+                      type="therapist"
+                      onBook={(item) => {
+                        setSelectedSpecialist(item);
+                        setIsModalOpen(true);
+                        setSuccessMessage('');
+                      }}
+                    />
+                  ))}
+                </div>
+              )
             )}
           </div>
         </div>
