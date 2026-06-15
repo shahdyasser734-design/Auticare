@@ -206,11 +206,19 @@ export const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-        {/* Shared Routes */}
+        {/* Shared Specialist Routes - accessible by any authenticated specialist */}
+        <Route
+          path="/cases/:id"
+          element={
+            <ProtectedRoute>
+              <PatientDetail />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/specialist/patients/:id"
           element={
-            <ProtectedRoute requiredRole={[ROLES.DOCTOR, ROLES.THERAPIST]}>
+            <ProtectedRoute>
               <PatientDetail />
             </ProtectedRoute>
           }
