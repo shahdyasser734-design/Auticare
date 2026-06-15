@@ -263,7 +263,7 @@ export const PatientCarousel: React.FC<PatientCarouselProps> = ({ patients, isDo
                   className="flex-1 text-xs cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/cases/${patient.id}`);
+                    navigate(`/patients/${patient.id}`);
                   }}
                 >
                   <User className="w-3 h-3 mr-1" /> Profile
@@ -312,7 +312,7 @@ export const PatientCarousel: React.FC<PatientCarouselProps> = ({ patients, isDo
                       className="flex-1 text-xs cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/cases/${patient.id}`);
+                        navigate(`/patients/${patient.id}`);
                       }}
                     >
                       <FileText className="w-3 h-3 mr-1" /> Notes

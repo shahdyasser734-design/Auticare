@@ -71,7 +71,8 @@ export const ROUTES = {
   THERAPIST_PATIENTS: '/therapist/patients',
 
   // Shared routes
-  SPECIALIST_PATIENTS_DETAIL: '/specialist/patients/:id',
+  PATIENTS_DETAIL: '/patients/:id',       // ← canonical unified patient detail
+  SPECIALIST_PATIENTS_DETAIL: '/patients/:id', // alias kept for backward compat
   CHAT: '/chat',
   NOTIFICATIONS: '/notifications',
   SETTINGS: '/settings',

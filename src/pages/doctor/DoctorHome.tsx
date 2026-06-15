@@ -435,7 +435,7 @@ export const DoctorHome = () => {
             <PatientCarousel
               patients={patients}
               isDoctor={isDoctor}
-              onPatientClick={(patientId) => navigate(`/cases/${patientId}`)}
+              onPatientClick={(patientId) => navigate(`/patients/${patientId}`)}
             />
           </section>
         )}
@@ -488,7 +488,7 @@ export const DoctorHome = () => {
                             </div>
                             {session.childId && (
                               <button
-                                onClick={() => navigate(`/cases/${session.childId}`)}
+                                onClick={() => navigate(`/patients/${session.childId}`)}
                                 className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer flex items-center gap-1"
                               >
                                 🔎 View Patient Profile <ChevronRight size={11} />
@@ -553,7 +553,7 @@ export const DoctorHome = () => {
                         )}
                         {booking.childId && (
                           <button
-                            onClick={() => navigate(`/cases/${booking.childId}`)}
+                            onClick={() => navigate(`/patients/${booking.childId}`)}
                             className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer flex items-center gap-1"
                           >
                             🔎 Review Patient Profile <ChevronRight size={11} />
@@ -629,7 +629,7 @@ export const DoctorHome = () => {
                           </div>
                           {session.childId && (
                             <button
-                              onClick={() => navigate(`/cases/${session.childId}`)}
+                              onClick={() => navigate(`/patients/${session.childId}`)}
                               className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer flex items-center gap-1"
                             >
                               🔎 View Charts <ChevronRight size={11} />
@@ -706,7 +706,7 @@ export const DoctorHome = () => {
                           </span>
                         </div>
                         <button
-                          onClick={() => navigate(`/cases/${c.id}`)}
+                          onClick={() => navigate(`/patients/${c.id}`)}
                           className="text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:underline cursor-pointer shrink-0 flex items-center gap-0.5"
                         >
                           Open <ChevronRight size={11} />

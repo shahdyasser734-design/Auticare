@@ -206,7 +206,19 @@ export const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-        {/* Shared Specialist Routes - accessible by any authenticated specialist */}
+        {/* ── Unified Patient Detail ─────────────────────────────────────────
+             Single route, no role restriction. Any authenticated user who
+             arrives here gets the page. Role only controls UI actions inside.
+             Old paths (/cases/:id, /specialist/patients/:id) are kept as
+             aliases so any existing bookmark/link still works.              */}
+        <Route
+          path="/patients/:id"
+          element={
+            <ProtectedRoute>
+              <PatientDetail />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/cases/:id"
           element={
