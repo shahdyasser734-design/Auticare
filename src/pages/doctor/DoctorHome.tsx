@@ -75,13 +75,32 @@ export const DoctorHome = () => {
 
       const uniqueChildren = new Map();
 
-      const assignedBookings = (childList || []).filter((b: Booking) =>
-        b && (b.status === 'scheduled' || b.status === 'confirmed' || b.status === 'approved')
-      );
+      // Ensure we have access to all bookings for the specialist
+      const allBookings = childList || [];
+      
+      const patientCards = dashData?.patientCards || dashData?.patients || dashData?.assignedChildren || [];
 
-      const patientCards = dashData?.patientCards || [];
+      // Extract patients from dashboard cards
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+      patientCards.forEach((card: any) => {
+        const id = card.id || card.childId;
+        if (id) {
+          uniqueChildren.set(id, {
+            id,
+            name: card.name || card.childName || 'Unknown Patient',
+            age: card.age ?? card.childAge ?? card.ageInYears ?? null,
+            gender: card.gender ?? card.childGender ?? card.sex ?? 'Unknown',
+            status: card.status || 'active',
+            assignedDoctor: card.assignedDoctor || (isDoctor ? user?.name : 'Not Assigned'),
+            assignedTherapist: card.assignedTherapist || (!isDoctor ? user?.name : 'Not Assigned'),
+            parentId: card.parentId || '',
+            parentName: card.parentName || 'Parent'
+          });
+        }
+      });
 
-      assignedBookings.forEach((b: Booking) => {
+      // Extract patients from ALL bookings, not just active ones
+      allBookings.forEach((b: Booking) => {
         if (b && b.childId && !uniqueChildren.has(b.childId)) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const card = patientCards.find((c: any) => c.childName === b.childName || c.name === b.childName);
@@ -100,7 +119,12 @@ export const DoctorHome = () => {
       });
       const extractedPatients = Array.from(uniqueChildren.values());
 
-      setDashboardData(dashData);
+      const enrichedDashData = {
+        ...dashData,
+        completedSessions: dashData?.completedSessions || allBookings.filter((b: Booking) => b?.status === 'completed').length,
+      };
+
+      setDashboardData(enrichedDashData);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setPatients(extractedPatients as any[]);
       setSessions(bookingData);
@@ -152,17 +176,22 @@ export const DoctorHome = () => {
   };
 
   const pendingBookings = (sessions || []).filter((s) => s && s.status === 'pending');
-  const confirmedSessions = (sessions || []).filter((s) => s && (s.status === 'confirmed' || s.status === 'scheduled'));
+  const confirmedSessions = (sessions || []).filter((s) => s && (s.status === 'confirmed' || s.status === 'scheduled' || s.status === 'approved'));
   const todaySessions = confirmedSessions.filter((s) => s && (isToday(s.appointmentDate) || isToday(s.dateTime)));
+
+  // Completed sessions might not be in `sessions` (which is upcoming), so use the dashData if > 0, otherwise fallback
+  const completedSessionsCount = dashboardData?.completedSessions && dashboardData.completedSessions > 0
+    ? dashboardData.completedSessions 
+    : 0; // We can't access `childList` directly here, but we can rely on `dashboardData` or mock
 
   const computedDashboardData: DashboardSpecialistData = {
     ...dashboardData,
-    patientCount: children.length,
-    activeCases: children.length,
-    todaySessions: todaySessions.length,
-    upcomingSessions: confirmedSessions.length,
-    pendingRequests: pendingBookings.length,
-    completedSessions: (sessions || []).filter((s) => s && s.status === 'completed').length,
+    patientCount: dashboardData?.patientCount || children.length,
+    activeCases: dashboardData?.activeCases || dashboardData?.activePatients || children.length,
+    todaySessions: dashboardData?.todaySessions || todaySessions.length,
+    upcomingSessions: dashboardData?.upcomingSessions || confirmedSessions.length,
+    pendingRequests: dashboardData?.pendingRequests || pendingBookings.length,
+    completedSessions: completedSessionsCount,
     unreadMessages: chatUnreadCount,
   };
 
