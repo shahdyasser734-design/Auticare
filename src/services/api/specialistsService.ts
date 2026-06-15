@@ -27,7 +27,7 @@ export const normalizeSpecialist = (raw: Record<string, unknown>): Specialist =>
   const specId = String(r.id ?? r.specialistId ?? '');
   
   // Determine type based on explicit backend 'role' or 'type', otherwise fallback to specialization/title
-  let calculatedType: 'doctor' | 'therapist' = 'doctor';
+  let calculatedType: 'doctor' | 'therapist';
   
   const rawRole = String(r.role ?? '').toLowerCase();
   const rawType = String(r.type ?? '').toLowerCase();

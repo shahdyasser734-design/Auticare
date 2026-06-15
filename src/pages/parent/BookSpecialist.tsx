@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+
 import { MainLayout } from '../../layouts/MainLayout';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
@@ -99,7 +99,7 @@ const SpecialistCard = ({ data, type, onBook }: { data: SpecialistDisplay; type:
 );
 
 export const BookSpecialist = () => {
-  const navigate = useNavigate();
+
   const [specialists, setSpecialists] = useState<SpecialistDisplay[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSpecialist, setSelectedSpecialist] = useState<SpecialistDisplay | null>(null);
