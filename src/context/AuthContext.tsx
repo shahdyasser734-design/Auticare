@@ -354,8 +354,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('userId');
     localStorage.removeItem('role');
     localStorage.removeItem('isAuthenticated');
-    setUser(null);
+    sessionStorage.clear();
     setIsAuthenticated(false);
+    setUser(null);
   };
 
   const forgotPassword = async (email: string) => {

@@ -40,7 +40,7 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
   const token = localStorage.getItem('token');
   const tokenExpired = token ? !isTokenValid(token) : true;
 
-  if (!isAuthenticated || tokenExpired) {
+  if (!isAuthenticated || tokenExpired || !user) {
     if (tokenExpired && token) {
       // Token is present but expired
       localStorage.removeItem('token');
