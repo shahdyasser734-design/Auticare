@@ -1,0 +1,122 @@
+import axios from 'axios';
+import type { AxiosInstance, AxiosError } from 'axios';
+
+// Use the Vite proxy during development and a relative API path in production.
+// WARNING: Using the absolute URL directly will cause CORS preflight (OPTIONS) 405 errors from the backend.
+export const API_BASE_URL = '/api';
+
+const apiClient: AxiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 60000, // 60 seconds to allow the Railway backend to wake up from cold starts
+});
+
+// Request interceptor to add auth token
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response interceptor to handle errors
+const getApiErrorMessage = (error: AxiosError): string => {
+  const responseData = error.response?.data;
+
+  if (typeof responseData === 'string') {
+    return responseData;
+  }
+
+  if (responseData && typeof responseData === 'object') {
+    const dataObj = responseData as Record<string, unknown>;
+    if (typeof dataObj.message === 'string') {
+      return dataObj.message;
+    }
+    if (typeof dataObj.error === 'string') {
+      return dataObj.error;
+    }
+    if (typeof dataObj.errors === 'string') {
+      return dataObj.errors;
+    }
+    if (typeof dataObj.errors === 'object' && dataObj.errors !== null) {
+      // Handle ASP.NET Core validation errors where 'errors' is an object of arrays
+      const errorsObj = dataObj.errors as Record<string, string[]>;
+      const firstKey = Object.keys(errorsObj)[0];
+      if (firstKey && Array.isArray(errorsObj[firstKey]) && errorsObj[firstKey].length > 0) {
+        return errorsObj[firstKey][0];
+      }
+    }
+    if (typeof dataObj.title === 'string') {
+      return dataObj.title;
+    }
+  }
+
+  return error.response?.statusText || error.message || 'An unknown error occurred';
+};
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError) => {
+    const isLogout401 = error.response?.status === 401 && error.config?.url?.includes('/auth/logout');
+
+    if (!isLogout401) {
+      console.error('API Error Details:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        url: error.config?.url,
+        method: error.config?.method,
+        responseData: error.response?.data,
+        requestData: error.config?.data,
+      });
+    }
+
+    if (error.response) {
+      const status = error.response.status;
+      const apiMessage = getApiErrorMessage(error);
+      if (apiMessage) {
+        error.message = apiMessage;
+      }
+
+      if (status === 401) {
+        // Token expired or invalid
+        if (!isLogout401) {
+          console.warn('API returned 401 Unauthorized for URL:', error.config?.url);
+        }
+        const url = error.config?.url || '';
+        if (!url.includes('/auth/logout') && !url.includes('/auth/login')) {
+          window.dispatchEvent(new CustomEvent('auth:unauthorized', { detail: { url } }));
+        }
+      } else if (status === 403) {
+        console.error('Forbidden action:', apiMessage);
+      } else if (status === 404) {
+        console.error('Resource not found:', apiMessage);
+      } else if (status >= 500) {
+        console.error('Server Error:', apiMessage);
+      }
+    } else if (error.code === 'ECONNABORTED') {
+      console.error('Timeout Error:', {
+        url: error.config?.url,
+        message: error.message,
+      });
+      error.message = `The server took too long to respond (it may be waking up from sleep). Please try again in a moment.`;
+    } else if (error.request) {
+      console.error('Network Error - No response from server:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        baseURL: error.config?.baseURL,
+        message: error.message,
+      });
+      error.message = `Network Error: Please check your connection. (${error.config?.url || 'Unknown endpoint'})`;
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default apiClient;
