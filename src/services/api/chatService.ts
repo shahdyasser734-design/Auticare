@@ -17,10 +17,16 @@ const mapMessage = (m: any): ChatMessage => ({
 
 export const chatServiceAPI = {
   startChat: async (contactId: string): Promise<ChatConversation> => {
+    const role = localStorage.getItem('role') || '';
+    const payload: Record<string, number> = {};
+    if (role === 'parent') {
+      payload.specialistId = Number(contactId);
+    } else {
+      payload.parentId = Number(contactId);
+    }
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response = await apiClient.post<any>('/chat/start', {
-      specialistId: Number(contactId),
-    });
+    const response = await apiClient.post<any>('/chat/start', payload);
     const r = response.data;
     return {
       id: String(r.chatId || r.id),
@@ -40,17 +46,33 @@ export const chatServiceAPI = {
     const response = await apiClient.get<any[]>('/chat/my-chats');
     const raw = response.data ?? [];
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return raw.map((r: any) => ({
-      id: String(r.chatId || r.id),
-      participantIds: r.specialistId ? [String(r.specialistId)] : (r.parentId ? [String(r.parentId)] : []),
-      participantNames: {
-        [String(r.specialistId || r.parentId)]: r.specialistName || r.parentName || r.patientName || 'Unknown',
-      },
-      lastUpdated: r.lastMessageAt || new Date().toISOString(),
-      unreadCount: r.unreadCount || 0,
-      createdAt: new Date().toISOString(),
-      ...r
-    }));
+    return raw.map((r: any) => {
+      const pIds: string[] = [];
+      const pNames: Record<string, string> = {};
+
+      if (r.specialistId) {
+        pIds.push(String(r.specialistId));
+        if (r.specialistName) pNames[String(r.specialistId)] = r.specialistName;
+      }
+      if (r.parentId) {
+        pIds.push(String(r.parentId));
+        if (r.parentName || r.patientName) pNames[String(r.parentId)] = r.parentName || r.patientName;
+      }
+      if (r.contactId) {
+        pIds.push(String(r.contactId));
+        if (r.contactName) pNames[String(r.contactId)] = r.contactName;
+      }
+
+      return {
+        id: String(r.chatId || r.id),
+        participantIds: pIds,
+        participantNames: pNames,
+        lastUpdated: r.lastMessageAt || new Date().toISOString(),
+        unreadCount: r.unreadCount || 0,
+        createdAt: new Date().toISOString(),
+        ...r
+      };
+    });
   },
 
   getMessages: async (chatId: string, limit?: number): Promise<ChatMessage[]> => {

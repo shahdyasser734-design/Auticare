@@ -155,7 +155,6 @@ export const DoctorSessions = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
                         <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Child Name:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.childName || 'Not Provided'}</span></p>
                         <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Parent Name:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.parentName || 'Not Provided'}</span></p>
-                        <p><strong className="text-slate-900 dark:text-slate-100 uppercase text-xs tracking-wider">Session Type:</strong><br /> <span className="font-medium text-slate-800 dark:text-slate-200">{session.specialistType === 'doctor' ? 'Doctor Consultation' : 'Therapy Session'}</span></p>
                       </div>
 
                       <div className="mt-3 bg-white dark:bg-transparent rounded-lg">
