@@ -62,27 +62,57 @@ export const PatientDetail = () => {
               dateOfBirth: card?.dateOfBirth ?? card?.date_of_birth ?? card?.dob ?? card?.childDob ?? '',
             } as unknown as Child;
           } else {
-            // Still could not find: show a minimal stub so the page renders.
-            // Do NOT throw — throwing causes the outer catch to swallow everything and
-            // the page silently stays on "Patient not found".
-            console.warn('[PatientDetail] Child not found in bookings, showing stub for id:', id);
-            childData = {
-              id,
-              name: 'Patient',
-              status: 'active',
-              parentId: '',
-            } as unknown as Child;
+            // getChild() returned 403 and no booking found — backend denied access.
+            // Redirect immediately rather than showing a broken stub.
+            console.warn('[PatientDetail] getChild() failed and no booking found for id:', id);
+            navigate('/unauthorized', { replace: true });
+            return;
           }
         }
 
-        // Note: Backend authorization is the source of truth.
-        // If childrenService.getChild() succeeds, the backend has already authorized access.
-        // The catch block above handles the 403 fallback for both doctors and therapists.
+        // --- DUAL-LAYER OWNERSHIP CHECK for Therapists ---
+        // Layer 1: Backend already ran (403 = access denied, caught above).
+        // Layer 2: Frontend validates this therapist is actually assigned to THIS child
+        //          using real assignment data — not just route/role.
+        if (user?.role === 'therapist' && user?.id) {
+          try {
+            const [myBookings, earlyPlans] = await Promise.all([
+              bookingService.getMyBookings(),
+              treatmentPlansService.getChildPlans(id).catch(() => [] as TreatmentPlan[]),
+            ]);
+
+            // Check 1: therapist has a booking for this specific child under their own specialistId
+            const assignedViaBooking = myBookings.some(
+              b => String(b.childId) === String(id) && String(b.specialistId) === String(user.id)
+            );
+
+            // Check 2: therapist appears in the treatment plan's assignedTherapists list
+            const assignedViaPlan = (earlyPlans as TreatmentPlan[]).some(
+              p => Array.isArray(p.assignedTherapists) && p.assignedTherapists.includes(user.id)
+            );
+
+            if (!assignedViaBooking && !assignedViaPlan) {
+              console.warn('[PatientDetail] Therapist is not assigned to this patient via bookings or treatment plan.');
+              navigate('/unauthorized', { replace: true });
+              return;
+            }
+
+            // Use earlyPlans so we don't re-fetch below
+            setPlans(earlyPlans as TreatmentPlan[]);
+          } catch (ownershipErr) {
+            // If the ownership check itself fails (network error), fail OPEN.
+            // A network blip should not lock out a legitimately assigned therapist.
+            console.warn('[PatientDetail] Ownership check failed, allowing access:', ownershipErr);
+          }
+        }
 
         const [resultsData, notesData, plansData] = await Promise.all([
           screeningService.getResults(id).catch(() => []),
           notesService.getChildNotes(id).catch(() => []),
-          treatmentPlansService.getChildPlans(id).catch(() => []),
+          // Skip re-fetching plans for therapists — already set above
+          user?.role === 'therapist'
+            ? Promise.resolve([] as TreatmentPlan[])
+            : treatmentPlansService.getChildPlans(id).catch(() => [] as TreatmentPlan[]),
         ]);
 
         // Filter notes strictly based on role: User must be sender or receiver, or legacy notes without roles.
@@ -96,7 +126,10 @@ export const PatientDetail = () => {
         setPatient(childData);
         setScreeningResults(Array.isArray(resultsData) ? resultsData : [resultsData]);
         setNotes(filteredNotes);
-        setPlans(plansData);
+        // Only update plans if not already set by therapist ownership block
+        if (user?.role !== 'therapist') {
+          setPlans(plansData as TreatmentPlan[]);
+        }
       } catch (err) {
         console.error('Error fetching patient data:', err);
       } finally {
