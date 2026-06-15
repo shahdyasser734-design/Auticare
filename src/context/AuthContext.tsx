@@ -4,6 +4,20 @@ import type { AuthContextType, User, AuthResponse, UserRole } from '../types';
 import { authService } from '../services/authService';
 import { childrenService } from '../services/api/childrenService';
 
+const isTokenValid = (token: string): boolean => {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+    const payload = JSON.parse(atob(parts[1]));
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const getErrorMessage = (error: unknown, fallback = 'An error occurred') => {
   if (error instanceof Error) return error.message;
   if (typeof error === 'string') return error;
@@ -47,7 +61,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const init = async () => {
       const token = localStorage.getItem('token');
       
-      if (!token) {
+      if (!token || !isTokenValid(token)) {
+        if (token) {
+          console.warn('[AuthContext] Token expired or invalid during init. Clearing session.');
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          localStorage.removeItem('userId');
+          localStorage.removeItem('role');
+          localStorage.removeItem('isAuthenticated');
+        }
         setIsAuthenticated(false);
         setUser(null);
         setChildrenLoaded(false);

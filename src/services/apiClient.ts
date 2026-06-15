@@ -2,8 +2,21 @@ import axios from 'axios';
 import type { AxiosInstance, AxiosError } from 'axios';
 
 // Use the Vite proxy during development and a relative API path in production.
-// WARNING: Using the absolute URL directly will cause CORS preflight (OPTIONS) 405 errors from the backend.
 export const API_BASE_URL = '/api';
+
+const isTokenValid = (token: string): boolean => {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+    const payload = JSON.parse(atob(parts[1]));
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -95,6 +108,12 @@ apiClient.interceptors.response.use(
         }
       } else if (status === 403) {
         console.error('Forbidden action:', apiMessage);
+        const token = localStorage.getItem('token');
+        if (token && !isTokenValid(token)) {
+          // Token is actually expired, treat 403 as 401
+          console.warn('API returned 403, but token is expired. Dispatching unauthorized.');
+          window.dispatchEvent(new CustomEvent('auth:unauthorized', { detail: { url: error.config?.url } }));
+        }
       } else if (status === 404) {
         console.error('Resource not found:', apiMessage);
       } else if (status >= 500) {

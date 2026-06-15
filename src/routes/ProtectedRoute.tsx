@@ -3,6 +3,20 @@ import { useAuth } from '../context/useAuth';
 import { LoadingPage } from '../components/common/Loading';
 import { ROUTES } from '../utils/constants';
 
+const isTokenValid = (token: string): boolean => {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+    const payload = JSON.parse(atob(parts[1]));
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -23,7 +37,20 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
     return <LoadingPage />;
   }
 
-  if (!isAuthenticated) {
+  const token = localStorage.getItem('token');
+  const tokenExpired = token ? !isTokenValid(token) : true;
+
+  if (!isAuthenticated || tokenExpired) {
+    if (tokenExpired && token) {
+      // Token is present but expired
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('role');
+      localStorage.removeItem('isAuthenticated');
+      // Dispatch event just in case AuthContext needs it, but we handle navigation here
+      window.dispatchEvent(new CustomEvent('auth:unauthorized', { detail: { url: location.pathname } }));
+    }
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
