@@ -355,7 +355,7 @@ export const TreatmentPlan = () => {
               <div className="flex justify-between items-center border-b pb-4">
                 <h3 className="font-bold text-2xl text-slate-900 dark:text-white flex items-center gap-2">
                   <Sparkles className="text-primary-600" />
-                  Configure Clinical Plan
+                  {plan?.id ? 'Edit Treatment Plan' : 'Create Treatment Plan'}
                 </h3>
                 <Badge variant="secondary">Specialist Editor</Badge>
               </div>
@@ -484,7 +484,7 @@ export const TreatmentPlan = () => {
                   </Button>
                   <Button onClick={handleSavePlan} disabled={saving} className="bg-green-600 hover:bg-green-700 text-white font-semibold flex items-center gap-2">
                     <Sparkles size={16} />
-                    {saving ? 'Publishing...' : 'Publish Treatment Plan'}
+                    {saving ? (plan?.id ? 'Updating...' : 'Publishing...') : (plan?.id ? 'Update Treatment Plan' : 'Create Treatment Plan')}
                   </Button>
                 </div>
               </div>
