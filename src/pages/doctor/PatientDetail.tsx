@@ -70,12 +70,7 @@ export const PatientDetail = () => {
           treatmentPlansService.getChildPlans(id).catch(() => [] as TreatmentPlan[]),
         ]);
 
-        const filteredNotes = notesData.filter((note: Note) =>
-          !note.senderRole ||
-          !note.receiverRole ||
-          note.senderRole === user?.role ||
-          note.receiverRole === user?.role
-        );
+        const filteredNotes = notesData; // Show all notes attached to the child's case
 
         setPatient(childData);
         setScreeningResults(Array.isArray(resultsData) ? resultsData : [resultsData]);

@@ -6,14 +6,14 @@ import { useAuth } from '../../context/useAuth';
 
 interface NoteCardProps {
   note: Note;
+  childName?: string;
   onUpdate: (updatedNote: Note) => void;
   onDelete: (id: string) => void;
 }
 
-export const NoteCard = ({ note, onUpdate, onDelete }: NoteCardProps) => {
+export const NoteCard = ({ note, childName, onUpdate, onDelete }: NoteCardProps) => {
   const { user } = useAuth();
 
-  // For real implementation:
   const canModify = (user?.role === 'doctor' || user?.role === 'therapist') && (user?.id === note.createdBy);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -43,9 +43,32 @@ export const NoteCard = ({ note, onUpdate, onDelete }: NoteCardProps) => {
       onDelete(note.id);
     } catch (err) {
       console.error('Failed to delete note:', err);
-      setIsDeleting(false); // Only reset if failed. If success, it unmounts.
+      setIsDeleting(false);
     }
   };
+
+  const relativeTime = (() => {
+    const d = new Date(note.createdAt);
+    const diff = Date.now() - d.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    const timeStr = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    if (days === 0) return `Today ${timeStr}`;
+    if (days === 1) return `Yesterday ${timeStr}`;
+    if (days < 7) return `${days} days ago`;
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+  })();
+
+  const role = note.senderRole?.toLowerCase() || 'specialist';
+  const roleBadgeClass = 
+    role === 'doctor' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
+    role === 'therapist' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' :
+    role === 'parent' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
+    'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
+
+  const displayRole = role.charAt(0).toUpperCase() + role.slice(1);
 
   if (isEditing) {
     return (
@@ -73,31 +96,46 @@ export const NoteCard = ({ note, onUpdate, onDelete }: NoteCardProps) => {
   return (
     <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all relative group">
       <div className="flex justify-between items-start gap-4">
-        <div className="flex-1">
-          <p className="text-sm text-slate-900 dark:text-slate-100 whitespace-pre-wrap">{note.content}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-3 font-medium">
-            {new Date(note.createdAt).toLocaleString()}
+        <div className="flex-1 space-y-2">
+          
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2">
+            <span className={`w-fit px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider ${roleBadgeClass}`}>
+              {displayRole}
+            </span>
+            <span className="font-bold text-sm text-slate-900 dark:text-white">
+              {note.senderName || 'Specialist'}
+            </span>
+          </div>
+
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            {displayRole} {childName ? `• For ${childName}` : ''}
+            <span className="mx-2">•</span>
+            {relativeTime}
             {note.updatedAt && note.updatedAt !== note.createdAt && ' (Edited)'}
+          </p>
+
+          <p className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap italic mt-1 bg-white/50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700/50">
+            "{note.content}"
           </p>
         </div>
         
         {canModify && (
-          <div className="flex flex-col sm:flex-row gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+          <div className="flex flex-col gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => setIsEditing(true)}
-              className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+              className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
               title="Edit Note"
               disabled={isDeleting}
             >
-              <Pencil size={16} />
+              <Pencil size={14} />
             </button>
             <button
               onClick={handleDelete}
-              className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
               title="Delete Note"
               disabled={isDeleting}
             >
-              {isDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+              {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
             </button>
           </div>
         )}

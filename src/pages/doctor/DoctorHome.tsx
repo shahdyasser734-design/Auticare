@@ -10,7 +10,7 @@ import { useAuth } from '../../context/useAuth';
 import { dashboardService, type DashboardSpecialistData, type PatientCard } from '../../services/api/dashboard';
 import { bookingService, type Booking } from '../../services/api/bookings';
 import { useNotification } from '../../context/NotificationContext';
-import { notesService } from '../../services/api/notes';
+import { notesService, type Note } from '../../services/api/notes';
 import { NoteCard } from '../../components/notes/NoteCard';
 
 import {
@@ -54,7 +54,7 @@ export const DoctorHome = () => {
       setError(null);
       console.log(`[DASHBOARD] Fetching specialist dashboard data for ${user?.role}:`, user?.id);
 
-      const [dashData, bookingData, childList, notesData] = await Promise.all([
+      const [dashData, bookingData, childList] = await Promise.all([
         dashboardService.getSpecialistDashboard().catch((err) => {
           console.warn('[DASHBOARD] Failed to fetch specialist dashboard:', err);
           return null;
@@ -65,10 +65,6 @@ export const DoctorHome = () => {
         }),
         bookingService.getMyBookings().catch((err) => {
           console.warn('[DASHBOARD] Failed to fetch all bookings for patients:', err);
-          return [];
-        }),
-        notesService.getMyNotes().catch((err) => {
-          console.warn('[DASHBOARD] Failed to fetch notes:', err);
           return [];
         }),
       ]);
@@ -139,10 +135,25 @@ export const DoctorHome = () => {
       setSessions(bookingData);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setChildren(extractedPatients as any[]);
-      setMyNotes(notesData || []);
+      // Instead of getting just 'myNotes', get all notes for all active cases for cross-role sync
+      const notesPromises = extractedPatients.map(c => notesService.getChildNotes(c.id).catch(() => []));
+      const allNotesArrs = await Promise.all(notesPromises);
+      const allNotesFlattened = allNotesArrs.flat();
+
+      const uniqueNotesMap = new Map<string, Note>();
+      allNotesFlattened.forEach(n => uniqueNotesMap.set(n.id, n));
+      const sortedNotes = Array.from(uniqueNotesMap.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      setDashboardData(enrichedDashData);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setPatients(extractedPatients as any[]);
+      setSessions(bookingData);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setChildren(extractedPatients as any[]);
+      setMyNotes(sortedNotes);
 
       console.log(
-        `[DASHBOARD] Dashboard ready - ${extractedPatients.length} patients, ${bookingData.length} bookings`
+        `[DASHBOARD] Dashboard ready - ${extractedPatients.length} patients, ${bookingData.length} bookings, ${sortedNotes.length} notes`
       );
     } catch (err) {
       console.error('[DASHBOARD] Error fetching dashboard data:', err);
@@ -156,6 +167,10 @@ export const DoctorHome = () => {
      
 // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchSpecialistData();
+
+    const handleUpdate = () => void fetchSpecialistData();
+    window.addEventListener('auticare_notifications_updated', handleUpdate);
+    return () => window.removeEventListener('auticare_notifications_updated', handleUpdate);
 // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -812,17 +827,21 @@ export const DoctorHome = () => {
               <div className="space-y-2.5">
                 {myNotes.length === 0 ? (
                   <div className="text-center py-6">
-                    <p className="text-stone-400 dark:text-slate-500 text-xs font-medium">No notes found.</p>
+                    <p className="text-stone-400 dark:text-slate-500 text-xs font-medium">No notes yet.</p>
                   </div>
                 ) : (
-                  myNotes.slice(0, 5).map((note) => (
-                    <NoteCard
-                      key={note.id}
-                      note={note}
-                      onUpdate={(updated) => setMyNotes(myNotes.map(n => n.id === updated.id ? updated : n))}
-                      onDelete={(deletedId) => setMyNotes(myNotes.filter(n => n.id !== deletedId))}
-                    />
-                  ))
+                  myNotes.slice(0, 5).map((note) => {
+                    const matchedChild = displayChildren.find(c => String(c.id) === String(note.childId));
+                    return (
+                      <NoteCard
+                        key={note.id}
+                        note={note}
+                        childName={matchedChild?.name}
+                        onUpdate={(updated) => setMyNotes(myNotes.map(n => n.id === updated.id ? updated : n))}
+                        onDelete={(deletedId) => setMyNotes(myNotes.filter(n => n.id !== deletedId))}
+                      />
+                    );
+                  })
                 )}
               </div>
             </Card>

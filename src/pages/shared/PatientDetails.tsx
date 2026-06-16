@@ -683,6 +683,8 @@ export const PatientDetails = () => {
               {isDoctor     && <option value="therapist">Therapist</option>}
               {isTherapist  && <option value="doctor">Doctor</option>}
               {isTherapist  && <option value="parent">Parent</option>}
+              {user?.role === 'parent' && <option value="doctor">Doctor</option>}
+              {user?.role === 'parent' && <option value="therapist">Therapist</option>}
             </select>
           </div>
           <textarea
