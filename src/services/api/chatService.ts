@@ -86,7 +86,7 @@ export const chatServiceAPI = {
   sendMessage: async (
     chatId: string,
     content: string,
-    messageType: 'text' | 'file' = 'text'
+    messageType: 'text' | 'file' | 'audio' | 'call' = 'text'
   ): Promise<ChatMessage> => {
     const response = await apiClient.post<Record<string, unknown>>('/chat/send', {
       chatId: isNaN(Number(chatId)) ? chatId : Number(chatId),

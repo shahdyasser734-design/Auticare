@@ -66,7 +66,7 @@ const SpecialistCard = ({ data, type, onBook }: { data: SpecialistDisplay; type:
         <div>
           <p className="text-xs text-navy-400 dark:text-slate-500 mb-1">Experience</p>
           <p className="font-bold text-navy-900 dark:text-white">
-            {data.yearsOfExperience > 0 ? `${data.yearsOfExperience} yrs` : <span className="text-sm font-normal text-slate-500">New Specialist</span>}
+            {data.yearsOfExperience > 0 ? `${data.yearsOfExperience} yrs` : <span className="text-sm font-normal text-slate-500">Not specified</span>}
           </p>
         </div>
         <div>

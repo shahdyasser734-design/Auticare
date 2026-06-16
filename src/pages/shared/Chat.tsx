@@ -6,7 +6,7 @@ import { Avatar } from '../../components/common/Avatar';
 import { chatServiceAPI, type ChatConversation, type ChatMessage } from '../../services/api/chatService';
 import { bookingService } from '../../services/api/bookings';
 import { useAuth } from '../../context/useAuth';
-import { MessageSquare, Send, Loader2, RefreshCw, ChevronLeft } from 'lucide-react';
+import { MessageSquare, Send, Loader2, RefreshCw, ChevronLeft, Phone, Video, Paperclip, Mic, Smile } from 'lucide-react';
 import { useNotification } from '../../context/NotificationContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -118,6 +118,10 @@ export const Chat = () => {
         const contactMap = new Map<string, ParticipantInfo>();
 
         bookings.forEach(b => {
+          // Skip pending/rejected cases (Case Approval Workflow)
+          const status = (b.status || '').toLowerCase();
+          if (status === 'pending' || status === 'rejected') return;
+
           // Add specialist if they are not the current user
           if (b.specialistId && String(b.specialistId) !== myId && b.specialistName) {
             contactMap.set(String(b.specialistId), {
@@ -180,6 +184,25 @@ export const Chat = () => {
       } catch (err) {
         console.warn('[Chat] Failed to fetch bookings for contacts:', err);
       }
+
+      // ── Filter chats based on role strictly ──
+      const currentUserRole = user?.role?.toLowerCase() || '';
+      data = data.filter(chat => {
+        const others = getOtherParticipants(chat, myId);
+        // Prevent self-chat or empty chat
+        if (others.length === 0) return false;
+
+        const otherRole = others[0].role.toLowerCase();
+
+        if (currentUserRole === 'parent') {
+          return ['doctor', 'therapist', 'specialist'].includes(otherRole);
+        } else if (currentUserRole === 'doctor') {
+          return ['therapist', 'parent', 'specialist'].includes(otherRole);
+        } else if (currentUserRole === 'therapist') {
+          return ['doctor', 'parent', 'specialist'].includes(otherRole);
+        }
+        return true;
+      });
 
       setConversations(data);
 
@@ -244,6 +267,34 @@ export const Chat = () => {
   }, [messages]);
 
   // ─── Send message ────────────────────────────────────────────────────────
+
+  const handleSendCall = useCallback(async (type: 'audio' | 'video') => {
+    if (!selected?.id) { setSendError('No conversation selected.'); return; }
+    
+    setSending(true);
+    setSendError(null);
+
+    try {
+      let activeChatId = selected.id;
+
+      if (activeChatId.startsWith('new-')) {
+        const contactId = activeChatId.replace('new-', '');
+        const newChat = await chatServiceAPI.startChat(contactId);
+        activeChatId = newChat.id;
+        setSelected(newChat);
+        void fetchConversations();
+      }
+
+      const content = `Incoming ${type} call... Join here: https://zoom.us/j/123456789`;
+      await chatServiceAPI.sendMessage(activeChatId, content, 'call');
+      await fetchMessages({ ...selected, id: activeChatId });
+    } catch (err: unknown) {
+      const error = err as { response?: { status?: number, data?: { message?: string } }; message?: string };
+      setSendError(error?.response?.data?.message || error?.message || 'Failed to start call.');
+    } finally {
+      setSending(false);
+    }
+  }, [selected, fetchConversations, fetchMessages]);
 
   const handleSend = useCallback(async () => {
     const content = newMessage.trim();
@@ -417,6 +468,29 @@ export const Chat = () => {
                     {selectedOther.role}
                   </p>
                 </div>
+                
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => {
+                      if (!selected) return;
+                      handleSendCall('audio');
+                    }}
+                    className="p-2 rounded-xl text-stone-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
+                    title="Start Audio Call"
+                  >
+                    <Phone size={20} />
+                  </button>
+                  <button 
+                    onClick={() => {
+                      if (!selected) return;
+                      handleSendCall('video');
+                    }}
+                    className="p-2 rounded-xl text-stone-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
+                    title="Start Video Call"
+                  >
+                    <Video size={20} />
+                  </button>
+                </div>
 
               </div>
 
@@ -452,9 +526,9 @@ export const Chat = () => {
                         <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                           <div className="max-w-sm rounded-3xl border border-blue-200 dark:border-blue-800/50 bg-gradient-to-br from-blue-50 to-white dark:from-slate-900 dark:to-slate-800 p-4 shadow-md space-y-3">
                             <div className="flex items-center gap-2">
-                              <span className="text-2xl">🎥</span>
+                              <span className="text-2xl">{msg.messageType === 'call' ? '📞' : '🎥'}</span>
                               <div>
-                                <p className="font-bold text-stone-900 dark:text-white text-sm">Zoom Consultation</p>
+                                <p className="font-bold text-stone-900 dark:text-white text-sm">{msg.messageType === 'call' ? 'Incoming Call' : 'Zoom Consultation'}</p>
                                 <p className="text-xs text-stone-400">{formatTime(msg.timestamp)}</p>
                               </div>
                             </div>
@@ -462,7 +536,7 @@ export const Chat = () => {
                               onClick={() => window.open(zoomUrl, '_blank', 'noopener,noreferrer')}
                               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm py-2 rounded-xl transition-colors"
                             >
-                              Join Zoom Meeting
+                              Join
                             </button>
                           </div>
                         </div>
@@ -476,14 +550,36 @@ export const Chat = () => {
                             <Avatar name={msg.senderName || selectedOther.name} size="sm" />
                           </div>
                         )}
-                        <div className="max-w-[70%]">
+                        <div className="max-w-[70%] relative group">
                           <div className={`px-4 py-3 rounded-3xl text-sm leading-relaxed font-medium ${
                             isOwn
                               ? 'bg-indigo-600 text-white rounded-tr-sm shadow-md shadow-indigo-500/10'
                               : 'bg-stone-100 dark:bg-slate-800/70 text-stone-800 dark:text-slate-200 rounded-tl-sm'
                           }`}>
-                            {msg.content}
+                            {msg.messageType === 'audio' ? (
+                                <div className="flex items-center gap-2">
+                                  <button className="p-1.5 rounded-full bg-black/10 hover:bg-black/20 dark:bg-white/20 dark:hover:bg-white/30 transition-colors"><Mic size={16}/></button>
+                                  <div className="h-1 w-24 bg-black/10 dark:bg-white/30 rounded-full overflow-hidden"><div className="h-full bg-current w-1/3"></div></div>
+                                  <span className="text-xs font-bold">0:05</span>
+                                </div>
+                            ) : msg.messageType === 'file' ? (
+                                <div className="flex items-center gap-2">
+                                  <Paperclip size={16} />
+                                  <span className="underline cursor-pointer">{msg.content || 'Attached File'}</span>
+                                </div>
+                            ) : msg.content}
                           </div>
+                          
+                          {msg.reactions && Object.keys(msg.reactions).length > 0 && (
+                            <div className={`absolute -bottom-2 ${isOwn ? 'right-4' : 'left-4'} bg-white dark:bg-slate-700 rounded-full px-1.5 py-0.5 text-xs shadow border border-slate-100 dark:border-slate-600 flex gap-1 z-10`}>
+                              {Object.values(msg.reactions).map((r, i) => <span key={i}>{r}</span>)}
+                            </div>
+                          )}
+
+                          <button className={`absolute top-1/2 -translate-y-1/2 ${isOwn ? '-left-8' : '-right-8'} opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-slate-400 hover:text-indigo-500 bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700 z-10`} title="React">
+                            <Smile size={14} />
+                          </button>
+
                           <p className={`text-[10px] text-stone-400 mt-1 ${isOwn ? 'text-right' : 'text-left'}`}>
                             {formatTime(msg.timestamp)}
                           </p>
@@ -506,8 +602,11 @@ export const Chat = () => {
               {/* Input bar */}
               <form
                 onSubmit={handleFormSubmit}
-                className="flex gap-2 pt-4 border-t border-stone-200/60 dark:border-white/8 shrink-0"
+                className="flex items-center gap-2 pt-4 border-t border-stone-200/60 dark:border-white/8 shrink-0 relative"
               >
+                <button type="button" className="p-2 text-stone-400 hover:text-indigo-600 transition-colors" title="Attach file">
+                  <Paperclip size={20} />
+                </button>
                 <input
                   ref={inputRef}
                   type="text"
@@ -518,6 +617,9 @@ export const Chat = () => {
                   disabled={sending}
                   className="flex-1 rounded-2xl border border-stone-200 dark:border-white/10 bg-white dark:bg-slate-800 text-stone-900 dark:text-white text-sm px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 font-medium placeholder:text-stone-400 disabled:opacity-50 transition-shadow"
                 />
+                <button type="button" className="p-2 text-stone-400 hover:text-indigo-600 transition-colors" title="Record Voice Note">
+                  <Mic size={20} />
+                </button>
                 <button
                   type="submit"
                   disabled={!newMessage.trim() || sending}

@@ -293,9 +293,11 @@ export interface ChatMessage {
   senderName: string;
   senderRole: 'parent' | 'doctor' | 'therapist';
   content: string;
-  messageType: 'text' | 'zoom-link' | 'file';
+  messageType: 'text' | 'zoom-link' | 'file' | 'audio' | 'call';
   zoomLink?: string;
   fileAttachment?: Attachment;
+  audioUrl?: string;
+  reactions?: Record<string, string>; // e.g. { 'userId': '👍' }
   timestamp: string;
   isRead: boolean;
 }

@@ -64,7 +64,7 @@ export const SpecialistCardUI = ({
               <div className="text-xs font-medium text-slate-600">{specialist.specialty}</div>
               <div className="text-xs text-slate-500 mt-1">
                 <span className="inline-block px-2 py-1 bg-slate-100 rounded text-xs">
-                  {specialist.years > 0 ? `${specialist.years}+ yrs exp` : 'New Specialist'}
+                  {specialist.years > 0 ? `${specialist.years}+ yrs exp` : 'Not specified'}
                 </span>
               </div>
             </div>
