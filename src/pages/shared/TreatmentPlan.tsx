@@ -156,8 +156,6 @@ export const TreatmentPlan = () => {
     if (!childId) return;
     setSaving(true);
     try {
-      let savedPlan: TreatmentPlanType;
-      
       const finalGoal = JSON.stringify({ smartGoals, interventionPlan });
       const finalNotes = JSON.stringify({ clinicalAssessment, diagnosisSummary, progressTracking, generalNotes });
       const finalEndDate = endDate ? new Date(endDate).toISOString() : null;
@@ -196,9 +194,7 @@ export const TreatmentPlan = () => {
         };
         
         console.log('[DEBUG] PUT Payload:', { planId: plan.id, payload: updatePayload });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const res = await treatmentPlansService.updatePlan(plan.id, updatePayload as any);
-        savedPlan = res as unknown as TreatmentPlanType;
+        await treatmentPlansService.updatePlan(plan.id, updatePayload as any);
       } else {
         let finalSpecialistId: string | number = user?.id || 1;
         
@@ -228,14 +224,14 @@ export const TreatmentPlan = () => {
         
         console.log('[DEBUG] POST Payload:', { childId, specialistId: finalSpecialistId, payload: createPayload });
         
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const res = await treatmentPlansService.createPlan(createPayload as any);
-          savedPlan = res as unknown as TreatmentPlanType;
+          await treatmentPlansService.createPlan(createPayload as any);
       }
 
-      setPlan(savedPlan);
       setPublishSuccess(true);
       setTimeout(() => setPublishSuccess(false), 5000);
+      
+      // ALWAYS REFRESH DATA AFTER PUBLISH
+      await loadPlanData();
       
       try {
         if (targetStatus === 'PUBLISHED') {
