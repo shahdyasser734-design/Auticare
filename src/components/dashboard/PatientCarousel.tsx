@@ -146,9 +146,17 @@ export const PatientCarousel: React.FC<PatientCarouselProps> = ({ patients, isDo
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white">{patient.name}</h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                      {patient.age ? `Age ${patient.age}` : ''} {patient.gender ? `• ${patient.gender}` : ''}
-                    </p>
+                    {(() => {
+                      const ageStr = patient.age ? `Age ${patient.age}` : '';
+                      const isUnknownGender = !patient.gender || patient.gender.toString().toLowerCase() === 'unknown' || patient.gender.toString().toLowerCase() === 'undefined' || patient.gender.toString().toLowerCase() === 'null';
+                      const genderStr = !isUnknownGender ? patient.gender : '';
+                      const info = [ageStr, genderStr].filter(Boolean).join(' • ');
+                      return info ? (
+                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                          {info}
+                        </p>
+                      ) : null;
+                    })()}
                   </div>
                   {patient.profileImage && (
                     <img

@@ -102,13 +102,13 @@ export const DoctorPatients = () => {
               id,
               name: card.name || card.childName || 'Unknown Patient',
               age: card.age ?? card.childAge ?? card.ageInYears ?? null,
-              gender: card.gender ?? card.childGender ?? card.sex ?? 'Unknown',
+              gender: card.gender ?? card.childGender ?? card.sex ?? '',
               parentId: card.parentId || '',
               dateOfBirth: card.dateOfBirth ?? card.date_of_birth ?? card.dob ?? card.childDob ?? '',
               riskLevel: (card.lastScreening as Record<string, unknown>)?.riskLevel || card.riskLevel || null,
               status: card.status || 'active',
-              assignedDoctor: card.assignedDoctor || (isDoctor ? user?.name : 'No Doctor Assigned'),
-              assignedTherapist: card.assignedTherapist || (isTherapist ? user?.name : 'No Therapist Assigned'),
+              assignedDoctor: card.assignedDoctor || (isDoctor ? user?.name : ''),
+              assignedTherapist: card.assignedTherapist || (isTherapist ? user?.name : ''),
             });
           }
         });
@@ -122,13 +122,13 @@ export const DoctorPatients = () => {
               id: b.childId,
               name: b.childName || 'Unknown Patient',
               age: card?.age ?? card?.childAge ?? card?.ageInYears ?? null,
-              gender: card?.gender ?? card?.childGender ?? card?.sex ?? 'Unknown',
+              gender: card?.gender ?? card?.childGender ?? card?.sex ?? '',
               parentId: b.parentId || '',
               dateOfBirth: card?.dateOfBirth ?? card?.date_of_birth ?? card?.dob ?? card?.childDob ?? '',
               riskLevel: (card?.lastScreening as Record<string, unknown>)?.riskLevel || card?.riskLevel || null,
               status: 'active',
-              assignedDoctor: card?.assignedDoctor || (isDoctor ? user?.name : b.doctorName) || 'No Doctor Assigned',
-              assignedTherapist: card?.assignedTherapist || (isTherapist ? user?.name : b.therapistName) || 'No Therapist Assigned',
+              assignedDoctor: card?.assignedDoctor || (isDoctor ? user?.name : b.doctorName) || '',
+              assignedTherapist: card?.assignedTherapist || (isTherapist ? user?.name : b.therapistName) || '',
             });
           }
         });
@@ -191,14 +191,16 @@ export const DoctorPatients = () => {
                             Age: {patient.age}
                           </p>
                         )}
-                        {patient.gender && patient.gender.toLowerCase() !== 'unknown' && (
-                          <p className="text-sm text-slate-650 dark:text-slate-400 capitalize">
-                            Gender: {patient.gender}
-                          </p>
+                        {patient.gender && patient.gender.toLowerCase() !== 'unknown' && patient.gender.toLowerCase() !== 'undefined' && patient.gender.toLowerCase() !== 'null' && (
+                          <span className="text-sm text-slate-500 dark:text-slate-400 capitalize">• {patient.gender}</span>
                         )}
-                        <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                          <p><strong className="text-slate-600 dark:text-slate-300">Doctor:</strong> {(patient as unknown as Record<string, unknown>).assignedDoctor as string || 'No Doctor Assigned'}</p>
-                          <p><strong className="text-slate-600 dark:text-slate-300">Therapist:</strong> {(patient as unknown as Record<string, unknown>).assignedTherapist as string || 'No Therapist Assigned'}</p>
+                        <div className="mt-3 flex flex-col gap-1 text-sm text-xs text-slate-500 dark:text-slate-400">
+                          {!!(patient as unknown as Record<string, unknown>).assignedDoctor && (
+                            <p><strong className="text-slate-600 dark:text-slate-300">Doctor:</strong> {(patient as unknown as Record<string, unknown>).assignedDoctor as string}</p>
+                          )}
+                          {!!(patient as unknown as Record<string, unknown>).assignedTherapist && (
+                            <p><strong className="text-slate-600 dark:text-slate-300">Therapist:</strong> {(patient as unknown as Record<string, unknown>).assignedTherapist as string}</p>
+                          )}
                         </div>
                       </div>
                     </div>

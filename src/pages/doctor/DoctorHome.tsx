@@ -109,10 +109,10 @@ export const DoctorHome = () => {
             id: b.childId,
             name: b.childName || 'Unknown Patient',
             age: card?.age ?? card?.childAge ?? card?.ageInYears ?? null,
-            gender: card?.gender ?? card?.childGender ?? card?.sex ?? 'Unknown',
+            gender: card?.gender ?? card?.childGender ?? card?.sex ?? '',
             status: 'active',
-            assignedDoctor: card?.assignedDoctor || (isDoctor ? user?.name : b.doctorName) || 'No Doctor Assigned',
-            assignedTherapist: card?.assignedTherapist || (isTherapist ? user?.name : b.therapistName) || 'No Therapist Assigned',
+            assignedDoctor: card?.assignedDoctor || (isDoctor ? user?.name : b.doctorName) || '',
+            assignedTherapist: card?.assignedTherapist || (isTherapist ? user?.name : b.therapistName) || '',
             parentId: b.parentId || '',
             parentName: b.parentName || 'Parent'
           });
@@ -703,21 +703,23 @@ export const DoctorHome = () => {
                               <p className="text-stone-400 dark:text-slate-500 text-[11px] mt-0.5 capitalize">{info}</p>
                             ) : null;
                           })()}
-                          {isDoctor && !!(c as Record<string, unknown>).assignedTherapist && (
+                          {isDoctor && !!(c as Record<string, unknown>).assignedTherapist && (c as Record<string, unknown>).assignedTherapist !== 'No Therapist Assigned' && (c as Record<string, unknown>).assignedTherapist !== 'Unknown' && (
                             <p className="text-violet-500 text-[11px] mt-0.5 font-medium">🧑‍🏫 {(c as Record<string, unknown>).assignedTherapist as string}</p>
                           )}
-                          {!isDoctor && !!(c as Record<string, unknown>).assignedDoctor && (
+                          {!isDoctor && !!(c as Record<string, unknown>).assignedDoctor && (c as Record<string, unknown>).assignedDoctor !== 'No Doctor Assigned' && (c as Record<string, unknown>).assignedDoctor !== 'Unknown' && (
                             <p className="text-blue-500 text-[11px] mt-0.5 font-medium">👨‍⚕️ {(c as Record<string, unknown>).assignedDoctor as string}</p>
                           )}
-                          <span className={`inline-block mt-1.5 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                            (c as Record<string, unknown>).status === 'active'
-                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                              : (c as Record<string, unknown>).status === 'in-treatment'
-                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                              : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-                          }`}>
-                            {(c as Record<string, unknown>).status === 'in-treatment' ? 'In Treatment' : (c as Record<string, unknown>).status as string}
-                          </span>
+                          {(c as Record<string, unknown>).status && (c as Record<string, unknown>).status !== 'Unknown' && (
+                            <span className={`inline-block mt-1.5 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                              (c as Record<string, unknown>).status === 'active'
+                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                                : (c as Record<string, unknown>).status === 'in-treatment'
+                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                            }`}>
+                              {(c as Record<string, unknown>).status === 'in-treatment' ? 'In Treatment' : (c as Record<string, unknown>).status as string}
+                            </span>
+                          )}
                         </div>
                         <button
                           onClick={() => navigate(`/patients/${c.id}`)}
