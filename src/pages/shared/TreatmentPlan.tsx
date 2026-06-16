@@ -4,6 +4,7 @@ import { MainLayout } from '../../layouts/MainLayout';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
+import { Modal } from '../../components/common/Modal';
 import { Input } from '../../components/common/Input';
 import { useAuth } from '../../context/useAuth';
 import { bookingsService } from '../../services/api/bookingsService';
@@ -34,6 +35,8 @@ export const TreatmentPlan = () => {
   const [specialist, setSpecialist] = useState<Specialist | null>(null);
   const [publishSuccess, setPublishSuccess] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   // Ref for PDF export — targets only the treatment plan content card
@@ -391,13 +394,15 @@ export const TreatmentPlan = () => {
 
   const handleDeletePlan = async () => {
     if (!plan?.id) return;
-    if (!window.confirm('Are you sure you want to permanently delete this Treatment Plan? This action cannot be undone.')) return;
     
     setSaving(true);
     try {
       await treatmentPlansService.deletePlan(plan.id);
       setPlan(null);
       setIsEditingMode(false);
+      setIsDeleteModalOpen(false);
+      setDeleteSuccess(true);
+      setTimeout(() => setDeleteSuccess(false), 5000);
       await loadPlanData();
     } catch (err) {
       console.error('Error deleting treatment plan:', err);
@@ -459,6 +464,21 @@ export const TreatmentPlan = () => {
               </p>
               <p className="text-sm text-slate-700 dark:text-slate-350">
                 The treatment plan has been saved successfully. Child profile and specialist dashboard have been updated.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Success Banner */}
+        {deleteSuccess && (
+          <div className="rounded-3xl border border-red-200 bg-red-50/50 dark:bg-red-950/20 p-5 flex items-start gap-4 animate-fade-in-down">
+            <span className="text-2xl text-red-500">🗑️</span>
+            <div>
+              <p className="text-sm font-semibold text-red-800 dark:text-red-300 uppercase tracking-wider mb-1">
+                Treatment Plan Deleted Successfully
+              </p>
+              <p className="text-sm text-slate-700 dark:text-slate-350">
+                The treatment plan has been permanently removed from the system globally.
               </p>
             </div>
           </div>
@@ -766,7 +786,7 @@ export const TreatmentPlan = () => {
                             Edit Treatment Plan
                           </Button>
                           <Button 
-                            onClick={() => void handleDeletePlan()} 
+                            onClick={() => setIsDeleteModalOpen(true)} 
                             disabled={saving}
                             variant="outline" 
                             className="gap-2 border-red-200 text-red-600 hover:bg-red-50"
@@ -825,6 +845,35 @@ export const TreatmentPlan = () => {
           </div>
         )}
       </div>
+
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => !saving && setIsDeleteModalOpen(false)}
+        title="Delete Treatment Plan"
+        footer={
+          <div className="flex justify-end gap-3 w-full">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteModalOpen(false)}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white border-red-600"
+              onClick={() => void handleDeletePlan()}
+              disabled={saving}
+            >
+              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Confirm Delete
+            </Button>
+          </div>
+        }
+      >
+        <p className="text-slate-600 dark:text-slate-300">
+          Are you sure you want to delete this treatment plan? This action is permanent and cannot be undone.
+        </p>
+      </Modal>
     </MainLayout>
   );
 };
