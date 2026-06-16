@@ -34,13 +34,16 @@ export const normalizeTreatmentPlan = (p: any): any => {
   }
 
   let titleVal = p.title || '';
+  if (typeof titleVal === 'string' && titleVal.trim().startsWith('{')) {
+    titleVal = '';
+  }
   if (!titleVal && p.notes) {
     const firstLine = p.notes.split('\n')[0];
     if (firstLine && !firstLine.trim().startsWith('{')) {
       titleVal = firstLine;
     }
   }
-  titleVal = titleVal || 'Treatment Plan';
+  titleVal = titleVal || 'Development & Clinical Treatment Plan';
 
   return {
     ...p,
