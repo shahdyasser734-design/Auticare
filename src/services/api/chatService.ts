@@ -120,8 +120,9 @@ export const chatServiceAPI = {
     }
 
     const response = await apiClient.post<Record<string, unknown>>('/chat/send', formData, {
+      // We must not explicitly set Content-Type here, or else we lose the browser-generated boundary
       headers: {
-        'Content-Type': 'multipart/form-data',
+        'Content-Type': undefined,
       },
     });
     return mapMessage(response.data?.data || response.data);
