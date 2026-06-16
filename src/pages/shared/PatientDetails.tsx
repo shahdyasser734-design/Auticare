@@ -149,21 +149,12 @@ export const PatientDetails = () => {
           (b: Booking) => String(b.childId) === String(id)
         );
 
-        // ── 5. Fetch therapy sessions for each treatment plan ─────────────────
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const inlinePlan = (childData as any).treatmentPlan || (childData as any).TreatmentPlan;
-        const allPlans = Array.isArray(plansRaw) ? [...plansRaw] : [];
-        if (inlinePlan && !allPlans.find(p => p.id === inlinePlan.id)) {
-          allPlans.push(inlinePlan);
-        }
-        
-        // Unconditional dashboard hydration: inject treatment plan if missing
-        if (allPlans.length === 0 && card?.treatmentPlan) {
-          allPlans.push(card.treatmentPlan as TreatmentPlan);
-        }
-        let normalizedPlans = (allPlans as TreatmentPlan[]);
+        // ── 5. Treatment Plan source of truth ────────────────────────────────
+        // We only use plansRaw from treatmentPlansService. 
+        // DO NOT inject from childData or dashboard card to prevent stale data.
+        let normalizedPlans = Array.isArray(plansRaw) ? [...plansRaw] : [];
         if (isTherapist) {
-          normalizedPlans = normalizedPlans.filter(p => p.status === 'active');
+          normalizedPlans = normalizedPlans.filter(p => p.status === 'active' || p.status === 'PUBLISHED');
         }
 
         // Fetch therapy sessions from all visible plans (linked by treatmentPlanId)

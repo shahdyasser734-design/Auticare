@@ -97,20 +97,8 @@ export const treatmentPlansService = {
   },
 
   getPlan: async (id: string): Promise<TreatmentPlan> => {
-    try {
-      const response = await apiClient.get<TreatmentPlan>(`/treatment-plans/${id}`);
-      return normalizeTreatmentPlan(response.data);
-    } catch (err) {
-      // Fallback for therapist or permissions issue
-      try {
-        const myPlans = await treatmentPlansService.getMyPlans();
-        const found = myPlans.find(p => String(p.id) === String(id) || String((p as TreatmentPlan & { treatmentId?: string }).treatmentId) === String(id));
-        if (found) return found;
-      } catch {
-        // Ignored
-      }
-      throw err;
-    }
+    const response = await apiClient.get<TreatmentPlan>(`/treatment-plans/${id}`);
+    return normalizeTreatmentPlan(response.data);
   },
 
   updatePlan: async (id: string, data: Partial<CreateTreatmentPlanRequest>): Promise<TreatmentPlan> => {
@@ -162,58 +150,13 @@ export const treatmentPlansService = {
   },
 
   getChildPlans: async (childId: string): Promise<TreatmentPlan[]> => {
-    try {
-      const response = await apiClient.get<TreatmentPlan[]>(`/treatment-plans/child/${childId}`);
-      let plans = (response.data || []).map(normalizeTreatmentPlan);
-      if (plans.length > 0) return plans;
-    } catch {
-      // Ignore error, proceed to fallback
-    }
-
-    // Fallback: Try fetching via my-plans to see if it's a role-based visibility issue
-    try {
-      const myPlans = await treatmentPlansService.getMyPlans();
-      return myPlans.filter(p => String(p.childId) === String(childId));
-    } catch {
-      return [];
-    }
+    const response = await apiClient.get<TreatmentPlan[]>(`/treatment-plans/child/${childId}`);
+    return (response.data || []).map(normalizeTreatmentPlan);
   },
 
   getMyPlans: async (): Promise<TreatmentPlan[]> => {
-    let myPlans: TreatmentPlan[] = [];
-    try {
-      const response = await apiClient.get<TreatmentPlan[]>('/treatment-plans/my-plans');
-      myPlans = (response.data || []).map(normalizeTreatmentPlan);
-    } catch (err) {
-      console.warn('Backend /treatment-plans/my-plans returned error, using fallback to bookings:', err);
-    }
-
-    // Always fallback to bookings to guarantee Therapist visibility for Doctor-published plans
-    try {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const bookings = await apiClient.get<any[]>('/bookings/my-bookings');
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const uniqueChildIds = [...new Set((bookings.data || []).map((b: any) => b.childId).filter(Boolean))];
-      if (uniqueChildIds.length > 0) {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const plansPromises = uniqueChildIds.map((cId: any) => 
-          apiClient.get<TreatmentPlan[]>(`/treatment-plans/child/${cId}`)
-            .then(res => res.data || [])
-            .catch(() => [])
-        );
-        const plansArrays = await Promise.all(plansPromises);
-        const childPlans = plansArrays.flat().map(normalizeTreatmentPlan);
-        
-        const allPlans = [...myPlans, ...childPlans];
-        const deduplicated = Array.from(new Map(allPlans.map(p => [String(p.id), p])).values());
-        
-          return deduplicated;
-      }
-    } catch (bookingErr) {
-      console.warn('Bookings fallback failed:', bookingErr);
-    }
-    
-    return myPlans;
+    const response = await apiClient.get<TreatmentPlan[]>('/treatment-plans/my-plans');
+    return (response.data || []).map(normalizeTreatmentPlan);
   },
 };
 
