@@ -28,10 +28,30 @@ export const localNotificationManager = {
     type: Notification['type'],
     title: string,
     message: string,
-    relatedId?: string
+    relatedId?: string,
+    exactTimestamp?: string
   ): void => {
     if (!userId) return;
     const notifications = loadLocal();
+    
+    // Deduplication logic: If we have an exact matching title/message/relatedId within the last 5 seconds, drop it.
+    // Or if relatedId exists and matches exactly with the same type in the last 1 minute, skip.
+    const now = Date.now();
+    const isDuplicate = notifications.some(n => {
+      if (n.userId !== userId) return false;
+      const age = now - new Date(n.createdAt).getTime();
+      
+      // Exact match guard (same message, title, type within 10 seconds)
+      if (n.title === title && n.message === message && age < 10000) return true;
+      
+      // Source/Action guard (same related source and type within 1 minute, prevents spam)
+      if (relatedId && n.relatedId === relatedId && n.type === type && age < 60000) return true;
+      
+      return false;
+    });
+
+    if (isDuplicate) return;
+
     const newNotification: Notification = {
       id: `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       userId,
@@ -40,7 +60,7 @@ export const localNotificationManager = {
       message,
       relatedId,
       isRead: false,
-      createdAt: new Date().toISOString()
+      createdAt: exactTimestamp || new Date().toISOString()
     };
     notifications.push(newNotification);
     saveLocal(notifications);

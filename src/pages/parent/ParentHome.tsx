@@ -87,6 +87,10 @@ export const ParentHome = () => {
   useEffect(() => {
 // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchDashboard();
+
+    const handleUpdate = () => void fetchDashboard();
+    window.addEventListener('auticare_notifications_updated', handleUpdate);
+    return () => window.removeEventListener('auticare_notifications_updated', handleUpdate);
 // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeChildId]);
 

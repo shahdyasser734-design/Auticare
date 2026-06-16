@@ -31,12 +31,30 @@ export const notificationService = {
       // Strict role-based isolation: ONLY return notifications belonging to the current user
       const filteredApi = allNotifications.filter(n => n.userId === currentUserId);
       
-      // Merge and sort by newest first
-      const merged = [...localNotifications, ...filteredApi].sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
+      // Merge all notifications
+      const combined = [...localNotifications, ...filteredApi];
       
-      return merged;
+      // Deduplicate by relatedId + type + tight time window (to prevent API and local overlapping)
+      const deduplicated: Notification[] = [];
+      const seenSignatures = new Set<string>();
+
+      // Sort newest first
+      combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      for (const n of combined) {
+        // Group them by type, relatedId, and the hour they were created to prevent spam
+        const timeGroup = new Date(n.createdAt).getTime() / (1000 * 60 * 5); // 5-minute blocks
+        const signature = n.relatedId 
+          ? `${n.type}-${n.relatedId}-${Math.floor(timeGroup)}` 
+          : `${n.type}-${n.title}-${Math.floor(timeGroup)}`;
+
+        if (!seenSignatures.has(signature)) {
+          seenSignatures.add(signature);
+          deduplicated.push(n);
+        }
+      }
+      
+      return deduplicated;
     }
     return allNotifications;
   },

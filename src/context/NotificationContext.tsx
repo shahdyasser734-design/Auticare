@@ -62,13 +62,17 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       const unreadCount = list.filter(n => !n.isRead).length;
       if (unreadCount > 0) {
         const newest = list.find(n => !n.isRead);
-        if (newest) {
-          const lastSeenId = Number(localStorage.getItem('lastSeenNotificationId') || '0');
-          const currentId = Number(newest.id);
+        if (newest && newest.id) {
+          const seenStr = sessionStorage.getItem('seenAlertIds') || '[]';
+          let seenAlertIds: string[] = [];
+          try { seenAlertIds = JSON.parse(seenStr); } catch { /* ignore */ }
           
-          if (currentId > lastSeenId) {
-            setNewestUnreadMsg(newest.message || 'You have a new notification!');
-            localStorage.setItem('lastSeenNotificationId', String(currentId));
+          if (!seenAlertIds.includes(newest.id)) {
+            setNewestUnreadMsg(newest.message || newest.title || 'You have a new notification!');
+            seenAlertIds.push(newest.id);
+            // Keep array small
+            if (seenAlertIds.length > 50) seenAlertIds.shift();
+            sessionStorage.setItem('seenAlertIds', JSON.stringify(seenAlertIds));
           }
         }
       }
@@ -77,8 +81,33 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       try {
         const chats = await chatServiceAPI.getMyChats();
         const cUnread = chats.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
-        setChatUnreadCount(cUnread);
-        localStorage.setItem('chatUnreadCount', String(cUnread));
+        
+        setChatUnreadCount(prev => {
+          if (cUnread > prev) {
+            // Find which chats have new messages
+            const unreadChats = chats.filter(c => c.unreadCount > 0);
+            unreadChats.forEach(chat => {
+              if (chat.lastMessage && String(chat.lastMessage.senderId) !== String(user.id)) {
+                let msgText = 'Sent a new message';
+                if (chat.lastMessage.messageType === 'image') msgText = 'Sent an image';
+                else if (chat.lastMessage.messageType === 'file') msgText = 'Sent a file';
+                else if (chat.lastMessage.messageType === 'voice') msgText = 'Sent a voice message';
+                else if (chat.lastMessage.replyToMessageId) msgText = 'Replied to your message';
+                else if (chat.lastMessage.content) msgText = chat.lastMessage.content;
+                
+                localNotificationManager.emitNotification(
+                  user.id,
+                  'message',
+                  `New Message from ${chat.lastMessage.senderName || 'Chat'}`,
+                  msgText,
+                  `chat-${chat.id}`
+                );
+              }
+            });
+          }
+          localStorage.setItem('chatUnreadCount', String(cUnread));
+          return cUnread;
+        });
       } catch {
         // ignore chat fetch errors
       }
