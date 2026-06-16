@@ -47,9 +47,10 @@ export const NoteCard = ({ note, childName, onUpdate, onDelete }: NoteCardProps)
     }
   };
 
+  const [now] = useState(() => Date.now());
   const relativeTime = (() => {
     const d = new Date(note.createdAt);
-    const diff = Date.now() - d.getTime();
+    const diff = now - d.getTime();
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);

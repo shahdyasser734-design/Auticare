@@ -30,9 +30,9 @@ const loadLocalMedia = (): ChatMessage[] => {
 const saveLocalMedia = (messages: ChatMessage[]) => {
   try {
     localStorage.setItem(LOCAL_MEDIA_KEY, JSON.stringify(messages));
-  } catch (err: any) {
+  } catch (err: unknown) {
     // If quota exceeded, remove the oldest 5 messages and try again
-    if (err.name === 'QuotaExceededError' && messages.length > 5) {
+    if (err instanceof Error && err.name === 'QuotaExceededError' && messages.length > 5) {
       messages.splice(0, 5); // remove oldest
       try {
         localStorage.setItem(LOCAL_MEDIA_KEY, JSON.stringify(messages));
