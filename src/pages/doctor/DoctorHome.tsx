@@ -13,11 +13,14 @@ import { useNotification } from '../../context/NotificationContext';
 import { chatServiceAPI } from '../../services/api/chatService';
 import { notesService, type Note } from '../../services/api/notes';
 import { NoteCard } from '../../components/notes/NoteCard';
+import { treatmentPlansService } from '../../services/api/treatmentPlansService';
+import type { TreatmentPlan } from '../../types';
+import { TreatmentPlanDescription } from '../../components/treatmentPlans/TreatmentPlanDescription';
 
 import {
   Loader2, Calendar, Users, Bell, ClipboardList, ArrowRight,
   Activity, MessageSquare, Video, CheckCircle2, Clock3, Stethoscope,
-  Sparkles, ChevronRight, Heart
+  Sparkles, ChevronRight, Heart, FileText, BookOpen
 } from 'lucide-react';
 
 const isToday = (dateStr?: string): boolean => {
@@ -46,6 +49,7 @@ export const DoctorHome = () => {
   const [children, setChildren] = useState<any[]>([]);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [myNotes, setMyNotes] = useState<any[]>([]);
+  const [plans, setPlans] = useState<TreatmentPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -141,6 +145,10 @@ export const DoctorHome = () => {
       const allNotesArrs = await Promise.all(notesPromises);
       const allNotesFlattened = allNotesArrs.flat();
 
+      const plansPromises = extractedPatients.map(c => treatmentPlansService.getChildPlans(c.id).catch(() => []));
+      const allPlansArrs = await Promise.all(plansPromises);
+      const activePlans = allPlansArrs.flat().filter(p => p.status === 'active');
+
       const uniqueNotesMap = new Map<string, Note>();
       allNotesFlattened.forEach(n => {
         if (String(n.createdBy) !== String(user?.id)) {
@@ -156,6 +164,7 @@ export const DoctorHome = () => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setChildren(extractedPatients as any[]);
       setMyNotes(sortedNotes);
+      setPlans(activePlans);
 
       console.log(
         `[DASHBOARD] Dashboard ready - ${extractedPatients.length} patients, ${bookingData.length} bookings, ${sortedNotes.length} notes`
@@ -631,6 +640,52 @@ export const DoctorHome = () => {
                           Reject
                         </Button>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            {/* Active Treatment Plans */}
+            <Card className="border border-stone-200/60 dark:border-white/8 shadow-md rounded-3xl p-6 bg-[var(--surface-strong)] dark:bg-slate-800/80">
+              <h3 className="font-black text-lg text-stone-800 dark:text-white mb-5 flex items-center gap-2 tracking-tight">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
+                  <FileText className="text-emerald-600" size={17} />
+                </div>
+                Active Treatment Plans
+                {plans.length > 0 && <Badge variant="success">{plans.length}</Badge>}
+              </h3>
+
+              {plans.length === 0 ? (
+                <div className="text-center py-10">
+                  <div className="w-14 h-14 rounded-2xl bg-stone-100 dark:bg-slate-700/50 flex items-center justify-center mx-auto mb-3">
+                    <BookOpen size={24} className="text-stone-400" />
+                  </div>
+                  <p className="text-stone-500 text-sm font-medium">No active treatment plans yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {plans.map((p) => (
+                    <div
+                      key={p.id}
+                      className="p-4 bg-emerald-50/40 dark:bg-emerald-950/10 border border-emerald-200/50 dark:border-emerald-800/20 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-emerald-300 dark:hover:border-emerald-700/30 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-bold text-stone-900 dark:text-white text-sm">{p.title}</p>
+                          <Badge variant="success">{p.status}</Badge>
+                        </div>
+                        <div className="mt-2">
+                          <TreatmentPlanDescription text={p.description} />
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => navigate(`/treatment-plan/${p.childId}`)}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shrink-0 cursor-pointer font-bold shadow-sm"
+                      >
+                        Open Pathway <ChevronRight size={13} className="ml-1" />
+                      </Button>
                     </div>
                   ))}
                 </div>

@@ -61,14 +61,14 @@ export const NoteCard = ({ note, childName, onUpdate, onDelete }: NoteCardProps)
     return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
   })();
 
-  const role = note.senderRole?.toLowerCase() || 'specialist';
+  const role = note.senderRole?.toLowerCase() || '';
   const roleBadgeClass = 
     role === 'doctor' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
     role === 'therapist' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' :
     role === 'parent' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
     'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
 
-  const displayRole = role.charAt(0).toUpperCase() + role.slice(1);
+  const displayRole = role ? role.charAt(0).toUpperCase() + role.slice(1) : '';
 
   if (isEditing) {
     return (
@@ -98,20 +98,28 @@ export const NoteCard = ({ note, childName, onUpdate, onDelete }: NoteCardProps)
       <div className="flex justify-between items-start gap-4">
         <div className="flex-1 space-y-2">
           
-          <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2">
-            <span className={`w-fit px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider ${roleBadgeClass}`}>
-              {displayRole}
-            </span>
-            <span className="font-bold text-sm text-slate-900 dark:text-white">
-              {note.senderName || 'Specialist'}
-            </span>
-          </div>
+          {(displayRole || note.senderName) && (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2">
+              {displayRole && (
+                <span className={`w-fit px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider ${roleBadgeClass}`}>
+                  {displayRole}
+                </span>
+              )}
+              {note.senderName && (
+                <span className="font-bold text-sm text-slate-900 dark:text-white">
+                  {note.senderName}
+                </span>
+              )}
+            </div>
+          )}
 
           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-            {displayRole} {childName ? `• For ${childName}` : ''}
-            <span className="mx-2">•</span>
-            {relativeTime}
-            {note.updatedAt && note.updatedAt !== note.createdAt && ' (Edited)'}
+            {[
+              displayRole ? displayRole : null,
+              childName ? `For ${childName}` : null,
+              relativeTime,
+              note.updatedAt && note.updatedAt !== note.createdAt ? '(Edited)' : null
+            ].filter(Boolean).join(' • ')}
           </p>
 
           <p className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap italic mt-1 bg-white/50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700/50">

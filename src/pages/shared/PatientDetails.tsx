@@ -132,12 +132,12 @@ export const PatientDetails = () => {
 
         // Hydrate roles from the rich dashboard card (or fallbacks)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (childData as any).assignedDoctor = card?.assignedDoctor || bk?.doctorName || 'No Doctor Assigned';
+        (childData as any).assignedDoctor = card?.assignedDoctor || bk?.doctorName || null;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (childData as any).assignedDoctorId = card?.assignedDoctorId || (bk?.specialistType?.toLowerCase() === 'doctor' ? bk?.specialistId : undefined);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (childData as any).assignedTherapist = card?.assignedTherapist || bk?.therapistName || 'Unassigned Therapist';
+        (childData as any).assignedTherapist = card?.assignedTherapist || bk?.therapistName || null;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (childData as any).assignedTherapistId = card?.assignedTherapistId || (bk?.specialistType?.toLowerCase() === 'therapist' ? bk?.specialistId : undefined);
 
@@ -344,9 +344,13 @@ export const PatientDetails = () => {
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-600 dark:text-slate-400">
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <p><strong className="text-slate-800 dark:text-slate-200">Doctor:</strong> {(patient as any).assignedDoctor || 'No Doctor Assigned'}</p>
+                {((patient as any).assignedDoctor && (patient as any).assignedDoctor !== 'No Doctor Assigned' && (patient as any).assignedDoctor !== 'Unknown') && (
+                  <p><strong className="text-slate-800 dark:text-slate-200">Doctor:</strong> {(patient as any).assignedDoctor}</p>
+                )}
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <p><strong className="text-slate-800 dark:text-slate-200">Therapist:</strong> {(patient as any).assignedTherapist || 'Unassigned Therapist'}</p>
+                {((patient as any).assignedTherapist && (patient as any).assignedTherapist !== 'Unassigned Therapist' && (patient as any).assignedTherapist !== 'Unknown') && (
+                  <p><strong className="text-slate-800 dark:text-slate-200">Therapist:</strong> {(patient as any).assignedTherapist}</p>
+                )}
               </div>
             </div>
           </div>
