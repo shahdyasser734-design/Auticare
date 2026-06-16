@@ -13,7 +13,8 @@ import { specialistsService } from '../../services/api/specialistsService';
 import { FileUpload } from '../../components/common/FileUpload';
 import { fileUploadService } from '../../services/api/fileUploadService';
 import { childrenService } from '../../services/api/children';
-import { User, FileText, BarChart3, ArrowLeft, Loader2, Sparkles, Save, Download } from 'lucide-react';
+import { User, FileText, BarChart3, ArrowLeft, Loader2, Sparkles, Save, ChevronDown, Image as ImageIcon } from 'lucide-react';
+import html2canvas from 'html2canvas';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const html2pdf: any = (await import('html2pdf.js')).default;
 import type { Child, TreatmentPlan as TreatmentPlanType, Specialist } from '../../types';
@@ -39,6 +40,16 @@ export const TreatmentPlan = () => {
 
   // Ref for PDF export — targets only the treatment plan content card
   const pdfContentRef = useRef<HTMLDivElement>(null);
+  
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [exportToast, setExportToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  useEffect(() => {
+    if (exportToast) {
+      const timer = setTimeout(() => setExportToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [exportToast]);
   
   // Treatment Plan states
   const [plan, setPlan] = useState<TreatmentPlanType | null>(null);
@@ -185,14 +196,66 @@ export const TreatmentPlan = () => {
 
       await html2pdf().set(opt).from(element).save();
 
+      await html2pdf().set(opt).from(element).save();
+
       if (pdfHeader) pdfHeader.style.display = 'none';
       if (pdfTitle) pdfTitle.style.display = 'none';
       elementsToHide.forEach(el => (el as HTMLElement).style.display = '');
 
+      setExportToast({ message: 'Treatment plan exported successfully', type: 'success' });
     } catch (err) {
       console.error('PDF export failed:', err);
+      setExportToast({ message: 'Failed to export treatment plan. Please try again.', type: 'error' });
     } finally {
       setExporting(false);
+      setShowExportMenu(false);
+    }
+  };
+
+  const handleExportImage = async () => {
+    if (!plan || !pdfContentRef.current) return;
+    setExporting(true);
+    try {
+      const element = pdfContentRef.current;
+      
+      const pdfHeader = document.getElementById('pdf-header');
+      const pdfTitle = document.getElementById('pdf-title');
+      const elementsToHide = document.querySelectorAll('[data-pdf-hide]');
+      
+      if (pdfHeader) pdfHeader.style.display = 'block';
+      if (pdfTitle) pdfTitle.style.display = 'flex';
+      elementsToHide.forEach(el => (el as HTMLElement).style.display = 'none');
+
+      const isDarkMode = document.documentElement.classList.contains('dark');
+      const bgColor = isDarkMode ? '#0f172a' : '#ffffff';
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: bgColor,
+      });
+
+      const image = canvas.toDataURL('image/png', 1.0);
+      const filename = `treatment-plan-${child?.name?.toLowerCase().replace(/\s+/g, '-') || 'patient'}.png`;
+
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = image;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      if (pdfHeader) pdfHeader.style.display = 'none';
+      if (pdfTitle) pdfTitle.style.display = 'none';
+      elementsToHide.forEach(el => (el as HTMLElement).style.display = '');
+
+      setExportToast({ message: 'Treatment plan exported successfully', type: 'success' });
+    } catch (err) {
+      console.error('Image export failed:', err);
+      setExportToast({ message: 'Failed to export treatment plan. Please try again.', type: 'error' });
+    } finally {
+      setExporting(false);
+      setShowExportMenu(false);
     }
   };
 
@@ -718,18 +781,39 @@ export const TreatmentPlan = () => {
                     </div>
                     
                     {isParent && plan?.status === 'PUBLISHED' && (
-                      <div className="mt-8 pt-6 border-t border-slate-200 dark:border-white/10 flex justify-end">
-                        <Button
-                          onClick={() => void handleExportPdf()}
-                          disabled={exporting}
-                          className="gap-2 bg-primary-600 hover:bg-primary-700 text-white shadow-md hover:shadow-lg transition-all"
-                        >
-                          {exporting ? (
-                            <><Loader2 className="h-4 w-4 animate-spin" /> Generating PDF...</>
-                          ) : (
-                            <><Download className="h-4 w-4" /> Export to PDF</>
+                      <div className="mt-8 pt-6 border-t border-slate-200 dark:border-white/10 flex justify-end relative">
+                        <div className="relative">
+                          <Button
+                            onClick={() => setShowExportMenu(!showExportMenu)}
+                            disabled={exporting}
+                            className="gap-2 bg-primary-600 hover:bg-primary-700 text-white shadow-md hover:shadow-lg transition-all px-5 py-2.5 rounded-full font-medium"
+                          >
+                            {exporting ? (
+                              <><Loader2 className="h-4 w-4 animate-spin" /> Exporting...</>
+                            ) : (
+                              <>📥 Export Treatment Plan <ChevronDown className="h-4 w-4" /></>
+                            )}
+                          </Button>
+
+                          {showExportMenu && !exporting && (
+                            <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
+                              <button
+                                onClick={() => { setShowExportMenu(false); void handleExportPdf(); }}
+                                className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm font-medium text-slate-700 dark:text-slate-200 transition-colors"
+                              >
+                                <FileText className="h-4 w-4 text-primary-500" />
+                                Download as PDF
+                              </button>
+                              <button
+                                onClick={() => { setShowExportMenu(false); void handleExportImage(); }}
+                                className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm font-medium text-slate-700 dark:text-slate-200 transition-colors border-t border-slate-100 dark:border-slate-700"
+                              >
+                                <ImageIcon className="h-4 w-4 text-green-500" />
+                                Download as Image (PNG)
+                              </button>
+                            </div>
                           )}
-                        </Button>
+                        </div>
                       </div>
                     )}
                     {/* Close pdfContentRef wrapper */}
@@ -740,6 +824,16 @@ export const TreatmentPlan = () => {
           </div>
         )}
       </div>
+
+      {/* Export Toast Notification */}
+      {exportToast && (
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 z-[9999] animate-in slide-in-from-bottom-5 fade-in duration-300 ${
+          exportToast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+        }`}>
+          {exportToast.type === 'success' ? '✅' : '❌'}
+          <span className="font-semibold text-sm">{exportToast.message}</span>
+        </div>
+      )}
     </MainLayout>
   );
 };
