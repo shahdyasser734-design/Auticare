@@ -101,51 +101,64 @@ export const PatientDetails = () => {
 
     const load = async () => {
       try {
-        // ── 1. Patient profile ─────────────────────────────────────────────────
+        // ── 1. Fetch Dashboard & Core Dependencies First ─────────────────────
+        const [dash, allMyBookings] = await Promise.all([
+          dashboardService.getSpecialistDashboard().catch(() => null),
+          bookingService.getMyBookings().catch(() => [] as Booking[]),
+        ]);
+        
+        const bk = allMyBookings.find((b: Booking) => String(b.childId) === String(id));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const card = dash?.patientCards?.find((c: any) =>
+          c.childId === id || c.id === id || c.childName === bk?.childName || c.name === bk?.childName
+        );
+
+        // ── 2. Patient profile ─────────────────────────────────────────────────
         let childData: Child;
         try {
           childData = await childrenService.getChild(id);
         } catch {
           // Fallback: build from bookings when getChild() returns 403
-          const [myBookings, dash] = await Promise.all([
-            bookingService.getMyBookings(),
-            dashboardService.getSpecialistDashboard().catch(() => null),
-          ]);
-          const bk = myBookings.find(b => String(b.childId) === String(id));
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const card = dash?.patientCards?.find((c: any) =>
-            c.childName === bk?.childName || c.name === bk?.childName
-          );
           childData = {
             id,
-            name: bk?.childName || 'Patient',
+            name: bk?.childName || card?.name || card?.childName || 'Patient',
             age: card?.age ?? card?.childAge ?? null,
             gender: card?.gender ?? '',
             status: 'active',
-            parentId: bk?.parentId || '',
+            parentId: bk?.parentId || card?.parentId || '',
             dateOfBirth: card?.dateOfBirth ?? '',
           } as unknown as Child;
         }
 
-        // ── 2. All supporting data in parallel ────────────────────────────────
-        const [resultsRaw, notesRaw, plansRaw, allMyBookings] = await Promise.all([
+        // Hydrate roles from the rich dashboard card (or fallbacks)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (childData as any).assignedDoctor = card?.assignedDoctor || bk?.doctorName || (isDoctor ? user?.name : 'No Doctor Assigned');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (childData as any).assignedTherapist = card?.assignedTherapist || bk?.therapistName || (isTherapist ? user?.name : 'No Therapist Assigned');
+
+        // ── 3. All supporting data in parallel ────────────────────────────────
+        const [resultsRaw, notesRaw, plansRaw] = await Promise.all([
           screeningService.getResults(id).catch(() => []),
           notesService.getChildNotes(id).catch(() => []),
           treatmentPlansService.getChildPlans(id).catch(() => [] as TreatmentPlan[]),
-          bookingService.getMyBookings().catch(() => [] as Booking[]),
         ]);
 
-        // ── 3. Filter bookings to this specific child (sessions) ───────────────
+        // ── 4. Filter bookings to this specific child (sessions) ───────────────
         const childBookings = (allMyBookings as Booking[]).filter(
-          b => String(b.childId) === String(id)
+          (b: Booking) => String(b.childId) === String(id)
         );
 
-        // ── 4. Fetch therapy sessions for each treatment plan ─────────────────
+        // ── 5. Fetch therapy sessions for each treatment plan ─────────────────
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const inlinePlan = (childData as any).treatmentPlan || (childData as any).TreatmentPlan;
         const allPlans = Array.isArray(plansRaw) ? [...plansRaw] : [];
         if (inlinePlan && !allPlans.find(p => p.id === inlinePlan.id)) {
           allPlans.push(inlinePlan);
+        }
+        
+        // Unconditional dashboard hydration: inject treatment plan if missing
+        if (allPlans.length === 0 && card?.treatmentPlan) {
+          allPlans.push(card.treatmentPlan as TreatmentPlan);
         }
         
         const normalizedPlans = (allPlans as TreatmentPlan[]);
@@ -280,6 +293,12 @@ export const PatientDetails = () => {
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 ml-auto">
                   {isDoctor ? '🩺 Doctor View' : '🧠 Therapist View'}
                 </span>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-600 dark:text-slate-400">
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                <p><strong className="text-slate-800 dark:text-slate-200">Doctor:</strong> {(patient as any).assignedDoctor || 'No Doctor Assigned'}</p>
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                <p><strong className="text-slate-800 dark:text-slate-200">Therapist:</strong> {(patient as any).assignedTherapist || 'No Therapist Assigned'}</p>
               </div>
             </div>
           </div>
