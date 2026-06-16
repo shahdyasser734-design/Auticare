@@ -26,7 +26,7 @@ export const DoctorPatients = () => {
       const patientCards = dashData?.patientCards || [];
       
       // 1. Add all patients from Dashboard (this includes assigned patients with no bookings)
-      patientCards.forEach((card: any) => {
+      patientCards.forEach((card: Record<string, unknown>) => {
         const id = card.id || card.childId;
         if (id && !uniqueChildren.has(id)) {
           uniqueChildren.set(id, {
@@ -48,7 +48,7 @@ export const DoctorPatients = () => {
       bookings.forEach(b => {
         if (b.childId && !uniqueChildren.has(b.childId)) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const card = patientCards.find((c: any) => c.childName === b.childName || c.name === b.childName);
+          const card = patientCards.find((c: any) => c.childName === b.childName || c.name === b.childName) as Record<string, unknown> | undefined;
           uniqueChildren.set(b.childId, {
             id: b.childId,
             name: b.childName || 'Unknown Patient',
@@ -65,8 +65,7 @@ export const DoctorPatients = () => {
       });
       
       const mappedPatients = Array.from(uniqueChildren.values());
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setPatients(mappedPatients as any[]);
+      setPatients(mappedPatients as Child[]);
     } catch (err) {
       console.error('Error fetching patients:', err);
     } finally {
@@ -92,7 +91,7 @@ export const DoctorPatients = () => {
         const patientCards = dashData?.patientCards || [];
         
         // 1. Add all patients from Dashboard
-        patientCards.forEach((card: any) => {
+        patientCards.forEach((card: Record<string, unknown>) => {
           const id = card.id || card.childId;
           if (id && !uniqueChildren.has(id)) {
             uniqueChildren.set(id, {
@@ -114,7 +113,7 @@ export const DoctorPatients = () => {
         bookings.forEach(b => {
           if (b.childId && !uniqueChildren.has(b.childId)) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const card = patientCards.find((c: any) => c.childName === b.childName || c.name === b.childName);
+            const card = patientCards.find((c: any) => c.childName === b.childName || c.name === b.childName) as Record<string, unknown> | undefined;
             uniqueChildren.set(b.childId, {
               id: b.childId,
               name: b.childName || 'Unknown Patient',
@@ -131,8 +130,7 @@ export const DoctorPatients = () => {
         });
         const mappedPatients = Array.from(uniqueChildren.values());
  
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setPatients(mappedPatients.filter((p: any) => (p.name ?? '').toLowerCase().includes(query.toLowerCase())) as any[]);
+        setPatients(mappedPatients.filter((p: unknown) => ((p as Record<string, unknown>).name ?? '').toString().toLowerCase().includes(query.toLowerCase())) as Child[]);
       } catch (err) {
         console.error('Error:', err);
       }
@@ -195,8 +193,8 @@ export const DoctorPatients = () => {
                           </p>
                         )}
                         <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                          <p><strong className="text-slate-600 dark:text-slate-300">Doctor:</strong> {(patient as any).assignedDoctor || 'No Doctor Assigned'}</p>
-                          <p><strong className="text-slate-600 dark:text-slate-300">Therapist:</strong> {(patient as any).assignedTherapist || 'No Therapist Assigned'}</p>
+                          <p><strong className="text-slate-600 dark:text-slate-300">Doctor:</strong> {(patient as unknown as Record<string, unknown>).assignedDoctor as string || 'No Doctor Assigned'}</p>
+                          <p><strong className="text-slate-600 dark:text-slate-300">Therapist:</strong> {(patient as unknown as Record<string, unknown>).assignedTherapist as string || 'No Therapist Assigned'}</p>
                         </div>
                       </div>
                     </div>

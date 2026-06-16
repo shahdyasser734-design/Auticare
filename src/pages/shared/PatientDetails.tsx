@@ -148,7 +148,7 @@ export const PatientDetails = () => {
           allPlans.push(inlinePlan);
         }
         
-        let normalizedPlans = (allPlans as TreatmentPlan[]);
+        const normalizedPlans = (allPlans as TreatmentPlan[]);
 
         // Fetch therapy sessions from all visible plans (linked by treatmentPlanId)
         const therapySessionArrays = await Promise.all(

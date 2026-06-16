@@ -199,7 +199,7 @@ export const Chat = () => {
     } finally {
       setLoadingChats(false);
     }
-  }, [myId, user?.role, location.state]);
+  }, [myId, location.state]);
 
   // ─── Fetch messages ──────────────────────────────────────────────────────
 
@@ -278,7 +278,7 @@ export const Chat = () => {
       await fetchMessages({ ...selected, id: activeChatId });
     } catch (err: unknown) {
       const error = err as { response?: { status?: number, data?: { message?: string } }; message?: string };
-      let msg = error?.response?.data?.message || error?.message || 'Failed to send. Please try again.';
+      const msg = error?.response?.data?.message || error?.message || 'Failed to send. Please try again.';
       console.error('[Chat] Send error:', err);
       setSendError(msg);
       // Restore the message so the user can retry

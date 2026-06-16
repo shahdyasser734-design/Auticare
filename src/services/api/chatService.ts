@@ -17,7 +17,6 @@ const mapMessage = (m: any): ChatMessage => ({
 
 export const chatServiceAPI = {
   startChat: async (contactId: string): Promise<ChatConversation> => {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
     const parsedId = isNaN(Number(contactId)) ? contactId : Number(contactId);
     // Send standard IDs. If backend is updated, it will read what it needs.
     const payload: Record<string, string | number> = {
@@ -89,7 +88,7 @@ export const chatServiceAPI = {
     content: string,
     messageType: 'text' | 'file' = 'text'
   ): Promise<ChatMessage> => {
-    const response = await apiClient.post<any>('/chat/send', {
+    const response = await apiClient.post<Record<string, unknown>>('/chat/send', {
       chatId: isNaN(Number(chatId)) ? chatId : Number(chatId),
       content,
       messageType,
