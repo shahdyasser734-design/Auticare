@@ -194,8 +194,6 @@ export const TreatmentPlan = () => {
 
       await html2pdf().set(opt).from(element).save();
 
-      await html2pdf().set(opt).from(element).save();
-
       if (pdfHeader) pdfHeader.style.display = 'none';
       if (pdfTitle) pdfTitle.style.display = 'none';
       elementsToHide.forEach(el => (el as HTMLElement).style.display = '');
@@ -590,7 +588,7 @@ export const TreatmentPlan = () => {
           </div>
         ) : (
           /* View Mode Layout */
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" ref={pdfContentRef}>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Column: Summary Card */}
             <div className="lg:col-span-1 space-y-6">
               {/* Child Profile Widget */}
@@ -684,18 +682,49 @@ export const TreatmentPlan = () => {
                 </Card>
               ) : (
                   <Card className="border border-slate-200 dark:border-white/10 shadow-lg rounded-3xl p-6 md:p-8">
-                    {/* PDF capture root — was here, now moved to parent grid */}
-                    <div id="treatment-plan">
+                    {/* PDF capture root */}
+                    <div id="treatment-plan" ref={pdfContentRef}>
                     {/* PDF header visible only inside PDF — hidden from screen */}
                     <div className="hidden" style={{ display: 'none' }} aria-hidden="true" id="pdf-header">
-                      <h1 style={{ fontSize: '22px', color: '#1e40af', marginBottom: '8px' }}>Treatment Plan</h1>
-                      {child && <p style={{ fontSize: '14px', color: '#475569', marginBottom: '4px' }}><strong>Patient:</strong> {child.name} &nbsp;|&nbsp; <strong>Status:</strong> {plan?.status}</p>}
-                      <p style={{ fontSize: '14px', color: '#475569', marginBottom: '4px' }}>
-                        {specialist && <span><strong>Doctor:</strong> {specialist.name} &nbsp;|&nbsp; </span>}
-                        {child?.assignedTherapists && child.assignedTherapists.length > 0 && <span><strong>Therapist(s):</strong> {child.assignedTherapists.join(', ')} &nbsp;|&nbsp; </span>}
-                        <strong>Date:</strong> {new Date().toLocaleDateString()}
-                      </p>
-                      <hr style={{ borderColor: '#e2e8f0', margin: '12px 0' }} />
+                      <div style={{ padding: '20px', backgroundColor: '#f8fafc', borderRadius: '12px', marginBottom: '24px', border: '1px solid #e2e8f0' }}>
+                        <h1 style={{ fontSize: '24px', color: '#0f172a', marginBottom: '16px', fontWeight: 'bold' }}>Treatment Plan Report</h1>
+                        
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                          <div>
+                            <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 4px 0', fontWeight: 'bold' }}>PATIENT INFORMATION</p>
+                            <p style={{ fontSize: '16px', color: '#0f172a', margin: '0', fontWeight: 'bold' }}>{child?.name || 'N/A'}</p>
+                            <p style={{ fontSize: '14px', color: '#475569', margin: '4px 0 0 0' }}>Age: {child?.age ?? 'N/A'} yrs | Gender: <span style={{textTransform: 'capitalize'}}>{child?.gender || 'N/A'}</span></p>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 4px 0', fontWeight: 'bold' }}>AUTHORING SPECIALIST</p>
+                            <p style={{ fontSize: '16px', color: '#0f172a', margin: '0', fontWeight: 'bold' }}>{specialist?.name || 'N/A'}</p>
+                            <p style={{ fontSize: '14px', color: '#475569', margin: '4px 0 0 0' }}>{specialist?.specialization || 'Clinical Specialist'}</p>
+                          </div>
+                        </div>
+
+                        <hr style={{ borderColor: '#cbd5e1', margin: '16px 0', borderStyle: 'dashed' }} />
+                        
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <div>
+                            <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 4px 0', fontWeight: 'bold' }}>TREATMENT STATUS</p>
+                            <p style={{ fontSize: '14px', color: '#0f172a', margin: '0', fontWeight: 'bold', textTransform: 'capitalize' }}>
+                              {plan?.status || 'Active'}
+                            </p>
+                          </div>
+                          <div>
+                            <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 4px 0', fontWeight: 'bold' }}>PROGRESS OVERVIEW</p>
+                            <p style={{ fontSize: '14px', color: '#0f172a', margin: '0', fontWeight: 'bold', textTransform: 'capitalize' }}>
+                              {plan?.progress === 'completed' ? '100% (Completed)' : plan?.progress === 'active' ? '50% (Active)' : '0% (Paused)'}
+                            </p>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 4px 0', fontWeight: 'bold' }}>REPORT DATE</p>
+                            <p style={{ fontSize: '14px', color: '#0f172a', margin: '0', fontWeight: 'bold' }}>
+                              {new Date().toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     <div className="flex justify-between items-center mb-6" data-pdf-hide>
                       <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
