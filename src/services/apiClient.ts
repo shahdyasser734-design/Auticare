@@ -73,8 +73,33 @@ const getApiErrorMessage = (error: AxiosError): string => {
   return error.response?.statusText || error.message || 'An unknown error occurred';
 };
 
+// Enforce single source of truth for Treatment Plans on the frontend:
+// If an endpoint other than /treatment-plans returns embedded treatment plan objects,
+// aggressively strip them out to prevent cache-poisoning and stale data UI bugs.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const stripEmbeddedTreatmentPlans = (url: string | undefined, data: any) => {
+  if (!url || !data) return;
+  // Let the canonical endpoint pass through
+  if (url.includes('/treatment-plans')) return;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const strip = (obj: any) => {
+    if (Array.isArray(obj)) {
+      obj.forEach(strip);
+    } else if (obj !== null && typeof obj === 'object') {
+      if ('treatmentPlan' in obj) delete obj.treatmentPlan;
+      if ('TreatmentPlan' in obj) delete obj.TreatmentPlan;
+      Object.values(obj).forEach(strip);
+    }
+  };
+  strip(data);
+};
+
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    stripEmbeddedTreatmentPlans(response.config?.url, response.data);
+    return response;
+  },
   (error: AxiosError) => {
     const isLogout401 = error.response?.status === 401 && error.config?.url?.includes('/auth/logout');
 
