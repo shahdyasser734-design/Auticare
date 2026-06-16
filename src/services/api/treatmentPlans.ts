@@ -161,31 +161,38 @@ export const treatmentPlansService = {
   },
 
   getMyPlans: async (): Promise<TreatmentPlan[]> => {
+    let myPlans: TreatmentPlan[] = [];
     try {
       const response = await apiClient.get<TreatmentPlan[]>('/treatment-plans/my-plans');
-      return (response.data || []).map(normalizeTreatmentPlan);
+      myPlans = (response.data || []).map(normalizeTreatmentPlan);
     } catch (err) {
       console.warn('Backend /treatment-plans/my-plans returned error, using fallback to bookings:', err);
-      try {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const bookings = await apiClient.get<any[]>('/bookings/my-bookings');
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const uniqueChildIds = [...new Set((bookings.data || []).map((b: any) => b.childId).filter(Boolean))];
-        if (uniqueChildIds.length > 0) {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const plansPromises = uniqueChildIds.map((cId: any) => 
-            apiClient.get<TreatmentPlan[]>(`/treatment-plans/child/${cId}`)
-              .then(res => res.data || [])
-              .catch(() => [])
-          );
-          const plansArrays = await Promise.all(plansPromises);
-          return plansArrays.flat().map(normalizeTreatmentPlan);
-        }
-      } catch (bookingErr) {
-        console.warn('Bookings fallback failed:', bookingErr);
-      }
-      return [];
     }
+
+    // Always fallback to bookings to guarantee Therapist visibility for Doctor-published plans
+    try {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const bookings = await apiClient.get<any[]>('/bookings/my-bookings');
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const uniqueChildIds = [...new Set((bookings.data || []).map((b: any) => b.childId).filter(Boolean))];
+      if (uniqueChildIds.length > 0) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const plansPromises = uniqueChildIds.map((cId: any) => 
+          apiClient.get<TreatmentPlan[]>(`/treatment-plans/child/${cId}`)
+            .then(res => res.data || [])
+            .catch(() => [])
+        );
+        const plansArrays = await Promise.all(plansPromises);
+        const childPlans = plansArrays.flat().map(normalizeTreatmentPlan);
+        
+        const allPlans = [...myPlans, ...childPlans];
+        return Array.from(new Map(allPlans.map(p => [String(p.id), p])).values());
+      }
+    } catch (bookingErr) {
+      console.warn('Bookings fallback failed:', bookingErr);
+    }
+    
+    return myPlans;
   },
 };
 

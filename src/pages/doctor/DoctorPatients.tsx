@@ -212,9 +212,6 @@ export const DoctorPatients = () => {
                           {!!(patient as unknown as Record<string, unknown>).assignedDoctor && (
                             <p><strong className="text-slate-600 dark:text-slate-300">Doctor:</strong> {(patient as unknown as Record<string, unknown>).assignedDoctor as string}</p>
                           )}
-                          {!!(patient as unknown as Record<string, unknown>).assignedTherapist && (
-                            <p><strong className="text-slate-600 dark:text-slate-300">Therapist:</strong> {(patient as unknown as Record<string, unknown>).assignedTherapist as string}</p>
-                          )}
                         </div>
                       </div>
                     </div>
