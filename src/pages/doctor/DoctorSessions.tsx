@@ -20,6 +20,7 @@ export const DoctorSessions = () => {
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState('');
   const [updateError, setUpdateError] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const fetchSessions = async () => {
     try {
