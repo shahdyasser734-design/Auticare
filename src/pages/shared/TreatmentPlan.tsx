@@ -216,12 +216,16 @@ export const TreatmentPlan = () => {
         });
         
         // Notification to therapist (mock generic or specific if therapist ID is known)
-        await apiClient.post('/notifications', {
-          userId: 'therapist', // Backend handles routing or broadcasting to therapists
-          title: 'Treatment Plan Assigned',
-          message: `A new treatment plan has been assigned to you for ${child?.name || 'Patient'}.`,
-          type: 'treatment-plan'
-        });
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const therapistId = (child as any)?.assignedTherapistId;
+        if (therapistId) {
+          await apiClient.post('/notifications', {
+            userId: therapistId,
+            title: 'Treatment Plan Assigned',
+            message: `Dr. ${user?.name || 'Specialist'} has published a new treatment plan for ${child?.name || 'Patient'}.`,
+            type: 'treatment-plan'
+          });
+        }
       } catch (err) {
         console.warn('Failed to dispatch notifications', err);
       }

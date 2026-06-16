@@ -34,11 +34,12 @@ export const notesService = {
     const note = response.data?.data || response.data;
     
     if (data.receiverId) {
+      const senderInfo = data.senderRole ? `${data.senderRole.charAt(0).toUpperCase() + data.senderRole.slice(1)} ${data.senderName || ''}`.trim() : (data.senderName || 'A user');
       localNotificationManager.emitNotification(
         data.receiverId,
         'notes',
         'New Clinical Note',
-        `A new note "${data.title}" has been shared with you.`,
+        `${senderInfo} added a new note: "${data.title}"`,
         note.id
       );
     }
@@ -57,11 +58,12 @@ export const notesService = {
     
     if (data.receiverId || note.receiverId) {
       const targetId = (data.receiverId || note.receiverId) as string;
+      const senderInfo = data.senderRole ? `${data.senderRole.charAt(0).toUpperCase() + data.senderRole.slice(1)} ${data.senderName || ''}`.trim() : (data.senderName || 'A user');
       localNotificationManager.emitNotification(
         targetId,
         'notes',
         'Clinical Note Updated',
-        `The note "${data.title || note.title}" has been updated.`,
+        `${senderInfo} updated the note: "${data.title || note.title}"`,
         note.id
       );
     }
@@ -74,8 +76,34 @@ export const notesService = {
   },
 
   getMyNotes: async (): Promise<Note[]> => {
-    const response = await apiClient.get<Note[]>('/notes/my-notes');
-    return response.data;
+    let myNotes: Note[] = [];
+    try {
+      const response = await apiClient.get<Note[]>('/notes/my-notes');
+      myNotes = response.data || [];
+    } catch { /* ignore */ }
+
+    try {
+      // Also fetch from all booked children to ensure received notes are included
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const bookingsRes = await apiClient.get<any[]>('/bookings/my-bookings');
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const childIds = [...new Set((bookingsRes.data || []).map((b: any) => b.childId).filter(Boolean))];
+      
+      if (childIds.length > 0) {
+        const childNotesPromises = childIds.map(cId => 
+          apiClient.get<Note[]>(`/notes/child/${cId}`).then(res => res.data || []).catch(() => [])
+        );
+        
+        const allChildNotes = (await Promise.all(childNotesPromises)).flat();
+        const combined = [...myNotes, ...allChildNotes];
+        
+        // deduplicate
+        return Array.from(new Map(combined.map(n => [String(n.id), n])).values());
+      }
+    } catch {
+      // fallback to just my notes
+    }
+    return myNotes;
   },
 
   getChildNotes: async (childId: string): Promise<Note[]> => {

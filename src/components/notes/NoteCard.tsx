@@ -15,6 +15,7 @@ export const NoteCard = ({ note, childName, onUpdate, onDelete }: NoteCardProps)
   const { user } = useAuth();
 
   const canModify = (user?.role === 'doctor' || user?.role === 'therapist') && (user?.id === note.createdBy);
+  const isSentByMe = String(user?.id) === String(note.createdBy);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(note.content);
@@ -99,8 +100,8 @@ export const NoteCard = ({ note, childName, onUpdate, onDelete }: NoteCardProps)
       <div className="flex justify-between items-start gap-4">
         <div className="flex-1 space-y-2">
           
-          {(displayRole || note.senderName) && (
-            <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
+            <div className="flex items-center gap-1.5">
               {displayRole && (
                 <span className={`w-fit px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider ${roleBadgeClass}`}>
                   {displayRole}
@@ -112,7 +113,11 @@ export const NoteCard = ({ note, childName, onUpdate, onDelete }: NoteCardProps)
                 </span>
               )}
             </div>
-          )}
+            
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300">
+              {isSentByMe ? (note.receiverId ? `Sent to ${note.receiverRole || 'User'}` : 'Shared note') : 'Received'}
+            </span>
+          </div>
 
           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
             {[

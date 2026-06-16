@@ -63,7 +63,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       if (unreadCount > 0) {
         const newest = list.find(n => !n.isRead);
         if (newest && newest.id) {
-          const seenStr = sessionStorage.getItem('seenAlertIds') || '[]';
+          const seenStr = localStorage.getItem('auticare_seenAlertIds') || '[]';
           let seenAlertIds: string[] = [];
           try { seenAlertIds = JSON.parse(seenStr); } catch { /* ignore */ }
           
@@ -72,7 +72,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
             seenAlertIds.push(newest.id);
             // Keep array small
             if (seenAlertIds.length > 50) seenAlertIds.shift();
-            sessionStorage.setItem('seenAlertIds', JSON.stringify(seenAlertIds));
+            localStorage.setItem('auticare_seenAlertIds', JSON.stringify(seenAlertIds));
           }
         }
       }
