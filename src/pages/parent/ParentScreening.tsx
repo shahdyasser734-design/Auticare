@@ -119,7 +119,7 @@ const LOCAL_QUESTIONS: IScreeningQuestion[] = [
 
 export const ParentScreening = () => {
   const navigate = useNavigate();
-  const { user, activeChildId } = useAuth();
+  const { user, activeChildId, parentChildren, authInitialized } = useAuth();
   const { showPrompt } = useModal();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -153,8 +153,15 @@ export const ParentScreening = () => {
           return;
         }
 
+        const currentChild = parentChildren?.find(c => String(c.id) === String(activeId));
+        if (!currentChild) {
+          console.error("Unauthorized access to child profile for screening.");
+          navigate(ROUTES.PARENT_HOME, { replace: true });
+          return;
+        }
+
         setChildId(activeId);
-        const storedChildName = localStorage.getItem('latestChildName');
+        const storedChildName = currentChild.name || localStorage.getItem('latestChildName');
         if (storedChildName) {
           setChildName(storedChildName);
         }
@@ -185,9 +192,10 @@ export const ParentScreening = () => {
       }
     };
 
+    if (!authInitialized) return;
     initializeScreening();
 // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate]);
+  }, [navigate, authInitialized, parentChildren]);
 
   if (loading) {
     return (

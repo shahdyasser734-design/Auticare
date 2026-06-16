@@ -140,7 +140,13 @@ export const ParentScreeningResults = () => {
 
         console.log('Screening Results: Fetching data for activeChildId:', id);
 
-        const currentChild = parentChildren?.find(c => c.id === id);
+        const currentChild = parentChildren?.find(c => String(c.id) === String(id));
+        if (!currentChild) {
+          console.error("Unauthorized access: Child not found in parent's account.");
+          setResult(null);
+          setLoading(false);
+          return;
+        }
         const childName = currentChild?.name || localStorage.getItem('latestChildName') || 'Child';
 
         // Check if treatment plan exists
