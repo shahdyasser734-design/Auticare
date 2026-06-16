@@ -29,7 +29,7 @@ export const normalizeBooking = (b: any): Booking => {
   const joinLink = String(b.meetingLink || b.joinLink || b.meeting_link || b.join_link || '');
   // Use the real specialist name from the backend — never fall back to hardcoded names
   const specName = String(b.specialistName || b.SpecialistName || '');
-  const specType = String(b.specialistType || b.SpecialistType || 'doctor');
+  const specType = String(b.specialistType || b.SpecialistType || '').toLowerCase();
   const treatmentId = b.treatmentId || b.TreatmentId || '';
   return {
     id: idStr,

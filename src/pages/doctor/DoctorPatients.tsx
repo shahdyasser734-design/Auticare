@@ -8,8 +8,12 @@ import { Avatar } from '../../components/common/Avatar';
 import { bookingService } from '../../services/api/bookings';
 import { dashboardService } from '../../services/api/dashboard';
 import type { Child } from '../../services/api/children';
+import { useAuth } from '../../context/useAuth';
 
 export const DoctorPatients = () => {
+  const { user } = useAuth();
+  const isDoctor = user?.role === 'doctor';
+  const isTherapist = user?.role === 'therapist';
   const navigate = useNavigate();
   const [patients, setPatients] = useState<Child[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -38,8 +42,8 @@ export const DoctorPatients = () => {
             dateOfBirth: card.dateOfBirth ?? card.date_of_birth ?? card.dob ?? card.childDob ?? '',
             riskLevel: (card.lastScreening as Record<string, unknown>)?.riskLevel || card.riskLevel || null,
             status: card.status || 'active',
-            assignedDoctor: card.assignedDoctor || 'No Doctor Assigned',
-            assignedTherapist: card.assignedTherapist || 'No Therapist Assigned',
+            assignedDoctor: card.assignedDoctor || (isDoctor ? user?.name : 'No Doctor Assigned'),
+            assignedTherapist: card.assignedTherapist || (isTherapist ? user?.name : 'No Therapist Assigned'),
           });
         }
       });
@@ -58,8 +62,8 @@ export const DoctorPatients = () => {
             dateOfBirth: card?.dateOfBirth ?? card?.date_of_birth ?? card?.dob ?? card?.childDob ?? '',
             riskLevel: (card?.lastScreening as Record<string, unknown>)?.riskLevel || card?.riskLevel || null,
             status: 'active',
-            assignedDoctor: card?.assignedDoctor || b.doctorName || 'No Doctor Assigned',
-            assignedTherapist: card?.assignedTherapist || b.therapistName || 'No Therapist Assigned',
+            assignedDoctor: card?.assignedDoctor || (isDoctor ? user?.name : b.doctorName) || 'No Doctor Assigned',
+            assignedTherapist: card?.assignedTherapist || (isTherapist ? user?.name : b.therapistName) || 'No Therapist Assigned',
           });
         }
       });
@@ -103,8 +107,8 @@ export const DoctorPatients = () => {
               dateOfBirth: card.dateOfBirth ?? card.date_of_birth ?? card.dob ?? card.childDob ?? '',
               riskLevel: (card.lastScreening as Record<string, unknown>)?.riskLevel || card.riskLevel || null,
               status: card.status || 'active',
-              assignedDoctor: card.assignedDoctor || 'No Doctor Assigned',
-              assignedTherapist: card.assignedTherapist || 'No Therapist Assigned',
+              assignedDoctor: card.assignedDoctor || (isDoctor ? user?.name : 'No Doctor Assigned'),
+              assignedTherapist: card.assignedTherapist || (isTherapist ? user?.name : 'No Therapist Assigned'),
             });
           }
         });
@@ -123,8 +127,8 @@ export const DoctorPatients = () => {
               dateOfBirth: card?.dateOfBirth ?? card?.date_of_birth ?? card?.dob ?? card?.childDob ?? '',
               riskLevel: (card?.lastScreening as Record<string, unknown>)?.riskLevel || card?.riskLevel || null,
               status: 'active',
-              assignedDoctor: card?.assignedDoctor || b.doctorName || 'No Doctor Assigned',
-              assignedTherapist: card?.assignedTherapist || b.therapistName || 'No Therapist Assigned',
+              assignedDoctor: card?.assignedDoctor || (isDoctor ? user?.name : b.doctorName) || 'No Doctor Assigned',
+              assignedTherapist: card?.assignedTherapist || (isTherapist ? user?.name : b.therapistName) || 'No Therapist Assigned',
             });
           }
         });
