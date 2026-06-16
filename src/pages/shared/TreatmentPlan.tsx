@@ -164,8 +164,8 @@ export const TreatmentPlan = () => {
       const html2pdf = (await import('html2pdf.js')).default;
 
       const dateStr = new Date().toISOString().split('T')[0];
-      const childNameSlug = child?.name?.replace(/\s+/g, '_') || 'Patient';
-      const filename = `TreatmentPlan_${childNameSlug}_${dateStr}.pdf`;
+      const childNameSlug = child?.name?.toLowerCase().replace(/\s+/g, '-') || 'patient';
+      const filename = `treatment-plan-${childNameSlug}-${dateStr}.pdf`;
 
       const opt = {
         margin:       [10, 15, 10, 15] as [number, number, number, number],
@@ -657,8 +657,13 @@ export const TreatmentPlan = () => {
                     <div id="treatment-plan" ref={pdfContentRef}>
                     {/* PDF header visible only inside PDF — hidden from screen */}
                     <div className="hidden" style={{ display: 'none' }} aria-hidden="true" id="pdf-header">
-                      <h1 style={{ fontSize: '22px', color: '#1e40af', marginBottom: '4px' }}>Treatment Plan</h1>
-                      {child && <p style={{ fontSize: '14px', color: '#475569' }}>Patient: {child.name} &nbsp;|&nbsp; Status: {plan?.status}</p>}
+                      <h1 style={{ fontSize: '22px', color: '#1e40af', marginBottom: '8px' }}>Treatment Plan</h1>
+                      {child && <p style={{ fontSize: '14px', color: '#475569', marginBottom: '4px' }}><strong>Patient:</strong> {child.name} &nbsp;|&nbsp; <strong>Status:</strong> {plan?.status}</p>}
+                      <p style={{ fontSize: '14px', color: '#475569', marginBottom: '4px' }}>
+                        {specialist && <span><strong>Doctor:</strong> {specialist.name} &nbsp;|&nbsp; </span>}
+                        {child?.assignedTherapists && child.assignedTherapists.length > 0 && <span><strong>Therapist(s):</strong> {child.assignedTherapists.join(', ')} &nbsp;|&nbsp; </span>}
+                        <strong>Date:</strong> {new Date().toLocaleDateString()}
+                      </p>
                       <hr style={{ borderColor: '#e2e8f0', margin: '12px 0' }} />
                     </div>
                     <div className="flex justify-between items-center mb-6" data-pdf-hide>
@@ -682,7 +687,7 @@ export const TreatmentPlan = () => {
                           {exporting ? (
                             <><Loader2 className="h-4 w-4 animate-spin" /> Generating PDF...</>
                           ) : (
-                            <><Download className="h-4 w-4" /> Export as PDF</>
+                            <><Download className="h-4 w-4" /> Export to PDF</>
                           )}
                         </Button>
                       )}
