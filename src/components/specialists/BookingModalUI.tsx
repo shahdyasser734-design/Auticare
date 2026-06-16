@@ -14,7 +14,6 @@ export const BookingModalUI = ({
   onConfirm,
   submitting = false,
   isTherapist = false,
-  selectedFile = null,
   setSelectedFile,
 }: {
   open: boolean;
@@ -29,7 +28,6 @@ export const BookingModalUI = ({
   onConfirm: () => void;
   submitting?: boolean;
   isTherapist?: boolean;
-  selectedFile?: File | null;
   setSelectedFile?: (file: File | null) => void;
 }) => {
   if (!open) return null;

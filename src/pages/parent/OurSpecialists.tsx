@@ -206,7 +206,7 @@ const OurSpecialists = () => {
           try {
             const uploadRes = await fileUploadService.uploadFile(selectedFile, 'booking-document');
             attachedFileUrl = uploadRes.url;
-          } catch (uploadErr) {
+          } catch (_err) {
             setApiError('File upload failed. Please try again.');
             setSubmitting(false);
             return;
@@ -343,7 +343,6 @@ const OurSpecialists = () => {
         onConfirm={confirmBookingUI}
         submitting={submitting}
         isTherapist={selected?.type === 'therapist'}
-        selectedFile={selectedFile}
         setSelectedFile={setSelectedFile}
       />
     </div>

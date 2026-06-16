@@ -5,7 +5,7 @@ export const fileUploadService = {
   // Upload a file
   uploadFile: async (
     file: File,
-    documentType: 'medical-report' | 'session-attachment' | 'treatment-document' | 'specialist-document'
+    documentType: 'medical-report' | 'session-attachment' | 'treatment-document' | 'specialist-document' | 'booking-document'
   ): Promise<FileUploadResponse> => {
     const formData = new FormData();
     formData.append('file', file);

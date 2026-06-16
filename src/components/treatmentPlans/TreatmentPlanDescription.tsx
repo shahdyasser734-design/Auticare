@@ -1,5 +1,12 @@
+interface TreatmentPlanLike {
+  description?: string;
+  notes?: string;
+  goal?: string;
+  goals?: string[];
+}
+
 interface Props {
-  plan?: any;
+  plan?: TreatmentPlanLike;
   text?: string;
   fallbackText?: string;
 }

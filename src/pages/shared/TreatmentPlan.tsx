@@ -15,9 +15,8 @@ import { FileUpload } from '../../components/common/FileUpload';
 import { fileUploadService } from '../../services/api/fileUploadService';
 import { childrenService } from '../../services/api/children';
 import { User, FileText, BarChart3, ArrowLeft, Loader2, Sparkles, Save, Download, Trash2 } from 'lucide-react';
-import jsPDF from 'jspdf';
-// @ts-ignore
-import html2pdf from 'html2pdf.js';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const html2pdf: any = (await import('html2pdf.js')).default;
 import type { Child, TreatmentPlan as TreatmentPlanType, Specialist } from '../../types';
 import apiClient from '../../services/apiClient';
 
@@ -180,9 +179,9 @@ export const TreatmentPlan = () => {
       const bgColor = isDarkMode ? '#0f172a' : '#ffffff';
 
       const opt = {
-        margin:       [10, 10, 10, 10],
+        margin:       [10, 10, 10, 10] as [number, number, number, number],
         filename:     `treatment-plan-${child?.name?.toLowerCase().replace(/\s+/g, '-') || 'patient'}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
+        image:        { type: 'jpeg' as const, quality: 0.98 },
         html2canvas:  { scale: 2, useCORS: true, backgroundColor: bgColor },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
@@ -242,7 +241,7 @@ export const TreatmentPlan = () => {
         };
         
         console.log('[DEBUG] PUT Payload:', { planId: plan.id, payload: updatePayload });
-        await treatmentPlansService.updatePlan(plan.id, updatePayload as any);
+        await treatmentPlansService.updatePlan(plan.id, updatePayload as Record<string, unknown>);
       } else {
         let finalSpecialistId: string | number = user?.id || 1;
         
@@ -272,7 +271,7 @@ export const TreatmentPlan = () => {
         
         console.log('[DEBUG] POST Payload:', { childId, specialistId: finalSpecialistId, payload: createPayload });
         
-          await treatmentPlansService.createPlan(createPayload as any);
+          await treatmentPlansService.createPlan(createPayload as unknown as import('../../services/api/treatmentPlans').CreateTreatmentPlanRequest);
       }
 
       setPublishSuccess(true);

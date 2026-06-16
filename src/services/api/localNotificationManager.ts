@@ -98,6 +98,7 @@ export const localNotificationManager = {
     saveLocal(updated);
   },
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   seedInitialRoleNotifications: (_userId: string, _role: string): void => {
     // Disabled: Notifications must use real database names, not mock/static values.
   }
