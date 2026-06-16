@@ -165,8 +165,10 @@ export const PatientDetails = () => {
         if (allPlans.length === 0 && card?.treatmentPlan) {
           allPlans.push(card.treatmentPlan as TreatmentPlan);
         }
-        
-        const normalizedPlans = (allPlans as TreatmentPlan[]);
+        let normalizedPlans = (allPlans as TreatmentPlan[]);
+        if (isTherapist) {
+          normalizedPlans = normalizedPlans.filter(p => p.status === 'active');
+        }
 
         // Fetch therapy sessions from all visible plans (linked by treatmentPlanId)
         const therapySessionArrays = await Promise.all(
