@@ -1,4 +1,4 @@
-import { Users, Calendar, Clock, CheckCircle, AlertCircle, Mail, TrendingUp, TrendingDown } from 'lucide-react';
+import { Users, Calendar, CheckCircle, AlertCircle, Mail, TrendingUp, TrendingDown } from 'lucide-react';
 import { Card } from '../common/Card';
 import type { DashboardSpecialistData } from '../../services/api/dashboard';
 
@@ -21,7 +21,7 @@ interface DashboardStatsProps {
 
 export const DashboardStats: React.FC<DashboardStatsProps> = ({ stats }) => {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-5 gap-4">
       {stats.map((stat, idx) => {
         const baseColor = stat.color.split(' ')[0] || 'bg-slate-100';
         return (
@@ -92,12 +92,6 @@ export const createDoctorStats = (dashboardData: DashboardSpecialistData | null)
     color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400',
   },
   {
-    label: 'Upcoming',
-    value: dashboardData?.upcomingSessions ?? 0,
-    icon: <Clock size={20} />,
-    color: 'bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400',
-  },
-  {
     label: 'Pending',
     value: dashboardData?.pendingRequests ?? 0,
     icon: <AlertCircle size={20} />,
@@ -130,12 +124,6 @@ export const createTherapistStats = (dashboardData: DashboardSpecialistData | nu
     value: dashboardData?.todaySessions ?? 0,
     icon: <Calendar size={20} />,
     color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400',
-  },
-  {
-    label: 'Upcoming',
-    value: dashboardData?.upcomingSessions ?? 0,
-    icon: <Clock size={20} />,
-    color: 'bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400',
   },
   {
     label: 'Messages',
