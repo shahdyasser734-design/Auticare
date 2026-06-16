@@ -102,7 +102,8 @@ export const DoctorHome = () => {
 
       // Extract patients from ALL bookings, not just active ones
       allBookings.forEach((b: Booking) => {
-        if (b && b.childId && !uniqueChildren.has(b.childId)) {
+        const status = (b.status || '').toLowerCase();
+        if (status !== 'pending' && status !== 'rejected' && b && b.childId && !uniqueChildren.has(b.childId)) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const card = patientCards.find((c: any) => c.childName === b.childName || c.name === b.childName);
           uniqueChildren.set(b.childId, {
@@ -111,8 +112,8 @@ export const DoctorHome = () => {
             age: card?.age ?? card?.childAge ?? card?.ageInYears ?? null,
             gender: card?.gender ?? card?.childGender ?? card?.sex ?? '',
             status: 'active',
-            assignedDoctor: card?.assignedDoctor || (isDoctor ? user?.name : b.doctorName) || '',
-            assignedTherapist: card?.assignedTherapist || (isTherapist ? user?.name : b.therapistName) || '',
+            assignedDoctor: card.assignedDoctor || '',
+            assignedTherapist: card.assignedTherapist || '',
             parentId: b.parentId || '',
             parentName: b.parentName || 'Parent'
           });

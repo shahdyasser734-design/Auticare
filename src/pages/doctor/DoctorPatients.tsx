@@ -42,28 +42,29 @@ export const DoctorPatients = () => {
             dateOfBirth: card.dateOfBirth ?? card.date_of_birth ?? card.dob ?? card.childDob ?? '',
             riskLevel: (card.lastScreening as Record<string, unknown>)?.riskLevel || card.riskLevel || null,
             status: card.status || 'active',
-            assignedDoctor: card.assignedDoctor || (isDoctor ? user?.name : 'No Doctor Assigned'),
-            assignedTherapist: card.assignedTherapist || (isTherapist ? user?.name : 'No Therapist Assigned'),
+            assignedDoctor: card.assignedDoctor || '',
+            assignedTherapist: card.assignedTherapist || '',
           });
         }
       });
 
       // 2. Add patients from Bookings (fallback for missing cards)
       bookings.forEach(b => {
-        if (b.childId && !uniqueChildren.has(b.childId)) {
+        const status = (b.status || '').toLowerCase();
+        if (status !== 'pending' && status !== 'rejected' && b.childId && !uniqueChildren.has(b.childId)) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const card = patientCards.find((c: any) => c.childName === b.childName || c.name === b.childName) as Record<string, unknown> | undefined;
           uniqueChildren.set(b.childId, {
             id: b.childId,
             name: b.childName || 'Unknown Patient',
             age: card?.age ?? card?.childAge ?? card?.ageInYears ?? null,
-            gender: card?.gender ?? card?.childGender ?? card?.sex ?? 'Unknown',
+            gender: card?.gender ?? card?.childGender ?? card?.sex ?? '',
             parentId: b.parentId || '',
             dateOfBirth: card?.dateOfBirth ?? card?.date_of_birth ?? card?.dob ?? card?.childDob ?? '',
             riskLevel: (card?.lastScreening as Record<string, unknown>)?.riskLevel || card?.riskLevel || null,
             status: 'active',
-            assignedDoctor: card?.assignedDoctor || (isDoctor ? user?.name : b.doctorName) || 'No Doctor Assigned',
-            assignedTherapist: card?.assignedTherapist || (isTherapist ? user?.name : b.therapistName) || 'No Therapist Assigned',
+            assignedDoctor: card?.assignedDoctor || b.doctorName || '',
+            assignedTherapist: card?.assignedTherapist || b.therapistName || '',
           });
         }
       });
@@ -115,7 +116,8 @@ export const DoctorPatients = () => {
 
         // 2. Add patients from Bookings
         bookings.forEach(b => {
-          if (b.childId && !uniqueChildren.has(b.childId)) {
+          const status = (b.status || '').toLowerCase();
+          if (status !== 'pending' && status !== 'rejected' && b.childId && !uniqueChildren.has(b.childId)) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const card = patientCards.find((c: any) => c.childName === b.childName || c.name === b.childName) as Record<string, unknown> | undefined;
             uniqueChildren.set(b.childId, {
@@ -127,8 +129,8 @@ export const DoctorPatients = () => {
               dateOfBirth: card?.dateOfBirth ?? card?.date_of_birth ?? card?.dob ?? card?.childDob ?? '',
               riskLevel: (card?.lastScreening as Record<string, unknown>)?.riskLevel || card?.riskLevel || null,
               status: 'active',
-              assignedDoctor: card?.assignedDoctor || (isDoctor ? user?.name : b.doctorName) || '',
-              assignedTherapist: card?.assignedTherapist || (isTherapist ? user?.name : b.therapistName) || '',
+              assignedDoctor: card?.assignedDoctor || b.doctorName || '',
+              assignedTherapist: card?.assignedTherapist || b.therapistName || '',
             });
           }
         });
