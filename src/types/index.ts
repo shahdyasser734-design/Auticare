@@ -227,7 +227,7 @@ export interface TreatmentPlan {
   goals: string[];
   recommendations: string[];
   homeActivities: string[];
-  status: 'active' | 'completed' | 'paused';
+  status: 'DRAFT' | 'PUBLISHED' | 'COMPLETED' | 'active' | 'completed' | 'paused';
   startDate: string;
   endDate?: string;
   notes?: string;

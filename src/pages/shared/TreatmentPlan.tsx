@@ -13,7 +13,7 @@ import { specialistsService } from '../../services/api/specialistsService';
 import { FileUpload } from '../../components/common/FileUpload';
 import { fileUploadService } from '../../services/api/fileUploadService';
 import { childrenService } from '../../services/api/children';
-import { User, FileText, BarChart3, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
+import { User, FileText, BarChart3, ArrowLeft, Loader2, Sparkles, Save } from 'lucide-react';
 import type { Child, TreatmentPlan as TreatmentPlanType, Specialist } from '../../types';
 import apiClient from '../../services/apiClient';
 
@@ -149,7 +149,7 @@ export const TreatmentPlan = () => {
   }, [childId]);
   /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 
-  const handleSavePlan = async () => {
+  const handleSavePlan = async (targetStatus: 'DRAFT' | 'PUBLISHED') => {
     if (!childId) return;
     setSaving(true);
     try {
@@ -180,7 +180,8 @@ export const TreatmentPlan = () => {
           notes: finalNotes,
           progress: progress,
           endDate: finalEndDate,
-          visibleTo
+          visibleTo,
+          status: targetStatus
         };
         
         console.log('[DEBUG] PUT Payload:', { planId: plan.id, payload: updatePayload });
@@ -210,7 +211,8 @@ export const TreatmentPlan = () => {
           endDate: finalEndDate,
           goal: finalGoal,
           notes: finalNotes,
-          visibleTo
+          visibleTo,
+          status: targetStatus
         };
         
         console.log('[DEBUG] POST Payload:', { childId, specialistId: finalSpecialistId, payload: createPayload });
@@ -225,15 +227,15 @@ export const TreatmentPlan = () => {
       setTimeout(() => setPublishSuccess(false), 5000);
       
       try {
-        // Notification to parent
-        await apiClient.post('/notifications', {
-          userId: child?.parentId || '',
-          title: 'Treatment Plan Published',
-          message: `Dr. ${user?.name || 'Specialist'} has published a new clinical plan for ${child?.name || 'your child'}.`,
-          type: 'treatment-plan'
-        });
-        
-
+        if (targetStatus === 'PUBLISHED') {
+          // Notification to parent
+          await apiClient.post('/notifications', {
+            userId: child?.parentId || '',
+            title: 'Treatment Plan Published',
+            message: `Dr. ${user?.name || 'Specialist'} has published a new clinical plan for ${child?.name || 'your child'}.`,
+            type: 'treatment-plan'
+          });
+        }
       } catch (err) {
         console.warn('Failed to dispatch notifications', err);
       }
@@ -490,10 +492,18 @@ export const TreatmentPlan = () => {
                   <Button variant="outline" onClick={() => navigate(-1)} disabled={saving}>
                     Cancel
                   </Button>
-                  <Button onClick={handleSavePlan} disabled={saving} className="bg-green-600 hover:bg-green-700 text-white font-semibold flex items-center gap-2">
-                    <Sparkles size={16} />
-                    {saving ? (plan?.id ? 'Updating...' : 'Publishing...') : (plan?.id ? 'Update Treatment Plan' : 'Create Treatment Plan')}
-                  </Button>
+                  {isDoctor && (
+                    <div className="flex gap-2">
+                      <Button onClick={() => void handleSavePlan('DRAFT')} disabled={saving} variant="outline" className="gap-2">
+                        <Save className="h-4 w-4" />
+                        {saving ? 'Saving...' : 'Save Draft'}
+                      </Button>
+                      <Button onClick={() => void handleSavePlan('PUBLISHED')} disabled={saving} className="gap-2">
+                        <Save className="h-4 w-4" />
+                        {saving ? 'Publishing...' : (plan?.id ? 'Publish Updates' : 'Publish Plan')}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </Card>

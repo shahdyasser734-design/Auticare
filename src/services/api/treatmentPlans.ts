@@ -158,7 +158,12 @@ export const treatmentPlansService = {
       const response = await apiClient.get<TreatmentPlan[]>(`/treatment-plans/child/${childId}`);
       const user = await authService.getCurrentUser();
       let plans = (response.data || []).map(normalizeTreatmentPlan);
-      plans = plans.filter(p => p.visibleTo?.includes(String(user.id)) || p.doctorId === String(user.id));
+      plans = plans.filter(p => {
+        const hasAccess = p.visibleTo?.includes(String(user.id)) || p.doctorId === String(user.id);
+        if (!hasAccess) return false;
+        if (user.role === 'doctor') return true;
+        return p.status === 'PUBLISHED';
+      });
       if (plans.length > 0) return plans;
     } catch {
       // Ignore error, proceed to fallback
@@ -203,7 +208,12 @@ export const treatmentPlansService = {
         
         try {
           const user = await authService.getCurrentUser();
-          return deduplicated.filter(p => p.visibleTo?.includes(String(user.id)) || p.doctorId === String(user.id));
+          return deduplicated.filter(p => {
+            const hasAccess = p.visibleTo?.includes(String(user.id)) || p.doctorId === String(user.id);
+            if (!hasAccess) return false;
+            if (user.role === 'doctor') return true;
+            return p.status === 'PUBLISHED';
+          });
         } catch {
           return deduplicated;
         }
@@ -214,7 +224,12 @@ export const treatmentPlansService = {
     
     try {
       const user = await authService.getCurrentUser();
-      return myPlans.filter(p => p.visibleTo?.includes(String(user.id)) || p.doctorId === String(user.id));
+      return myPlans.filter(p => {
+        const hasAccess = p.visibleTo?.includes(String(user.id)) || p.doctorId === String(user.id);
+        if (!hasAccess) return false;
+        if (user.role === 'doctor') return true;
+        return p.status === 'PUBLISHED';
+      });
     } catch {
       return myPlans;
     }
