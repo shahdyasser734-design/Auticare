@@ -202,7 +202,14 @@ export const Chat = () => {
       // ── Filter chats based on role strictly ──
       const currentUserRole = user?.role?.toLowerCase() || '';
       data = data.filter(chat => {
-        const others = getOtherParticipants(chat, myId);
+        let others = getOtherParticipants(chat, myId);
+        // Strictly filter out self-chat by id, name, and email matching the current logged-in user
+        others = others.filter(o => 
+          String(o.id) !== myId &&
+          (!user?.name || o.name?.toLowerCase() !== user.name.toLowerCase()) &&
+          (!user?.email || o.id?.toLowerCase() !== user.email.toLowerCase()) // Email is not in ParticipantInfo, but prevent any loose matching just in case
+        );
+
         // Prevent self-chat or empty chat
         if (others.length === 0) return false;
 

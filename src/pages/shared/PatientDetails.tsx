@@ -132,14 +132,14 @@ export const PatientDetails = () => {
 
         // Hydrate roles from the rich dashboard card (or fallbacks)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (childData as any).assignedDoctor = card?.assignedDoctor || bk?.doctorName || (isDoctor ? user?.name : 'No Doctor Assigned');
+        (childData as any).assignedDoctor = card?.assignedDoctor || bk?.doctorName || 'No Doctor Assigned';
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (childData as any).assignedDoctorId = card?.assignedDoctorId || (bk?.specialistType?.toLowerCase() === 'doctor' ? bk?.specialistId : undefined) || (isDoctor ? user?.id : undefined);
+        (childData as any).assignedDoctorId = card?.assignedDoctorId || (bk?.specialistType?.toLowerCase() === 'doctor' ? bk?.specialistId : undefined);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (childData as any).assignedTherapist = card?.assignedTherapist || bk?.therapistName || (isTherapist ? user?.name : 'No Therapist Assigned');
+        (childData as any).assignedTherapist = card?.assignedTherapist || bk?.therapistName || 'Unassigned Therapist';
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (childData as any).assignedTherapistId = card?.assignedTherapistId || (bk?.specialistType?.toLowerCase() === 'therapist' ? bk?.specialistId : undefined) || (isTherapist ? user?.id : undefined);
+        (childData as any).assignedTherapistId = card?.assignedTherapistId || (bk?.specialistType?.toLowerCase() === 'therapist' ? bk?.specialistId : undefined);
 
         // ── 3. All supporting data in parallel ────────────────────────────────
         const [resultsRaw, notesRaw, plansRaw] = await Promise.all([
@@ -344,7 +344,7 @@ export const PatientDetails = () => {
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 <p><strong className="text-slate-800 dark:text-slate-200">Doctor:</strong> {(patient as any).assignedDoctor || 'No Doctor Assigned'}</p>
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <p><strong className="text-slate-800 dark:text-slate-200">Therapist:</strong> {(patient as any).assignedTherapist || 'No Therapist Assigned'}</p>
+                <p><strong className="text-slate-800 dark:text-slate-200">Therapist:</strong> {(patient as any).assignedTherapist || 'Unassigned Therapist'}</p>
               </div>
             </div>
           </div>

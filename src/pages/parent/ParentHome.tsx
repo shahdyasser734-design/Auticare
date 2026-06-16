@@ -78,13 +78,17 @@ export const ParentHome = () => {
 
       // Deduplicate notes by ID and sort newest first
       const uniqueNotesMap = new Map<string, Note>();
-      fetchedNotes.forEach(note => uniqueNotesMap.set(note.id, note));
-      fetchedNotes = Array.from(uniqueNotesMap.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      fetchedNotes.forEach(n => {
+        if (String(n.createdBy) !== String(user?.id)) {
+          uniqueNotesMap.set(n.id, n);
+        }
+      });
+      const sortedNotes = Array.from(uniqueNotesMap.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
       const uniqueChildren = dedupeChildren(childList);
       setChildren(uniqueChildren);
       setPlans(finalPlanList);
-      setNotes(fetchedNotes);
+      setNotes(sortedNotes);
       setUpcomingSessions(finalUpcoming.length);
     } catch (err) {
       console.error('Error fetching parent dashboard:', err);
