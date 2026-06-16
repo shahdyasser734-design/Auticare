@@ -34,7 +34,6 @@ export const DoctorHome = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isDoctor = user?.role === 'doctor';
-  const isTherapist = user?.role === 'therapist';
   
   const { unreadCount: totalUnreadCount, notifications: allNotifications, chatUnreadCount } = useNotification();
   const notifications = allNotifications.slice(0, 5);
@@ -92,8 +91,8 @@ export const DoctorHome = () => {
             age: card.age ?? card.childAge ?? card.ageInYears ?? null,
             gender: card.gender ?? card.childGender ?? card.sex ?? 'Unknown',
             status: card.status || 'active',
-            assignedDoctor: card.assignedDoctor || (isDoctor ? user?.name : 'No Doctor Assigned'),
-            assignedTherapist: card.assignedTherapist || (isTherapist ? user?.name : 'No Therapist Assigned'),
+            assignedDoctor: card?.assignedDoctor || '',
+            assignedTherapist: card?.assignedTherapist || '',
             parentId: card.parentId || '',
             parentName: card.parentName || 'Parent'
           });
@@ -112,8 +111,8 @@ export const DoctorHome = () => {
             age: card?.age ?? card?.childAge ?? card?.ageInYears ?? null,
             gender: card?.gender ?? card?.childGender ?? card?.sex ?? '',
             status: 'active',
-            assignedDoctor: card.assignedDoctor || '',
-            assignedTherapist: card.assignedTherapist || '',
+            assignedDoctor: card?.assignedDoctor || b.doctorName || '',
+            assignedTherapist: card?.assignedTherapist || b.therapistName || '',
             parentId: b.parentId || '',
             parentName: b.parentName || 'Parent'
           });

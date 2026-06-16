@@ -8,12 +8,9 @@ import { Avatar } from '../../components/common/Avatar';
 import { bookingService } from '../../services/api/bookings';
 import { dashboardService } from '../../services/api/dashboard';
 import type { Child } from '../../services/api/children';
-import { useAuth } from '../../context/useAuth';
+
 
 export const DoctorPatients = () => {
-  const { user } = useAuth();
-  const isDoctor = user?.role === 'doctor';
-  const isTherapist = user?.role === 'therapist';
   const navigate = useNavigate();
   const [patients, setPatients] = useState<Child[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -108,8 +105,8 @@ export const DoctorPatients = () => {
               dateOfBirth: card.dateOfBirth ?? card.date_of_birth ?? card.dob ?? card.childDob ?? '',
               riskLevel: (card.lastScreening as Record<string, unknown>)?.riskLevel || card.riskLevel || null,
               status: card.status || 'active',
-              assignedDoctor: card.assignedDoctor || (isDoctor ? user?.name : ''),
-              assignedTherapist: card.assignedTherapist || (isTherapist ? user?.name : ''),
+              assignedDoctor: card.assignedDoctor || '',
+              assignedTherapist: card.assignedTherapist || '',
             });
           }
         });
