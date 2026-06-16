@@ -279,8 +279,11 @@ export const Chat = () => {
       // Immediately re-fetch so the sent message appears without waiting for next poll
       await fetchMessages({ ...selected, id: activeChatId });
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } }; message?: string };
-      const msg = error?.response?.data?.message || error?.message || 'Failed to send. Please try again.';
+      const error = err as { response?: { status?: number, data?: { message?: string } }; message?: string };
+      let msg = error?.response?.data?.message || error?.message || 'Failed to send. Please try again.';
+      if (error?.response?.status === 403) {
+        msg = "You are not authorized to send messages in this chat";
+      }
       console.error('[Chat] Send error:', err);
       setSendError(msg);
       // Restore the message so the user can retry

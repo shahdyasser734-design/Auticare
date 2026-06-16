@@ -11,6 +11,7 @@ export const ChatPage = () => {
   const [selectedConversation, setSelectedConversation] = useState<ChatConversation | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [sendError, setSendError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -55,12 +56,19 @@ export const ChatPage = () => {
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;
 
+    setSendError(null);
     try {
       const message = await chatServiceAPI.sendMessage(selectedConversation.id, newMessage);
       setMessages([...messages, message]);
       setNewMessage('');
-    } catch (err) {
+    } catch (err: unknown) {
+      const error = err as { response?: { status?: number, data?: { message?: string } }; message?: string };
+      let msg = error?.response?.data?.message || error?.message || 'Failed to send. Please try again.';
+      if (error?.response?.status === 403) {
+        msg = "You are not authorized to send messages in this chat";
+      }
       console.error('Error sending message:', err);
+      setSendError(msg);
     }
   };
 
@@ -179,6 +187,11 @@ export const ChatPage = () => {
               </div>
 
               {/* Input */}
+              {sendError && (
+                <div className="px-4 py-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-sm border-t border-red-100 dark:border-red-800">
+                  {sendError}
+                </div>
+              )}
               <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex gap-2">
                 <input
                   type="text"
