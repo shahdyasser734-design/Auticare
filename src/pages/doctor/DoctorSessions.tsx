@@ -7,7 +7,7 @@ import { Button } from '../../components/common/Button';
 import { bookingService, type Booking } from '../../services/api/bookings';
 import { useAuth } from '../../context/useAuth';
 
-import { Loader2 } from 'lucide-react';
+import { Loader2, FileDown, ExternalLink } from 'lucide-react';
 
 export const DoctorSessions = () => {
   const navigate = useNavigate();
@@ -97,6 +97,24 @@ export const DoctorSessions = () => {
     }
   };
 
+  const handleForceDownload = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename || 'download';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (e) {
+      console.error('Download failed, falling back to new tab', e);
+      window.open(url, '_blank');
+    }
+  };
+
   return (
     <MainLayout>
       <div className="space-y-8">
@@ -162,13 +180,20 @@ export const DoctorSessions = () => {
             return displaySessions.map((session) => {
               const meetingUrl = session.zoomUrl || session.joinLink || '';
 
+              const match = session.reason?.match(/Attached File:\s*(.+)/) || session.notes?.match(/Attached File:\s*(.+)/);
+              const attachedFileUrl = match ? match[1].trim() : null;
+              
+              const cleanReason = session.reason?.replace(/(\n\n)?Attached File:\s*.+/, '').trim();
+              const cleanNotes = session.notes?.replace(/(\n\n)?Attached File:\s*.+/, '').trim();
+              const fileName = attachedFileUrl ? attachedFileUrl.split('/').pop() || 'document' : '';
+
               return (
                 <Card key={session.id} className="border border-slate-300 dark:border-white/10 shadow hover:shadow-md transition-shadow rounded-2xl p-6 standard-card">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="space-y-3 flex-1">
                       <div className="flex flex-wrap items-center gap-3">
                         <span className="font-extrabold text-xl text-slate-900 dark:text-white block">
-                          {session.reason || (session.specialistType === 'doctor' ? `${session.childName || 'Child'}'s Clinical Consultation` : `${session.childName || 'Child'}'s Therapy Session`)}
+                          {cleanReason || (session.specialistType === 'doctor' ? `${session.childName || 'Child'}'s Clinical Consultation` : `${session.childName || 'Child'}'s Therapy Session`)}
                         </span>
                         <Badge variant={meetingUrl ? 'success' : 'warning'}>
                           {meetingUrl ? '🟢 Zoom Available' : '🔴 No Zoom Link'}
@@ -184,7 +209,27 @@ export const DoctorSessions = () => {
                         <p className="text-sm text-slate-800 dark:text-slate-200 font-medium">
                           <strong className="text-slate-900 dark:text-slate-100">Date & Time:</strong> {session.appointmentDate || 'TBD'} at {session.appointmentTime || 'TBD'}
                         </p>
-                        {session.notes && <p className="text-sm text-slate-600 dark:text-slate-400 italic mt-2 bg-slate-100 dark:bg-slate-900/40 p-3 rounded-lg border border-slate-200 dark:border-slate-800">Notes: {session.notes}</p>}
+                        {cleanNotes && <p className="text-sm text-slate-600 dark:text-slate-400 italic mt-2 bg-slate-100 dark:bg-slate-900/40 p-3 rounded-lg border border-slate-200 dark:border-slate-800">Notes: {cleanNotes}</p>}
+                        
+                        {attachedFileUrl && !isDoctor && (
+                          <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="flex items-center gap-3 overflow-hidden w-full">
+                              <span className="text-2xl">📄</span>
+                              <div className="min-w-0">
+                                <p className="text-xs font-semibold text-blue-900 dark:text-blue-100 uppercase tracking-wider mb-0.5">Uploaded File</p>
+                                <p className="text-sm text-blue-800 dark:text-blue-200 truncate max-w-[200px] sm:max-w-[300px]" title={fileName}>{fileName}</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2 shrink-0 w-full sm:w-auto">
+                              <Button size="sm" variant="outline" onClick={() => window.open(attachedFileUrl, '_blank')} className="gap-2 border-blue-300 text-blue-700 bg-white hover:bg-blue-50 flex-1 sm:flex-auto">
+                                <ExternalLink className="h-4 w-4" /> Open
+                              </Button>
+                              <Button size="sm" onClick={() => handleForceDownload(attachedFileUrl, fileName)} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white flex-1 sm:flex-auto">
+                                <FileDown className="h-4 w-4" /> Download
+                              </Button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                       
                       {session.childId && (

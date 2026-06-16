@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   User, FileText, Calendar, ChevronLeft, ClipboardList,
   AlertCircle, Loader2, Send, Eye, Edit3, Plus, Video,
-  Clock, CheckCircle2, XCircle, CalendarDays
+  Clock, CheckCircle2, XCircle, CalendarDays, FileDown, ExternalLink
 } from 'lucide-react';
 import { MainLayout } from '../../layouts/MainLayout';
 import { useAuth } from '../../context/useAuth';
@@ -80,6 +80,7 @@ export const PatientDetails = () => {
 
   const isDoctor    = user?.role?.toLowerCase() === 'doctor';
   const isTherapist = user?.role?.toLowerCase() === 'therapist';
+  const isParent    = user?.role?.toLowerCase() === 'parent';
 
   // ── state ──
   const [patient,          setPatient]          = useState<Child | null>(null);
@@ -227,6 +228,24 @@ export const PatientDetails = () => {
       console.error('[PatientDetails] Error saving note:', err);
     } finally {
       setSavingNote(false);
+    }
+  };
+
+  const handleForceDownload = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename || 'download';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (e) {
+      console.error('Download failed, falling back to new tab', e);
+      window.open(url, '_blank');
     }
   };
 
@@ -529,47 +548,74 @@ export const PatientDetails = () => {
             <div className="space-y-3">
 
               {/* Bookings (doctor or therapist appointments) */}
-              {sortedBookings.map(bk => (
-                <div
-                  key={bk.id}
-                  className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center gap-3"
-                >
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${sessionStatusColor(bk.status)}`}>
-                        {sessionStatusIcon(bk.status)}
-                        <span className="capitalize">{bk.status || 'Pending'}</span>
-                      </span>
-                      <span className="text-xs text-slate-500 dark:text-slate-400 capitalize">
-                        {bk.specialistType || 'appointment'}
-                      </span>
+              {sortedBookings.map(bk => {
+                const match = bk.notes?.match(/Attached File:\s*(.+)/) || bk.reason?.match(/Attached File:\s*(.+)/);
+                const attachedFileUrl = match ? match[1].trim() : null;
+                const cleanNotes = bk.notes?.replace(/(\n\n)?Attached File:\s*.+/, '').trim();
+                const fileName = attachedFileUrl ? attachedFileUrl.split('/').pop() || 'document' : '';
+
+                return (
+                  <div
+                    key={bk.id}
+                    className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-start gap-3"
+                  >
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${sessionStatusColor(bk.status)}`}>
+                          {sessionStatusIcon(bk.status)}
+                          <span className="capitalize">{bk.status || 'Pending'}</span>
+                        </span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 capitalize">
+                          {bk.specialistType || 'appointment'}
+                        </span>
+                      </div>
+                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                        {bk.specialistName || 'Specialist Appointment'}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                        <Calendar size={11} />
+                        {formatDateTime(bk.appointmentDate, bk.appointmentTime)}
+                        {bk.duration ? ` • ${bk.duration} min` : ''}
+                      </p>
+                      {cleanNotes && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400 italic mt-1">"{cleanNotes}"</p>
+                      )}
+                      
+                      {attachedFileUrl && !isParent && (
+                        <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                          <div className="flex items-center gap-2 overflow-hidden w-full">
+                            <span className="text-xl">📄</span>
+                            <div className="min-w-0">
+                              <p className="text-[10px] font-semibold text-blue-900 dark:text-blue-100 uppercase tracking-wider mb-0.5">Uploaded File</p>
+                              <p className="text-xs text-blue-800 dark:text-blue-200 truncate max-w-[200px]" title={fileName}>{fileName}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
+                            <button onClick={() => window.open(attachedFileUrl, '_blank')} className="flex items-center gap-1 px-2 py-1 bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-700 rounded-lg text-blue-600 dark:text-blue-400 text-xs font-semibold hover:shadow-sm transition-all cursor-pointer flex-1 sm:flex-auto justify-center">
+                              <ExternalLink size={12} /> Open
+                            </button>
+                            <button onClick={() => handleForceDownload(attachedFileUrl, fileName)} className="flex items-center gap-1 px-2 py-1 bg-blue-600 border border-blue-600 rounded-lg text-white text-xs font-semibold hover:bg-blue-700 hover:shadow-sm transition-all cursor-pointer flex-1 sm:flex-auto justify-center">
+                              <FileDown size={12} /> Download
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                      {bk.specialistName || 'Specialist Appointment'}
-                    </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                      <Calendar size={11} />
-                      {formatDateTime(bk.appointmentDate, bk.appointmentTime)}
-                      {bk.duration ? ` • ${bk.duration} min` : ''}
-                    </p>
-                    {bk.notes && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400 italic mt-1">"{bk.notes}"</p>
+
+                    {/* Zoom join link */}
+                    {(bk.joinLink || bk.zoomUrl) && (bk.status === 'confirmed' || bk.status === 'approved' || bk.status === 'scheduled') && (
+                      <a
+                        href={bk.joinLink || bk.zoomUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-colors whitespace-nowrap flex-shrink-0 mt-2 sm:mt-0"
+                      >
+                        <Video size={13} /> Join Zoom
+                      </a>
                     )}
                   </div>
-
-                  {/* Zoom join link */}
-                  {(bk.joinLink || bk.zoomUrl) && (bk.status === 'confirmed' || bk.status === 'approved' || bk.status === 'scheduled') && (
-                    <a
-                      href={bk.joinLink || bk.zoomUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-colors whitespace-nowrap flex-shrink-0"
-                    >
-                      <Video size={13} /> Join Zoom
-                    </a>
-                  )}
-                </div>
-              ))}
+                );
+              })}
 
               {/* Therapy sessions from treatment plans */}
               {therapySessions.map(ts => (
