@@ -212,7 +212,6 @@ export interface Booking {
   zoomUrl?: string;
   reason?: string;
   doctorName?: string;
-  therapistName?: string;
   parentName?: string;
   childName?: string;
   treatmentId?: string | number;
@@ -228,7 +227,6 @@ export interface TreatmentPlan {
   goals: string[];
   recommendations: string[];
   homeActivities: string[];
-  assignedTherapists: string[];
   status: 'active' | 'completed' | 'paused';
   startDate: string;
   endDate?: string;

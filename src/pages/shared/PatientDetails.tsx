@@ -136,10 +136,6 @@ export const PatientDetails = () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (childData as any).assignedDoctorId = card?.assignedDoctorId || (bk?.specialistType?.toLowerCase() === 'doctor' ? bk?.specialistId : undefined);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (childData as any).assignedTherapist = card?.assignedTherapist || bk?.therapistName || null;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (childData as any).assignedTherapistId = card?.assignedTherapistId || (bk?.specialistType?.toLowerCase() === 'therapist' ? bk?.specialistId : undefined);
 
         // ── 3. All supporting data in parallel ────────────────────────────────
         const [resultsRaw, notesRaw, plansRaw] = await Promise.all([
@@ -345,9 +341,6 @@ export const PatientDetails = () => {
               <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-600 dark:text-slate-400">
                 {(((patient as Child & { assignedDoctor?: string }).assignedDoctor) && ((patient as Child & { assignedDoctor?: string }).assignedDoctor) !== 'No Doctor Assigned' && ((patient as Child & { assignedDoctor?: string }).assignedDoctor) !== 'Unknown') && (
                   <p><strong className="text-slate-800 dark:text-slate-200">Doctor:</strong> {((patient as Child & { assignedDoctor?: string }).assignedDoctor)}</p>
-                )}
-                {(((patient as Child & { assignedTherapist?: string }).assignedTherapist) && ((patient as Child & { assignedTherapist?: string }).assignedTherapist) !== 'Unassigned Therapist' && ((patient as Child & { assignedTherapist?: string }).assignedTherapist) !== 'Unknown') && (
-                  <p><strong className="text-slate-800 dark:text-slate-200">Therapist:</strong> {((patient as Child & { assignedTherapist?: string }).assignedTherapist)}</p>
                 )}
               </div>
             </div>

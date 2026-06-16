@@ -187,16 +187,13 @@ export const TreatmentPlan = () => {
           console.warn('[TREATMENT PLAN] Failed to get specialist from bookings:', err);
         }
         
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const therapistId = (child as any)?.assignedTherapistId;
         const createPayload = {
           childId: childId,
           specialistId: finalSpecialistId,
           startDate: new Date().toISOString(),
           endDate: finalEndDate,
           goal: finalGoal,
-          notes: finalNotes,
-          assignedTherapists: therapistId ? [therapistId] : []
+          notes: finalNotes
         };
         
         console.log('[DEBUG] POST Payload:', { childId, specialistId: finalSpecialistId, payload: createPayload });
@@ -219,17 +216,7 @@ export const TreatmentPlan = () => {
           type: 'treatment-plan'
         });
         
-        // Notification to therapist (mock generic or specific if therapist ID is known)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const therapistId = (child as any)?.assignedTherapistId;
-        if (therapistId) {
-          await apiClient.post('/notifications', {
-            userId: therapistId,
-            title: 'Treatment Plan Assigned',
-            message: `Dr. ${user?.name || 'Specialist'} has published a new treatment plan for ${child?.name || 'Patient'}.`,
-            type: 'treatment-plan'
-          });
-        }
+
       } catch (err) {
         console.warn('Failed to dispatch notifications', err);
       }

@@ -54,7 +54,6 @@ export const normalizeBooking = (b: any): Booking => {
     reason: String(b.reason || ''),
     // For display: build specialist display name from real data
     doctorName: specType === 'doctor' ? specName : '',
-    therapistName: specType === 'therapist' ? specName : '',
     treatmentId: String(treatmentId),
     TreatmentId: String(treatmentId),
   };

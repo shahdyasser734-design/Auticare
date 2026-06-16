@@ -42,7 +42,6 @@ export interface PatientCard {
   lastActivityType?: 'session' | 'screening' | 'note' | 'session-completed';
   parentName?: string;
   parentPhone?: string;
-  assignedTherapist?: string;
   assignedDoctor?: string;
 }
 
@@ -61,7 +60,6 @@ export interface AssignedChild {
   gender?: string;
   status: 'active' | 'in-treatment' | 'pending';
   assignedDoctor?: string;
-  assignedTherapist?: string;
 }
 
 export interface DashboardSpecialistData {

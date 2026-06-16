@@ -44,7 +44,6 @@ export const normalizeTreatmentPlan = (p: any): any => {
     goals: goalsArray,
     recommendations: Array.isArray(p.recommendations) ? p.recommendations : (p.recommendations ? [p.recommendations] : []),
     homeActivities: Array.isArray(p.homeActivities) ? p.homeActivities : (p.homeActivities || []),
-    assignedTherapists: Array.isArray(p.assignedTherapists) ? p.assignedTherapists : (p.assignedTherapists || []),
     status: p.status || 'active',
     startDate: p.startDate || p.createdAt || '',
     endDate: p.endDate || undefined,

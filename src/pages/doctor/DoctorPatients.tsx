@@ -69,7 +69,6 @@ export const DoctorPatients = () => {
             riskLevel: (card?.lastScreening as Record<string, unknown>)?.riskLevel || card?.riskLevel || null,
             status: 'active',
             assignedDoctor: card?.assignedDoctor || b.doctorName || '',
-            assignedTherapist: card?.assignedTherapist || b.therapistName || '',
           });
         }
       });
@@ -121,7 +120,6 @@ export const DoctorPatients = () => {
               riskLevel: (card.lastScreening as Record<string, unknown>)?.riskLevel || card.riskLevel || null,
               status: card.status || 'active',
               assignedDoctor: card.assignedDoctor || '',
-              assignedTherapist: card.assignedTherapist || '',
             });
           }
         });
@@ -142,7 +140,6 @@ export const DoctorPatients = () => {
               riskLevel: (card?.lastScreening as Record<string, unknown>)?.riskLevel || card?.riskLevel || null,
               status: 'active',
               assignedDoctor: card?.assignedDoctor || b.doctorName || '',
-              assignedTherapist: card?.assignedTherapist || b.therapistName || '',
             });
           }
         });

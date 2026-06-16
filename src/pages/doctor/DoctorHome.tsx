@@ -119,7 +119,6 @@ export const DoctorHome = () => {
             gender: card?.gender ?? card?.childGender ?? card?.sex ?? '',
             status: 'active',
             assignedDoctor: card?.assignedDoctor || b.doctorName || '',
-            assignedTherapist: card?.assignedTherapist || b.therapistName || '',
             parentId: b.parentId || '',
             parentName: b.parentName || 'Parent'
           });
@@ -149,6 +148,7 @@ export const DoctorHome = () => {
           uniqueNotesMap.set(n.id, n);
         }
       });
+
       const sortedNotes = Array.from(uniqueNotesMap.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
       setDashboardData(enrichedDashData);
