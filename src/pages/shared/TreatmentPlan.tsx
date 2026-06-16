@@ -653,8 +653,8 @@ export const TreatmentPlan = () => {
                 </Card>
               ) : (
                   <Card className="border border-slate-200 dark:border-white/10 shadow-lg rounded-3xl p-6 md:p-8">
-                    {/* PDF capture root — DO NOT add data-pdf-hide here */}
-                    <div ref={pdfContentRef}>
+                    {/* PDF capture root — targeted by #treatment-plan */}
+                    <div id="treatment-plan" ref={pdfContentRef}>
                     {/* PDF header visible only inside PDF — hidden from screen */}
                     <div className="hidden" style={{ display: 'none' }} aria-hidden="true" id="pdf-header">
                       <h1 style={{ fontSize: '22px', color: '#1e40af', marginBottom: '4px' }}>Treatment Plan</h1>
