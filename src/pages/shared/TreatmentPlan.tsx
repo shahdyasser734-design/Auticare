@@ -13,7 +13,7 @@ import { specialistsService } from '../../services/api/specialistsService';
 import { FileUpload } from '../../components/common/FileUpload';
 import { fileUploadService } from '../../services/api/fileUploadService';
 import { childrenService } from '../../services/api/children';
-import { User, FileText, BarChart3, ArrowLeft, Loader2, Sparkles, Save, Download } from 'lucide-react';
+import { User, FileText, BarChart3, ArrowLeft, Loader2, Sparkles, Save, Download, Trash2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import type { Child, TreatmentPlan as TreatmentPlanType, Specialist } from '../../types';
 import apiClient from '../../services/apiClient';
@@ -389,6 +389,26 @@ export const TreatmentPlan = () => {
 
 
 
+  const handleDeletePlan = async () => {
+    if (!plan?.id) return;
+    if (!window.confirm('Are you sure you want to permanently delete this Treatment Plan? This action cannot be undone.')) return;
+    
+    setSaving(true);
+    try {
+      await treatmentPlansService.deletePlan(plan.id);
+      setPlan(null);
+      setIsEditingMode(false);
+      await loadPlanData();
+    } catch (err) {
+      console.error('Error deleting treatment plan:', err);
+      const errMsg = err instanceof Error ? err.message : 'Failed to delete treatment plan.';
+      setPublishError(errMsg);
+      setTimeout(() => setPublishError(null), 6000);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleFileUpload = async (file: File | null) => {
     if (!file) return;
     setUploading(true);
@@ -740,10 +760,21 @@ export const TreatmentPlan = () => {
                         Treatment Plan Details
                       </h2>
                       {isDoctor && !isEditingMode && plan?.status === 'PUBLISHED' && (
-                        <Button onClick={() => setIsEditingMode(true)} className="gap-2">
-                          <Sparkles className="h-4 w-4" />
-                          Edit Treatment Plan
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button onClick={() => setIsEditingMode(true)} className="gap-2">
+                            <Sparkles className="h-4 w-4" />
+                            Edit Treatment Plan
+                          </Button>
+                          <Button 
+                            onClick={() => void handleDeletePlan()} 
+                            disabled={saving}
+                            variant="outline" 
+                            className="gap-2 border-red-200 text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                          </Button>
+                        </div>
                       )}
 
                     </div>
