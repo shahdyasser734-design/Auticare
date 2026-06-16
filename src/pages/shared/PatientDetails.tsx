@@ -66,11 +66,10 @@ const formatDateTime = (dateStr?: string, timeStr?: string) => {
   } catch { return dateStr; }
 };
 
-// Treatment plan is "visible" to non-doctors when status is active/completed/published
-const isPlanPublished = (plan: TreatmentPlan) => {
-  const s = (plan.status || '').toLowerCase();
-  return s === 'active' || s === 'completed' || s === 'published';
-};
+// Treatment plan visibility:
+// Backend /treatment-plans/child/:id is the authoritative gate.
+// If the backend returns a plan, it is visible to the requesting user.
+// Frontend NEVER filters plans by role — only UI actions differ by role.
 
 // ─── component ───────────────────────────────────────────────────────────────
 
@@ -143,13 +142,10 @@ export const PatientDetails = () => {
 
         // ── 4. Fetch therapy sessions for each treatment plan ─────────────────
         const normalizedPlans = (plansRaw as TreatmentPlan[]);
-        const visiblePlans = normalizedPlans.filter(p =>
-          isDoctor ? true : isPlanPublished(p)
-        );
 
         // Fetch therapy sessions from all visible plans (linked by treatmentPlanId)
         const therapySessionArrays = await Promise.all(
-          visiblePlans.map(p =>
+          normalizedPlans.map(p =>
             p.id
               ? sessionsService.getTreatmentSessions(p.id).catch(() => [] as TherapySession[])
               : Promise.resolve([] as TherapySession[])
@@ -166,7 +162,10 @@ export const PatientDetails = () => {
         setPatient(childData);
         setScreeningResults(Array.isArray(resultsRaw) ? resultsRaw : [resultsRaw]);
         setNotes(filteredNotes);
-        setPlans(visiblePlans);
+        // All plans returned by backend are visible — no frontend role-filter.
+        // Backend /treatment-plans/child/:id controls visibility.
+        // Therapist gets read-only UI; Doctor gets edit/create UI.
+        setPlans(normalizedPlans);
         setBookings(childBookings);
         setTherapySessions(allTherapySessions);
       } catch (err) {

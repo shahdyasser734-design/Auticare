@@ -23,8 +23,9 @@ export const TreatmentPlan = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const isDoctor = user?.role === 'doctor';
-  const isParent = user?.role === 'parent';
+  const isDoctor    = user?.role === 'doctor';
+  const isParent    = user?.role === 'parent';
+  const isTherapist = user?.role === 'therapist';
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -91,9 +92,14 @@ export const TreatmentPlan = () => {
         const plans = await treatmentPlansService.getChildPlans(childId);
         if (plans && plans.length > 0) {
           if (isParent) {
+            // Parent sees active or completed plans only
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             activePlan = plans.find((p: any) => p.status === 'active' || p.status === 'completed') as unknown as TreatmentPlanType;
+          } else if (isTherapist) {
+            // Therapist sees any plan the backend returns (backend is the gate)
+            activePlan = plans[0] as unknown as TreatmentPlanType;
           } else {
+            // Doctor sees any plan (all plans)
             activePlan = plans[0] as unknown as TreatmentPlanType;
           }
         }
