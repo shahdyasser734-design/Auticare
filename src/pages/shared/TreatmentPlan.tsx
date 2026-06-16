@@ -8,6 +8,7 @@ import { Input } from '../../components/common/Input';
 import { useAuth } from '../../context/useAuth';
 import { bookingsService } from '../../services/api/bookingsService';
 import { treatmentPlansService } from '../../services/api/treatmentPlansService';
+import { TreatmentPlanDescription } from '../../components/treatmentPlans/TreatmentPlanDescription';
 import { specialistsService } from '../../services/api/specialistsService';
 import { FileUpload } from '../../components/common/FileUpload';
 import { fileUploadService } from '../../services/api/fileUploadService';
@@ -594,30 +595,7 @@ export const TreatmentPlan = () => {
                       Treatment Plan Details
                     </h2>
                     <div className="space-y-6">
-                      <div>
-                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">Clinical Assessment</p>
-                        <p className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap">{clinicalAssessment || 'No clinical assessment specified'}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">Diagnosis Summary</p>
-                        <p className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap">{diagnosisSummary || 'No diagnosis summary specified'}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">SMART Goals</p>
-                        <p className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap">{smartGoals || 'No SMART goals specified'}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">Intervention Plan</p>
-                        <p className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap">{interventionPlan || 'No intervention plan specified'}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">Progress Tracking</p>
-                        <p className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap">{progressTracking || 'No progress tracking metrics specified'}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">Notes / Comments</p>
-                        <p className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap">{generalNotes || 'No notes specified'}</p>
-                      </div>
+                      <TreatmentPlanDescription plan={plan} fallbackText="No data available" />
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4 border-t border-slate-200 dark:border-white/10">
                         <div>
                           <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Progress</p>
