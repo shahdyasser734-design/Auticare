@@ -626,7 +626,7 @@ export const TreatmentPlan = () => {
           </div>
         ) : (
           /* View Mode Layout */
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" ref={pdfContentRef}>
             {/* Left Column: Summary Card */}
             <div className="lg:col-span-1 space-y-6">
               {/* Child Profile Widget */}
@@ -720,8 +720,8 @@ export const TreatmentPlan = () => {
                 </Card>
               ) : (
                   <Card className="border border-slate-200 dark:border-white/10 shadow-lg rounded-3xl p-6 md:p-8">
-                    {/* PDF capture root — targeted by #treatment-plan */}
-                    <div id="treatment-plan" ref={pdfContentRef}>
+                    {/* PDF capture root — was here, now moved to parent grid */}
+                    <div id="treatment-plan">
                     {/* PDF header visible only inside PDF — hidden from screen */}
                     <div className="hidden" style={{ display: 'none' }} aria-hidden="true" id="pdf-header">
                       <h1 style={{ fontSize: '22px', color: '#1e40af', marginBottom: '8px' }}>Treatment Plan</h1>
