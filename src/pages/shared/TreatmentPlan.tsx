@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '../../layouts/MainLayout';
 import { Card } from '../../components/common/Card';
@@ -14,7 +14,6 @@ import { FileUpload } from '../../components/common/FileUpload';
 import { fileUploadService } from '../../services/api/fileUploadService';
 import { childrenService } from '../../services/api/children';
 import { User, FileText, BarChart3, ArrowLeft, Loader2, Sparkles, Save, Download } from 'lucide-react';
-import jsPDF from 'jspdf';
 import type { Child, TreatmentPlan as TreatmentPlanType, Specialist } from '../../types';
 import apiClient from '../../services/apiClient';
 
@@ -34,6 +33,10 @@ export const TreatmentPlan = () => {
   const [specialist, setSpecialist] = useState<Specialist | null>(null);
   const [publishSuccess, setPublishSuccess] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  // Ref for PDF export — targets only the treatment plan content card
+  const pdfContentRef = useRef<HTMLDivElement>(null);
   
   // Treatment Plan states
   const [plan, setPlan] = useState<TreatmentPlanType | null>(null);
@@ -153,67 +156,41 @@ export const TreatmentPlan = () => {
   }, [childId]);
   /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 
-  const handleExportPdf = () => {
-    if (!plan) return;
-    const doc = new jsPDF();
-    const margin = 20;
-    let y = margin;
+  const handleExportPdf = async () => {
+    if (!plan || !pdfContentRef.current) return;
+    setExporting(true);
+    try {
+      // Dynamically import to avoid SSR issues and keep bundle lazy
+      const html2pdf = (await import('html2pdf.js')).default;
 
-    doc.setFontSize(22);
-    doc.setTextColor(30, 64, 175); // Primary color
-    doc.text('Treatment Plan', margin, y);
-    y += 15;
+      const dateStr = new Date().toISOString().split('T')[0];
+      const childNameSlug = child?.name?.replace(/\s+/g, '_') || 'Patient';
+      const filename = `TreatmentPlan_${childNameSlug}_${dateStr}.pdf`;
 
-    doc.setFontSize(12);
-    doc.setTextColor(100, 116, 139); // Slate-500
-    doc.text(`Status: ${plan.status}`, margin, y);
-    y += 10;
-    
-    if (child) {
-      doc.setTextColor(15, 23, 42); // Slate-900
-      doc.text(`Patient: ${child.name}`, margin, y);
-      y += 10;
+      const opt = {
+        margin:       [10, 15, 10, 15] as [number, number, number, number],
+        filename,
+        image:        { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, logging: false },
+        jsPDF:        { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const },
+        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] },
+      };
+
+      // Temporarily inject a style that hides pdf-excluded elements
+      const style = document.createElement('style');
+      style.id = '__pdf_hide_style__';
+      style.textContent = '[data-pdf-hide] { display: none !important; }';
+      document.head.appendChild(style);
+
+      await html2pdf().set(opt).from(pdfContentRef.current).save();
+
+      // Cleanup injected style
+      document.getElementById('__pdf_hide_style__')?.remove();
+    } catch (err) {
+      console.error('PDF export failed:', err);
+    } finally {
+      setExporting(false);
     }
-
-    doc.setDrawColor(226, 232, 240); // Slate-200
-    doc.line(margin, y, 210 - margin, y);
-    y += 15;
-
-    const addSection = (title: string, content: string) => {
-      if (y > 270) {
-        doc.addPage();
-        y = margin;
-      }
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(15, 23, 42);
-      doc.text(title, margin, y);
-      y += 8;
-
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(71, 85, 105);
-      
-      const textLines = doc.splitTextToSize(content || 'Not provided', 170);
-      doc.text(textLines, margin, y);
-      y += (textLines.length * 6) + 10;
-    };
-
-    let parsedGoals: any = {};
-    let parsedNotes: any = {};
-    try { parsedGoals = JSON.parse(plan.goal || '{}'); } catch {}
-    try { parsedNotes = JSON.parse(plan.notes || '{}'); } catch {}
-
-    addSection('Clinical Assessment', parsedNotes.clinicalAssessment);
-    addSection('Diagnosis Summary', parsedNotes.diagnosisSummary);
-    addSection('Smart Goals', parsedGoals.smartGoals);
-    addSection('Intervention Plan', parsedGoals.interventionPlan);
-    addSection('Progress Tracking', parsedNotes.progressTracking);
-    addSection('General Notes', parsedNotes.generalNotes || plan.notes);
-
-    const dateStr = new Date().toISOString().split('T')[0];
-    const filename = `TreatmentPlan_${child?.name?.replace(/\s+/g, '_') || 'Patient'}_${dateStr}.pdf`;
-    doc.save(filename);
   };
 
   const handleSavePlan = async (targetStatus: 'DRAFT' | 'PUBLISHED') => {
@@ -676,7 +653,15 @@ export const TreatmentPlan = () => {
                 </Card>
               ) : (
                   <Card className="border border-slate-200 dark:border-white/10 shadow-lg rounded-3xl p-6 md:p-8">
-                    <div className="flex justify-between items-center mb-6">
+                    {/* PDF capture root — DO NOT add data-pdf-hide here */}
+                    <div ref={pdfContentRef}>
+                    {/* PDF header visible only inside PDF — hidden from screen */}
+                    <div className="hidden" style={{ display: 'none' }} aria-hidden="true" id="pdf-header">
+                      <h1 style={{ fontSize: '22px', color: '#1e40af', marginBottom: '4px' }}>Treatment Plan</h1>
+                      {child && <p style={{ fontSize: '14px', color: '#475569' }}>Patient: {child.name} &nbsp;|&nbsp; Status: {plan?.status}</p>}
+                      <hr style={{ borderColor: '#e2e8f0', margin: '12px 0' }} />
+                    </div>
+                    <div className="flex justify-between items-center mb-6" data-pdf-hide>
                       <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <FileText className="text-primary-600" size={24} />
                         Treatment Plan Details
@@ -688,12 +673,24 @@ export const TreatmentPlan = () => {
                         </Button>
                       )}
                       {isParent && plan?.status === 'PUBLISHED' && (
-                        <Button onClick={handleExportPdf} variant="outline" className="gap-2 border-primary-500 text-primary-600 hover:bg-primary-50">
-                          <Download className="h-4 w-4" />
-                          Export as PDF
+                        <Button
+                          onClick={() => void handleExportPdf()}
+                          disabled={exporting}
+                          variant="outline"
+                          className="gap-2 border-primary-500 text-primary-600 hover:bg-primary-50"
+                        >
+                          {exporting ? (
+                            <><Loader2 className="h-4 w-4 animate-spin" /> Generating PDF...</>
+                          ) : (
+                            <><Download className="h-4 w-4" /> Export as PDF</>
+                          )}
                         </Button>
                       )}
                     </div>
+                    {/* Title shown inside PDF */}
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-6" style={{ display: 'none' }} id="pdf-title">
+                      Treatment Plan Details {child ? `— ${child.name}` : ''}
+                    </h2>
                     <div className="space-y-6">
                       <TreatmentPlanDescription plan={plan} fallbackText="No data available" />
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4 border-t border-slate-200 dark:border-white/10">
@@ -712,6 +709,8 @@ export const TreatmentPlan = () => {
                           <p className="font-semibold text-slate-800 dark:text-slate-200">{plan.endDate ? new Date(plan.endDate).toLocaleDateString() : 'Continuous'}</p>
                         </div>
                       </div>
+                    </div>
+                    {/* Close pdfContentRef wrapper */}
                     </div>
                   </Card>
               )}
