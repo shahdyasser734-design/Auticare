@@ -651,11 +651,22 @@ export const TreatmentPlan = () => {
                   </Button>
                   {isDoctor && (
                     <div className="flex gap-2">
-                      <Button onClick={() => void handleSavePlan('DRAFT')} disabled={saving} variant="outline" className="gap-2">
+                      {plan?.id && (
+                        <Button 
+                          onClick={(e) => { e.preventDefault(); setIsDeleteModalOpen(true); }} 
+                          disabled={saving}
+                          variant="outline" 
+                          className="gap-2 border-red-200 text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </Button>
+                      )}
+                      <Button onClick={(e) => { e.preventDefault(); void handleSavePlan('DRAFT'); }} disabled={saving} variant="outline" className="gap-2">
                         <Save className="h-4 w-4" />
                         {saving ? 'Saving...' : 'Save Draft'}
                       </Button>
-                      <Button onClick={() => void handleSavePlan('PUBLISHED')} disabled={saving} className="gap-2">
+                      <Button onClick={(e) => { e.preventDefault(); void handleSavePlan('PUBLISHED'); }} disabled={saving} className="gap-2">
                         <Save className="h-4 w-4" />
                         {saving ? 'Publishing...' : (plan?.id ? 'Publish Updates' : 'Publish Plan')}
                       </Button>
@@ -871,7 +882,7 @@ export const TreatmentPlan = () => {
         }
       >
         <p className="text-slate-600 dark:text-slate-300">
-          Are you sure you want to delete this treatment plan? This action is permanent and cannot be undone.
+          Are you sure you want to delete this treatment plan?
         </p>
       </Modal>
     </MainLayout>
