@@ -11,6 +11,24 @@ export const getFullFileUrl = (path: string) => {
   return `${baseUrl.replace(/\/$/, '')}${path.startsWith('/') ? '' : '/'}${path}`;
 };
 
+const getMimeType = (filename: string): string => {
+  const ext = filename.split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'pdf': return 'application/pdf';
+    case 'doc': return 'application/msword';
+    case 'docx': return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    case 'png': return 'image/png';
+    case 'jpg':
+    case 'jpeg': return 'image/jpeg';
+    case 'webp': return 'image/webp';
+    case 'gif': return 'image/gif';
+    case 'txt': return 'text/plain';
+    case 'csv': return 'text/csv';
+    case 'zip': return 'application/zip';
+    default: return 'application/octet-stream';
+  }
+};
+
 export const forceDownload = async (url: string, filename: string) => {
   try {
     // Attempt to bypass CORS locally by stripping the backend host if present,
@@ -23,7 +41,9 @@ export const forceDownload = async (url: string, filename: string) => {
     const response = await fetch(fetchUrl);
     if (!response.ok) throw new Error('Network response was not ok');
     
-    const blob = await response.blob();
+    const rawBlob = await response.blob();
+    const mimeType = getMimeType(filename) || rawBlob.type;
+    const blob = new Blob([rawBlob], { type: mimeType });
     const blobUrl = window.URL.createObjectURL(blob);
     
     const link = document.createElement('a');
