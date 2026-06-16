@@ -84,7 +84,15 @@ export const DoctorHome = () => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
       patientCards.forEach((card: any) => {
         const id = card.id || card.childId;
-        if (id) {
+        
+        // Prevent auto-conversion: If they have bookings, but ALL of them are pending/rejected, skip.
+        const childBookings = allBookings.filter((b: Booking) => String(b.childId) === String(id));
+        const hasOnlyPendingBookings = childBookings.length > 0 && childBookings.every((b: Booking) => {
+          const s = (b.status || '').toLowerCase();
+          return s === 'pending' || s === 'rejected';
+        });
+
+        if (id && !hasOnlyPendingBookings) {
           uniqueChildren.set(id, {
             id,
             name: card.name || card.childName || 'Unknown Patient',

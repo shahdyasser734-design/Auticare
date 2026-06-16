@@ -261,6 +261,35 @@ export const PatientDetails = () => {
     (a, b) => new Date(b.dateTime ?? b.createdAt).getTime() - new Date(a.dateTime ?? a.createdAt).getTime()
   );
 
+  const isLocked = bookings.length > 0 && bookings.every(b => {
+    const s = (b.status || '').toLowerCase();
+    return s === 'pending' || s === 'rejected';
+  });
+
+  const handleApprove = async () => {
+    const pendingBooking = bookings.find(b => (b.status || '').toLowerCase() === 'pending');
+    if (pendingBooking) {
+      try {
+        await bookingService.updateBookingStatus(pendingBooking.id, 'confirmed');
+        window.location.reload();
+      } catch (err) {
+        console.error('Failed to approve:', err);
+      }
+    }
+  };
+
+  const handleReject = async () => {
+    const pendingBooking = bookings.find(b => (b.status || '').toLowerCase() === 'pending');
+    if (pendingBooking) {
+      try {
+        await bookingService.updateBookingStatus(pendingBooking.id, 'rejected');
+        window.location.reload();
+      } catch (err) {
+        console.error('Failed to reject:', err);
+      }
+    }
+  };
+
   return (
     <MainLayout>
       <div className="space-y-8 max-w-6xl mx-auto">
@@ -305,9 +334,41 @@ export const PatientDetails = () => {
         </div>
 
         {/* ── Top 3-Column Grid ──────────────────────────────────────────────── */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {isLocked ? (
+          <div className="standard-card p-10 rounded-2xl text-center space-y-5 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+            <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/50 rounded-full flex items-center justify-center mx-auto">
+              <Clock className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Case Pending Approval</h2>
+              <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto">
+                This patient has requested a session. You must approve the request to unlock clinical tools, treatment plans, and session access.
+              </p>
+            </div>
+            
+            {isDoctor && (
+              <div className="flex items-center justify-center gap-4 pt-4">
+                <button
+                  onClick={handleReject}
+                  className="px-6 py-2.5 bg-white dark:bg-slate-900 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 font-bold rounded-xl hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                >
+                  Reject Request
+                </button>
+                <button
+                  onClick={handleApprove}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-colors shadow-lg shadow-emerald-600/20"
+                >
+                  <CheckCircle2 size={18} />
+                  Approve Case
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-          {/* Screening Results */}
+              {/* Screening Results */}
           <div className="standard-card p-5 rounded-2xl space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -623,6 +684,8 @@ export const PatientDetails = () => {
             {savingNote ? 'Saving…' : 'Save & Send Note'}
           </button>
         </div>
+        </>
+        )}
 
       </div>
     </MainLayout>

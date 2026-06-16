@@ -6,6 +6,7 @@ import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Avatar } from '../../components/common/Avatar';
 import { bookingService } from '../../services/api/bookings';
+import type { Booking } from '../../services/api/bookings';
 import { dashboardService } from '../../services/api/dashboard';
 import type { Child } from '../../services/api/children';
 
@@ -29,7 +30,14 @@ export const DoctorPatients = () => {
       // 1. Add all patients from Dashboard (this includes assigned patients with no bookings)
       patientCards.forEach((card: Record<string, unknown>) => {
         const id = card.id || card.childId;
-        if (id && !uniqueChildren.has(id)) {
+        
+        const childBookings = bookings.filter((b: Booking) => String(b.childId) === String(id));
+        const hasOnlyPendingBookings = childBookings.length > 0 && childBookings.every((b: Booking) => {
+          const s = (b.status || '').toLowerCase();
+          return s === 'pending' || s === 'rejected';
+        });
+
+        if (id && !hasOnlyPendingBookings && !uniqueChildren.has(id)) {
           uniqueChildren.set(id, {
             id,
             name: card.name || card.childName || 'Unknown Patient',
@@ -95,7 +103,14 @@ export const DoctorPatients = () => {
         // 1. Add all patients from Dashboard
         patientCards.forEach((card: Record<string, unknown>) => {
           const id = card.id || card.childId;
-          if (id && !uniqueChildren.has(id)) {
+          
+          const childBookings = bookings.filter((b: Booking) => String(b.childId) === String(id));
+          const hasOnlyPendingBookings = childBookings.length > 0 && childBookings.every((b: Booking) => {
+            const s = (b.status || '').toLowerCase();
+            return s === 'pending' || s === 'rejected';
+          });
+
+          if (id && !hasOnlyPendingBookings && !uniqueChildren.has(id)) {
             uniqueChildren.set(id, {
               id,
               name: card.name || card.childName || 'Unknown Patient',
