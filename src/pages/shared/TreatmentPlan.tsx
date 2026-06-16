@@ -14,6 +14,7 @@ import { FileUpload } from '../../components/common/FileUpload';
 import { fileUploadService } from '../../services/api/fileUploadService';
 import { childrenService } from '../../services/api/children';
 import { User, FileText, BarChart3, ArrowLeft, Loader2, Sparkles, Save, Download } from 'lucide-react';
+import jsPDF from 'jspdf';
 import type { Child, TreatmentPlan as TreatmentPlanType, Specialist } from '../../types';
 import apiClient from '../../services/apiClient';
 
@@ -156,36 +157,103 @@ export const TreatmentPlan = () => {
   }, [childId]);
   /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 
-  const handleExportPdf = async () => {
-    if (!plan || !pdfContentRef.current) return;
+  const handleExportPdf = () => {
+    if (!plan) return;
     setExporting(true);
     try {
-      // Dynamically import to avoid SSR issues and keep bundle lazy
-      const html2pdf = (await import('html2pdf.js')).default;
+      const doc = new jsPDF();
+      const margin = 20;
+      let y = margin;
+
+      doc.setFontSize(22);
+      doc.setTextColor(30, 64, 175); // Primary color
+      doc.text('Treatment Plan Report', margin, y);
+      y += 12;
+
+      doc.setFontSize(11);
+      doc.setTextColor(100, 116, 139); // Slate-500
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, margin, y);
+      y += 15;
+
+      doc.setDrawColor(226, 232, 240); // Slate-200
+      doc.line(margin, y - 5, 210 - margin, y - 5);
+
+      doc.setFontSize(14);
+      doc.setTextColor(15, 23, 42); // Slate-900
+      doc.setFont('helvetica', 'bold');
+      doc.text('Patient & Provider Details', margin, y);
+      y += 8;
+
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(71, 85, 105);
+      
+      const safeText = (val: any) => val || 'No data available';
+
+      doc.text(`Patient Name: ${safeText(child?.name)}`, margin, y);
+      y += 6;
+      doc.text(`Age: ${safeText(child?.age)} | Gender: ${safeText(child?.gender)}`, margin, y);
+      y += 6;
+      doc.text(`Status: ${safeText(plan.status?.toUpperCase())} | Progress: ${safeText(plan.progress)}`, margin, y);
+      y += 6;
+      doc.text(`Start Date: ${plan.startDate ? new Date(plan.startDate).toLocaleDateString() : 'No data available'} | End Date: ${plan.endDate ? new Date(plan.endDate).toLocaleDateString() : 'Continuous'}`, margin, y);
+      y += 6;
+      doc.text(`Authoring Doctor: ${safeText(specialist?.name)}`, margin, y);
+      y += 6;
+      const therapists = (child?.assignedTherapists && child.assignedTherapists.length > 0) ? child.assignedTherapists.join(', ') : 'No data available';
+      doc.text(`Assigned Therapist(s): ${therapists}`, margin, y);
+      y += 10;
+
+      doc.setDrawColor(226, 232, 240);
+      doc.line(margin, y - 5, 210 - margin, y - 5);
+
+      const addSection = (title: string, content: string) => {
+        if (y > 270) {
+          doc.addPage();
+          y = margin;
+        }
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(15, 23, 42);
+        doc.text(title, margin, y);
+        y += 8;
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(71, 85, 105);
+        
+        const textLines = doc.splitTextToSize(safeText(content), 170);
+        
+        // check if text lines fit
+        if (y + (textLines.length * 6) > 280) {
+          doc.addPage();
+          y = margin;
+          doc.text(textLines, margin, y);
+        } else {
+          doc.text(textLines, margin, y);
+        }
+        
+        y += (textLines.length * 6) + 10;
+      };
+
+      let parsedGoals: any = {};
+      let parsedNotes: any = {};
+      try { parsedGoals = JSON.parse(plan.goal || '{}'); } catch {}
+      try { parsedNotes = JSON.parse(plan.notes || '{}'); } catch {}
+
+      addSection('Clinical Assessment', parsedNotes.clinicalAssessment);
+      addSection('Diagnosis Summary', parsedNotes.diagnosisSummary);
+      addSection('Progress Tracking', parsedNotes.progressTracking);
+      addSection('SMART Goals', parsedGoals.smartGoals);
+      addSection('Intervention Plan', parsedGoals.interventionPlan);
+      addSection('General Notes', parsedNotes.generalNotes || plan.notes);
 
       const dateStr = new Date().toISOString().split('T')[0];
       const childNameSlug = child?.name?.toLowerCase().replace(/\s+/g, '-') || 'patient';
-      const filename = `treatment-plan-${childNameSlug}-${dateStr}.pdf`;
-
-      const opt = {
-        margin:       [10, 15, 10, 15] as [number, number, number, number],
-        filename,
-        image:        { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, logging: false },
-        jsPDF:        { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const },
-        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] },
-      };
-
-      // Temporarily inject a style that hides pdf-excluded elements
-      const style = document.createElement('style');
-      style.id = '__pdf_hide_style__';
-      style.textContent = '[data-pdf-hide] { display: none !important; }';
-      document.head.appendChild(style);
-
-      await html2pdf().set(opt).from(pdfContentRef.current).save();
-
-      // Cleanup injected style
-      document.getElementById('__pdf_hide_style__')?.remove();
+      const childIdSlug = child?.id || 'unknown';
+      const filename = `treatment-plan-${childNameSlug}-${childIdSlug}-${dateStr}.pdf`;
+      
+      doc.save(filename);
     } catch (err) {
       console.error('PDF export failed:', err);
     } finally {
@@ -677,20 +745,7 @@ export const TreatmentPlan = () => {
                           Edit Treatment Plan
                         </Button>
                       )}
-                      {isParent && plan?.status === 'PUBLISHED' && (
-                        <Button
-                          onClick={() => void handleExportPdf()}
-                          disabled={exporting}
-                          variant="outline"
-                          className="gap-2 border-primary-500 text-primary-600 hover:bg-primary-50"
-                        >
-                          {exporting ? (
-                            <><Loader2 className="h-4 w-4 animate-spin" /> Generating PDF...</>
-                          ) : (
-                            <><Download className="h-4 w-4" /> Export to PDF</>
-                          )}
-                        </Button>
-                      )}
+
                     </div>
                     {/* Title shown inside PDF */}
                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-6" style={{ display: 'none' }} id="pdf-title">
@@ -715,6 +770,22 @@ export const TreatmentPlan = () => {
                         </div>
                       </div>
                     </div>
+                    
+                    {isParent && plan?.status === 'PUBLISHED' && (
+                      <div className="mt-8 pt-6 border-t border-slate-200 dark:border-white/10 flex justify-end">
+                        <Button
+                          onClick={() => void handleExportPdf()}
+                          disabled={exporting}
+                          className="gap-2 bg-primary-600 hover:bg-primary-700 text-white shadow-md hover:shadow-lg transition-all"
+                        >
+                          {exporting ? (
+                            <><Loader2 className="h-4 w-4 animate-spin" /> Generating PDF...</>
+                          ) : (
+                            <><Download className="h-4 w-4" /> Export to PDF</>
+                          )}
+                        </Button>
+                      </div>
+                    )}
                     {/* Close pdfContentRef wrapper */}
                     </div>
                   </Card>
