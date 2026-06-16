@@ -82,7 +82,6 @@ export const DoctorSessions = () => {
     }
 
     try {
-      // @ts-expect-error Dynamic import typing constraint
       const chatServiceAPI = (await import('../../services/api/chatService')).chatServiceAPI;
       const chat = await chatServiceAPI.startChat(session.parentId || session.childId);
       const newZoomUrl = `https://zoom.us/j/${session.id}?pwd=${Math.random().toString(36).substring(7)}`;

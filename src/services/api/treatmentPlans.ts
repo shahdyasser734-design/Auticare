@@ -98,7 +98,7 @@ export const treatmentPlansService = {
       // Fallback for therapist or permissions issue
       try {
         const myPlans = await treatmentPlansService.getMyPlans();
-        const found = myPlans.find((p: Record<string, unknown>) => String(p.id) === String(id) || String(p.treatmentId) === String(id));
+        const found = myPlans.find(p => String(p.id) === String(id) || String((p as TreatmentPlan & { treatmentId?: string }).treatmentId) === String(id));
         if (found) return found;
       } catch {
         // Ignored
@@ -154,7 +154,7 @@ export const treatmentPlansService = {
     // Fallback: Try fetching via my-plans to see if it's a role-based visibility issue
     try {
       const myPlans = await treatmentPlansService.getMyPlans();
-      return myPlans.filter((p: Record<string, unknown>) => String(p.childId) === String(childId));
+      return myPlans.filter(p => String(p.childId) === String(childId));
     } catch {
       return [];
     }

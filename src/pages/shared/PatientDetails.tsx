@@ -343,11 +343,11 @@ export const PatientDetails = () => {
                 </span>
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-600 dark:text-slate-400">
-                {((patient as Record<string, unknown>).assignedDoctor && (patient as Record<string, unknown>).assignedDoctor !== 'No Doctor Assigned' && (patient as Record<string, unknown>).assignedDoctor !== 'Unknown') && (
-                  <p><strong className="text-slate-800 dark:text-slate-200">Doctor:</strong> {String((patient as Record<string, unknown>).assignedDoctor)}</p>
+                {(((patient as Child & { assignedDoctor?: string }).assignedDoctor) && ((patient as Child & { assignedDoctor?: string }).assignedDoctor) !== 'No Doctor Assigned' && ((patient as Child & { assignedDoctor?: string }).assignedDoctor) !== 'Unknown') && (
+                  <p><strong className="text-slate-800 dark:text-slate-200">Doctor:</strong> {((patient as Child & { assignedDoctor?: string }).assignedDoctor)}</p>
                 )}
-                {((patient as Record<string, unknown>).assignedTherapist && (patient as Record<string, unknown>).assignedTherapist !== 'Unassigned Therapist' && (patient as Record<string, unknown>).assignedTherapist !== 'Unknown') && (
-                  <p><strong className="text-slate-800 dark:text-slate-200">Therapist:</strong> {String((patient as Record<string, unknown>).assignedTherapist)}</p>
+                {(((patient as Child & { assignedTherapist?: string }).assignedTherapist) && ((patient as Child & { assignedTherapist?: string }).assignedTherapist) !== 'Unassigned Therapist' && ((patient as Child & { assignedTherapist?: string }).assignedTherapist) !== 'Unknown') && (
+                  <p><strong className="text-slate-800 dark:text-slate-200">Therapist:</strong> {((patient as Child & { assignedTherapist?: string }).assignedTherapist)}</p>
                 )}
               </div>
             </div>
