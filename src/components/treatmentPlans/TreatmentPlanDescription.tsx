@@ -63,7 +63,7 @@ export const TreatmentPlanDescription = ({ plan, text }: Props) => {
     <div className="space-y-4 mt-3 bg-white/40 dark:bg-slate-900/40 p-4 rounded-xl border border-slate-100 dark:border-white/5">
       {fields.map(({ key, label }) => {
         const value = data[key];
-        const displayValue = value && typeof value === 'string' && value.trim() ? value.trim() : 'No data available';
+        const displayValue = value && typeof value === 'string' && value.trim() ? value.trim() : '—';
         return (
           <div key={key} className="text-sm">
             <span className="font-semibold text-slate-800 dark:text-slate-200 block mb-0.5">{label}:</span>

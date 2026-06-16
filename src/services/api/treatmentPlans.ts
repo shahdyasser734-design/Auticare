@@ -33,6 +33,15 @@ export const normalizeTreatmentPlan = (p: any): any => {
     descriptionVal = p.notes;
   }
 
+  let titleVal = p.title || '';
+  if (!titleVal && p.notes) {
+    const firstLine = p.notes.split('\n')[0];
+    if (firstLine && !firstLine.trim().startsWith('{')) {
+      titleVal = firstLine;
+    }
+  }
+  titleVal = titleVal || 'Treatment Plan';
+
   return {
     ...p,
     id: idStr,
@@ -40,7 +49,7 @@ export const normalizeTreatmentPlan = (p: any): any => {
     doctorId: String(p.specialistId || p.doctorId || ''),
     specialistId: String(p.specialistId || p.doctorId || ''),
     specialistName: p.specialistName || '',
-    title: p.title || p.notes?.split('\n')[0] || 'Treatment Plan',
+    title: titleVal,
     description: descriptionVal,
     goals: goalsArray,
     recommendations: Array.isArray(p.recommendations) ? p.recommendations : (p.recommendations ? [p.recommendations] : []),
@@ -146,7 +155,12 @@ export const treatmentPlansService = {
     if (user.role?.toLowerCase() !== 'doctor') {
       throw new Error('Access Denied: Only Doctor can delete Treatment Plans');
     }
-    await apiClient.delete(`/treatment-plans/${id}`);
+    // Also fallback to standard REST if needed, but per instructions we pass treatmentPlanId
+    try {
+      await apiClient.delete(`/TreatmentPlan/DeleteTreatmentPlan?treatmentPlanId=${id}`);
+    } catch {
+      await apiClient.delete(`/treatment-plans/${id}`);
+    }
   },
 
   getChildPlans: async (childId: string): Promise<TreatmentPlan[]> => {

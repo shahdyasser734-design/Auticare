@@ -36,7 +36,7 @@ export const TreatmentPlan = () => {
   const [specialist, setSpecialist] = useState<Specialist | null>(null);
   const [publishSuccess, setPublishSuccess] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
-  const [deleteSuccess, setDeleteSuccess] = useState(false);
+
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
 
@@ -334,11 +334,10 @@ export const TreatmentPlan = () => {
     try {
       await treatmentPlansService.deletePlan(plan.id);
       setPlan(null);
-      setIsEditingMode(false);
       setIsDeleteModalOpen(false);
-      setDeleteSuccess(true);
-      setTimeout(() => setDeleteSuccess(false), 5000);
-      await loadPlanData();
+      
+      // Navigate back to Patient Details so Doctor immediately leaves the plan view
+      navigate(`/patients/${childId}`);
     } catch (err) {
       console.error('Error deleting treatment plan:', err);
       const errMsg = err instanceof Error ? err.message : 'Failed to delete treatment plan.';
@@ -404,20 +403,6 @@ export const TreatmentPlan = () => {
           </div>
         )}
 
-        {/* Delete Success Banner */}
-        {deleteSuccess && (
-          <div className="rounded-3xl border border-red-200 bg-red-50/50 dark:bg-red-950/20 p-5 flex items-start gap-4 animate-fade-in-down">
-            <span className="text-2xl text-red-500">🗑️</span>
-            <div>
-              <p className="text-sm font-semibold text-red-800 dark:text-red-300 uppercase tracking-wider mb-1">
-                Treatment Plan Deleted Successfully
-              </p>
-              <p className="text-sm text-slate-700 dark:text-slate-350">
-                The treatment plan has been permanently removed from the system globally.
-              </p>
-            </div>
-          </div>
-        )}
 
         {/* Error Banner */}
         {publishError && (
