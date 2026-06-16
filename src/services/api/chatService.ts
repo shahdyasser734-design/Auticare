@@ -18,11 +18,11 @@ const mapMessage = (m: any): ChatMessage => ({
 export const chatServiceAPI = {
   startChat: async (contactId: string): Promise<ChatConversation> => {
     const role = localStorage.getItem('role') || '';
-    const payload: Record<string, number> = {};
+    const payload: Record<string, string | number> = {};
     if (role === 'parent') {
-      payload.specialistId = Number(contactId);
+      payload.specialistId = isNaN(Number(contactId)) ? contactId : Number(contactId);
     } else {
-      payload.parentId = Number(contactId);
+      payload.parentId = isNaN(Number(contactId)) ? contactId : Number(contactId);
     }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -90,7 +90,7 @@ export const chatServiceAPI = {
   ): Promise<ChatMessage> => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response = await apiClient.post<any>('/chat/send', {
-      chatId: Number(chatId),
+      chatId: isNaN(Number(chatId)) ? chatId : Number(chatId),
       content,
       messageType,
     });
@@ -106,7 +106,7 @@ export const chatServiceAPI = {
   ): Promise<ChatMessage> => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response = await apiClient.post<any>('/chat/send-zoom-link', {
-      chatId: Number(chatId),
+      chatId: isNaN(Number(chatId)) ? chatId : Number(chatId),
       zoomLink,
       confirmedDate: confirmedDate || new Date().toISOString().split('T')[0],
       confirmedTime: confirmedTime || new Date().toISOString().split('T')[1].substring(0, 5),

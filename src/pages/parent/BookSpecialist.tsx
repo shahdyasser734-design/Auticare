@@ -87,7 +87,7 @@ const SpecialistCard = ({ data, type, onBook }: { data: SpecialistDisplay; type:
         </div>
       </div>
     </div>
-    
+
     <div className="px-6 pb-6 md:px-8 md:pb-8">
       <Button
         className="w-full bg-orange-500 hover:bg-orange-600 shadow-md shadow-orange-500/20 text-white font-bold py-3 rounded-xl transition-all"
@@ -169,11 +169,11 @@ export const BookSpecialist = () => {
             {/* Custom Tab Control */}
             <div className="flex flex-col sm:flex-row justify-center gap-3">
               <div className="standard-card p-1.5 inline-flex relative">
-                <div 
+                <div
                   className="absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-slate-900 dark:bg-orange-500 rounded-xl transition-all duration-300 ease-out"
                   style={{ left: activeTab === 'doctors' ? '6px' : 'calc(50% + 3px)' }}
                 />
-                 <button
+                <button
                   className={clsx(
                     "relative z-10 px-6 py-3 rounded-xl font-bold text-sm transition-colors duration-300 min-w-[140px]",
                     activeTab === 'doctors' ? "text-white" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -216,7 +216,7 @@ export const BookSpecialist = () => {
                   </div>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Doctors Found</h3>
                   <p className="text-slate-500 dark:text-slate-400">
-                    {searchTerm 
+                    {searchTerm
                       ? `No results match "${searchTerm}". Try a different search term.`
                       : `We couldn't find any doctors at the moment. Please check back later.`}
                   </p>
@@ -224,9 +224,9 @@ export const BookSpecialist = () => {
               ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {doctors.map(specialist => (
-                    <SpecialistCard 
-                      key={specialist.id} 
-                      data={specialist} 
+                    <SpecialistCard
+                      key={specialist.id}
+                      data={specialist}
                       type="doctor"
                       onBook={(item) => {
                         setSelectedSpecialist(item);
@@ -246,7 +246,7 @@ export const BookSpecialist = () => {
                   </div>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Therapists Found</h3>
                   <p className="text-slate-500 dark:text-slate-400">
-                    {searchTerm 
+                    {searchTerm
                       ? `No results match "${searchTerm}". Try a different search term.`
                       : `We couldn't find any therapists at the moment. Please check back later.`}
                   </p>
@@ -254,9 +254,9 @@ export const BookSpecialist = () => {
               ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {therapists.map(specialist => (
-                    <SpecialistCard 
-                      key={specialist.id} 
-                      data={specialist} 
+                    <SpecialistCard
+                      key={specialist.id}
+                      data={specialist}
                       type="therapist"
                       onBook={(item) => {
                         setSelectedSpecialist(item);
