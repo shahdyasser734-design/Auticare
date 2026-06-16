@@ -91,8 +91,8 @@ export const DoctorHome = () => {
             age: card.age ?? card.childAge ?? card.ageInYears ?? null,
             gender: card.gender ?? card.childGender ?? card.sex ?? 'Unknown',
             status: card.status || 'active',
-            assignedDoctor: card.assignedDoctor || (isDoctor ? user?.name : 'Not Assigned'),
-            assignedTherapist: card.assignedTherapist || (!isDoctor ? user?.name : 'Not Assigned'),
+            assignedDoctor: card.assignedDoctor || 'No Doctor Assigned',
+            assignedTherapist: card.assignedTherapist || 'No Therapist Assigned',
             parentId: card.parentId || '',
             parentName: card.parentName || 'Parent'
           });
@@ -110,8 +110,8 @@ export const DoctorHome = () => {
             age: card?.age ?? card?.childAge ?? card?.ageInYears ?? null,
             gender: card?.gender ?? card?.childGender ?? card?.sex ?? 'Unknown',
             status: 'active',
-            assignedDoctor: isDoctor ? user?.name : (b.specialistName || 'Not Assigned'),
-            assignedTherapist: !isDoctor ? user?.name : 'Not Assigned',
+            assignedDoctor: card?.assignedDoctor || 'No Doctor Assigned',
+            assignedTherapist: card?.assignedTherapist || 'No Therapist Assigned',
             parentId: b.parentId || '',
             parentName: b.parentName || 'Parent'
           });
@@ -150,13 +150,20 @@ export const DoctorHome = () => {
 // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
   const handleUpdateStatus = async (e: React.MouseEvent, booking: Booking, newStatus: Booking['status']) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!booking?.id) return;
     try {
+      setUpdatingId(booking.id);
       console.log(`[DASHBOARD] Updating booking ${booking.id} to status: ${newStatus}`);
-      await bookingService.updateBookingStatus(booking.id, newStatus);
+      const updated = await bookingService.updateBookingStatus(booking.id, newStatus);
       console.log(`[DASHBOARD] Successfully updated booking ${booking.id}`);
+
+      // Optimistically update the session list immediately to avoid page flicker
+      setSessions(prev => prev.map(s => s.id === booking.id ? { ...s, ...(updated || {}), status: newStatus } : s));
 
       if (newStatus === 'confirmed' && booking.parentId) {
         try {
@@ -166,12 +173,15 @@ export const DoctorHome = () => {
         }
       }
 
-      await fetchSpecialistData();
+      // Fetch in the background instead of replacing the whole screen with a spinner immediately
+      void fetchSpecialistData();
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      console.error(`[DASHBOARD] Error updating booking ${booking.id}:`, err);
-      const errMsg = err?.response?.data?.title || err?.response?.data?.detail || err.message || 'Failed to update booking status.';
+      console.error(`[DASHBOARD] Error updating booking ${booking?.id}:`, err);
+      const errMsg = err?.response?.data?.title || err?.response?.data?.detail || err?.message || 'Failed to update booking status.';
       setError(`Status Update Failed: ${errMsg}`);
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -563,14 +573,17 @@ export const DoctorHome = () => {
                       <div className="flex gap-2 shrink-0">
                         <Button
                           size="sm"
+                          disabled={updatingId === booking?.id}
                           onClick={(e) => handleUpdateStatus(e, booking, 'confirmed')}
                           className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl cursor-pointer shadow-sm"
                         >
-                          <CheckCircle2 size={13} className="mr-1" /> Approve
+                          {updatingId === booking?.id ? <Loader2 size={13} className="mr-1 animate-spin" /> : <CheckCircle2 size={13} className="mr-1" />}
+                          Approve
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
+                          disabled={updatingId === booking?.id}
                           onClick={(e) => handleUpdateStatus(e, booking, 'rejected')}
                           className="rounded-xl cursor-pointer font-bold"
                         >

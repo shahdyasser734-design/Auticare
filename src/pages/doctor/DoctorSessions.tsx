@@ -39,15 +39,24 @@ export const DoctorSessions = () => {
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleUpdateStatus = async (id: string, newStatus: Booking['status']) => {
+    if (!id) return;
     try {
       setUpdateError(null);
-      await bookingService.updateBookingStatus(id, newStatus);
-      fetchSessions();
+      setUpdatingId(id);
+      const updated = await bookingService.updateBookingStatus(id, newStatus);
+      
+      // Safely update state using the updated object or just the new status
+      setSessions(prev => prev.map(s => s.id === id ? { ...s, ...(updated || {}), status: newStatus } : s));
+      
+      // Fetch in background to ensure consistency without unmounting
+      void fetchSessions();
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error('Error updating status:', err);
-      const errMsg = err?.response?.data?.title || err?.response?.data?.detail || err.message || 'Failed to update booking status.';
+      const errMsg = err?.response?.data?.title || err?.response?.data?.detail || err?.message || 'Failed to update booking status.';
       setUpdateError(`Status Update Failed: ${errMsg}`);
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -179,12 +188,21 @@ export const DoctorSessions = () => {
                         {session.status}
                       </Badge>
                       
-                      {session.status === 'pending' && (
+                      {session?.status === 'pending' && (
                         <div className="flex gap-2">
-                          <Button size="sm" onClick={() => handleUpdateStatus(session.id, 'confirmed')}>
-                            Confirm & Approve
+                          <Button 
+                            size="sm" 
+                            disabled={updatingId === session?.id}
+                            onClick={() => handleUpdateStatus(session.id, 'confirmed')}
+                          >
+                            {updatingId === session?.id ? 'Processing...' : 'Confirm & Approve'}
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => handleUpdateStatus(session.id, 'rejected')}>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            disabled={updatingId === session?.id}
+                            onClick={() => handleUpdateStatus(session.id, 'rejected')}
+                          >
                             Reject
                           </Button>
                         </div>

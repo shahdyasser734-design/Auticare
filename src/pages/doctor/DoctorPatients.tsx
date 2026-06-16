@@ -25,6 +25,26 @@ export const DoctorPatients = () => {
       const uniqueChildren = new Map();
       const patientCards = dashData?.patientCards || [];
       
+      // 1. Add all patients from Dashboard (this includes assigned patients with no bookings)
+      patientCards.forEach((card: any) => {
+        const id = card.id || card.childId;
+        if (id && !uniqueChildren.has(id)) {
+          uniqueChildren.set(id, {
+            id,
+            name: card.name || card.childName || 'Unknown Patient',
+            age: card.age ?? card.childAge ?? card.ageInYears ?? null,
+            gender: card.gender ?? card.childGender ?? card.sex ?? 'Unknown',
+            parentId: card.parentId || '',
+            dateOfBirth: card.dateOfBirth ?? card.date_of_birth ?? card.dob ?? card.childDob ?? '',
+            riskLevel: card.lastScreening?.riskLevel || card.riskLevel || null,
+            status: card.status || 'active',
+            assignedDoctor: card.assignedDoctor || 'No Doctor Assigned',
+            assignedTherapist: card.assignedTherapist || 'No Therapist Assigned',
+          });
+        }
+      });
+
+      // 2. Add patients from Bookings (fallback for missing cards)
       bookings.forEach(b => {
         if (b.childId && !uniqueChildren.has(b.childId)) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -38,6 +58,8 @@ export const DoctorPatients = () => {
             dateOfBirth: card?.dateOfBirth ?? card?.date_of_birth ?? card?.dob ?? card?.childDob ?? '',
             riskLevel: card?.lastScreening?.riskLevel || card?.riskLevel || null,
             status: 'active',
+            assignedDoctor: card?.assignedDoctor || b.doctorName || 'No Doctor Assigned',
+            assignedTherapist: card?.assignedTherapist || b.therapistName || 'No Therapist Assigned',
           });
         }
       });
@@ -69,6 +91,26 @@ export const DoctorPatients = () => {
         const uniqueChildren = new Map();
         const patientCards = dashData?.patientCards || [];
         
+        // 1. Add all patients from Dashboard
+        patientCards.forEach((card: any) => {
+          const id = card.id || card.childId;
+          if (id && !uniqueChildren.has(id)) {
+            uniqueChildren.set(id, {
+              id,
+              name: card.name || card.childName || 'Unknown Patient',
+              age: card.age ?? card.childAge ?? card.ageInYears ?? null,
+              gender: card.gender ?? card.childGender ?? card.sex ?? 'Unknown',
+              parentId: card.parentId || '',
+              dateOfBirth: card.dateOfBirth ?? card.date_of_birth ?? card.dob ?? card.childDob ?? '',
+              riskLevel: card.lastScreening?.riskLevel || card.riskLevel || null,
+              status: card.status || 'active',
+              assignedDoctor: card.assignedDoctor || 'No Doctor Assigned',
+              assignedTherapist: card.assignedTherapist || 'No Therapist Assigned',
+            });
+          }
+        });
+
+        // 2. Add patients from Bookings
         bookings.forEach(b => {
           if (b.childId && !uniqueChildren.has(b.childId)) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -82,6 +124,8 @@ export const DoctorPatients = () => {
               dateOfBirth: card?.dateOfBirth ?? card?.date_of_birth ?? card?.dob ?? card?.childDob ?? '',
               riskLevel: card?.lastScreening?.riskLevel || card?.riskLevel || null,
               status: 'active',
+              assignedDoctor: card?.assignedDoctor || b.doctorName || 'No Doctor Assigned',
+              assignedTherapist: card?.assignedTherapist || b.therapistName || 'No Therapist Assigned',
             });
           }
         });
@@ -150,6 +194,10 @@ export const DoctorPatients = () => {
                             Gender: {patient.gender}
                           </p>
                         )}
+                        <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                          <p><strong className="text-slate-600 dark:text-slate-300">Doctor:</strong> {(patient as any).assignedDoctor || 'No Doctor Assigned'}</p>
+                          <p><strong className="text-slate-600 dark:text-slate-300">Therapist:</strong> {(patient as any).assignedTherapist || 'No Therapist Assigned'}</p>
+                        </div>
                       </div>
                     </div>
 
