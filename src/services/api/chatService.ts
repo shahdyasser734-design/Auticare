@@ -42,44 +42,45 @@ export const chatServiceAPI = {
   },
 
   getMyChats: async (): Promise<ChatConversation[]> => {
-    const response = await apiClient.get<any>('/chat/my-chats');
-    const data = response.data;
-    const raw = Array.isArray(data) ? data : (data?.data || data?.chats || []);
-    return raw.map((r: any) => {
+    const response = await apiClient.get<Record<string, unknown> | unknown[]>('/chat/my-chats');
+    const data = response.data as Record<string, unknown>;
+    const raw: unknown[] = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : (Array.isArray(data?.chats) ? data.chats : []));
+    
+    return raw.map((rRaw: unknown) => {
+      const r = rRaw as Record<string, unknown>;
       const pIds: string[] = [];
       const pNames: Record<string, string> = {};
 
       if (r.specialistId) {
         pIds.push(String(r.specialistId));
-        if (r.specialistName) pNames[String(r.specialistId)] = r.specialistName;
+        if (r.specialistName) pNames[String(r.specialistId)] = String(r.specialistName);
       }
       if (r.parentId) {
         pIds.push(String(r.parentId));
-        if (r.parentName || r.patientName) pNames[String(r.parentId)] = r.parentName || r.patientName;
+        if (r.parentName || r.patientName) pNames[String(r.parentId)] = String(r.parentName || r.patientName);
       }
       if (r.contactId) {
         pIds.push(String(r.contactId));
-        if (r.contactName) pNames[String(r.contactId)] = r.contactName;
+        if (r.contactName) pNames[String(r.contactId)] = String(r.contactName);
       }
 
       return {
         id: String(r.chatId || r.id),
         participantIds: pIds,
         participantNames: pNames,
-        lastUpdated: r.lastMessageAt || new Date().toISOString(),
-        unreadCount: r.unreadCount || 0,
+        lastUpdated: (r.lastMessageAt as string) || new Date().toISOString(),
+        unreadCount: (r.unreadCount as number) || 0,
         createdAt: new Date().toISOString(),
-        ...r
-      };
+        ...(r as Record<string, unknown>)
+      } as ChatConversation;
     });
   },
 
   getMessages: async (chatId: string, limit?: number): Promise<ChatMessage[]> => {
     const params = limit ? { limit } : {};
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response = await apiClient.get<any>(`/chat/${chatId}/messages`, { params });
-    const data = response.data;
-    const raw = Array.isArray(data) ? data : (data?.data || data?.messages || []);
+    const response = await apiClient.get<Record<string, unknown> | unknown[]>(`/chat/${chatId}/messages`, { params });
+    const data = response.data as Record<string, unknown>;
+    const raw: unknown[] = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : (Array.isArray(data?.messages) ? data.messages : []));
     return raw.map(mapMessage);
   },
 
@@ -88,7 +89,7 @@ export const chatServiceAPI = {
     content: string,
     messageType: 'text' | 'file' | 'audio' | 'call' = 'text'
   ): Promise<ChatMessage> => {
-    const response = await apiClient.post<any>('/chat/send', {
+    const response = await apiClient.post<Record<string, unknown>>('/chat/send', {
       chatId: isNaN(Number(chatId)) ? chatId : Number(chatId),
       content,
       messageType,

@@ -222,7 +222,7 @@ export const Chat = () => {
     } finally {
       setLoadingChats(false);
     }
-  }, [myId, location.state]);
+  }, [myId, location.state, user?.role]);
 
   // ─── Fetch messages ──────────────────────────────────────────────────────
 

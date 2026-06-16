@@ -198,7 +198,7 @@ export const PatientDetails = () => {
     };
 
     load();
-  }, [id, user?.role, isDoctor]);
+  }, [id, user?.role, user?.id, user?.name, isDoctor, isTherapist]);
 
   // ── save note ──
   const handleSaveNote = async () => {
