@@ -36,6 +36,7 @@ export const TreatmentPlan = () => {
   
   // Treatment Plan states
   const [plan, setPlan] = useState<TreatmentPlanType | null>(null);
+  const [isEditingMode, setIsEditingMode] = useState(false);
   
   // Advanced fields
   const [clinicalAssessment, setClinicalAssessment] = useState('');
@@ -98,6 +99,7 @@ export const TreatmentPlan = () => {
 
       if (activePlan) {
         setPlan(activePlan);
+        setIsEditingMode(activePlan.status !== 'PUBLISHED');
         try {
           const parsedGoal = JSON.parse(activePlan.goal || '{}');
           setSmartGoals(parsedGoal.smartGoals || '');
@@ -135,6 +137,7 @@ export const TreatmentPlan = () => {
       } else {
         // If no plan, child doesn't have one yet
         setPlan(null);
+        setIsEditingMode(true);
       }
     } catch (err) {
       console.error('Error loading treatment plan:', err);
@@ -228,6 +231,7 @@ export const TreatmentPlan = () => {
       
       try {
         if (targetStatus === 'PUBLISHED') {
+          setIsEditingMode(false);
           // Notification to parent
           await apiClient.post('/notifications', {
             userId: child?.parentId || '',
@@ -358,7 +362,7 @@ export const TreatmentPlan = () => {
         )}
 
         {/* Unified Layout */}
-        {isDoctor ? (
+        {isDoctor && isEditingMode ? (
           /* Create & Edit Plan Mode (For Specialists) - Centered layout properly */
           <div className="max-w-4xl mx-auto w-full space-y-6">
             <Card className="border border-slate-200 dark:border-white/10 shadow-xl rounded-3xl p-6 md:p-8 space-y-6">
@@ -604,10 +608,18 @@ export const TreatmentPlan = () => {
                 </Card>
               ) : (
                   <Card className="border border-slate-200 dark:border-white/10 shadow-lg rounded-3xl p-6 md:p-8">
-                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                      <FileText className="text-primary-600" size={24} />
-                      Treatment Plan Details
-                    </h2>
+                    <div className="flex justify-between items-center mb-6">
+                      <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <FileText className="text-primary-600" size={24} />
+                        Treatment Plan Details
+                      </h2>
+                      {isDoctor && !isEditingMode && plan?.status === 'PUBLISHED' && (
+                        <Button onClick={() => setIsEditingMode(true)} className="gap-2">
+                          <Sparkles className="h-4 w-4" />
+                          Edit Treatment Plan
+                        </Button>
+                      )}
+                    </div>
                     <div className="space-y-6">
                       <TreatmentPlanDescription plan={plan} fallbackText="No data available" />
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4 border-t border-slate-200 dark:border-white/10">
