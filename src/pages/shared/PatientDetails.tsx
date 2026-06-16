@@ -134,7 +134,12 @@ export const PatientDetails = () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (childData as any).assignedDoctor = card?.assignedDoctor || bk?.doctorName || (isDoctor ? user?.name : 'No Doctor Assigned');
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (childData as any).assignedDoctorId = card?.assignedDoctorId || (bk?.specialistType?.toLowerCase() === 'doctor' ? bk?.specialistId : undefined) || (isDoctor ? user?.id : undefined);
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (childData as any).assignedTherapist = card?.assignedTherapist || bk?.therapistName || (isTherapist ? user?.name : 'No Therapist Assigned');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (childData as any).assignedTherapistId = card?.assignedTherapistId || (bk?.specialistType?.toLowerCase() === 'therapist' ? bk?.specialistId : undefined) || (isTherapist ? user?.id : undefined);
 
         // ── 3. All supporting data in parallel ────────────────────────────────
         const [resultsRaw, notesRaw, plansRaw] = await Promise.all([
@@ -200,22 +205,33 @@ export const PatientDetails = () => {
     if (!id || !newNote.trim()) return;
     setSavingNote(true);
     try {
+      // Resolve actual receiver ID
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const p = patient as any;
+      let actualReceiverId = receiverRole === 'parent' ? p?.parentId : receiverRole;
+      if (receiverRole === 'doctor' && p?.assignedDoctorId) actualReceiverId = p.assignedDoctorId;
+      if (receiverRole === 'therapist' && p?.assignedTherapistId) actualReceiverId = p.assignedTherapistId;
+
       const added = await notesService.createNote({
         title: 'Session Note',
         content: newNote,
         childId: id,
+        parentId: p?.parentId, // Ensure the parent receives it
         senderRole: user?.role,
         receiverRole,
+        receiverId: actualReceiverId !== receiverRole ? actualReceiverId : undefined, // Only pass if we actually resolved an ID
       });
       setNotes(prev => [added, ...prev]);
       setNewNote('');
       try {
-        await apiClient.post('/notifications', {
-          userId: receiverRole === 'parent' ? (patient?.parentId || '') : receiverRole,
-          title: 'New Session Note',
-          message: `${user?.name || 'A specialist'} sent a new note about ${patient?.name || 'the patient'}.`,
-          type: 'notes',
-        });
+        if (actualReceiverId && actualReceiverId !== receiverRole) {
+          await apiClient.post('/notifications', {
+            userId: actualReceiverId,
+            title: 'New Session Note',
+            message: `${user?.name || 'A specialist'} sent a new note about ${patient?.name || 'the patient'}.`,
+            type: 'notes',
+          });
+        }
       } catch { /* ignored */ }
     } catch (err) {
       console.error('[PatientDetails] Error saving note:', err);

@@ -42,10 +42,9 @@ export const chatServiceAPI = {
   },
 
   getMyChats: async (): Promise<ChatConversation[]> => {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response = await apiClient.get<any[]>('/chat/my-chats');
-    const raw = response.data ?? [];
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const response = await apiClient.get<any>('/chat/my-chats');
+    const data = response.data;
+    const raw = Array.isArray(data) ? data : (data?.data || data?.chats || []);
     return raw.map((r: any) => {
       const pIds: string[] = [];
       const pNames: Record<string, string> = {};
@@ -78,8 +77,9 @@ export const chatServiceAPI = {
   getMessages: async (chatId: string, limit?: number): Promise<ChatMessage[]> => {
     const params = limit ? { limit } : {};
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response = await apiClient.get<any[]>(`/chat/${chatId}/messages`, { params });
-    const raw = response.data ?? [];
+    const response = await apiClient.get<any>(`/chat/${chatId}/messages`, { params });
+    const data = response.data;
+    const raw = Array.isArray(data) ? data : (data?.data || data?.messages || []);
     return raw.map(mapMessage);
   },
 
@@ -88,12 +88,12 @@ export const chatServiceAPI = {
     content: string,
     messageType: 'text' | 'file' | 'audio' | 'call' = 'text'
   ): Promise<ChatMessage> => {
-    const response = await apiClient.post<Record<string, unknown>>('/chat/send', {
+    const response = await apiClient.post<any>('/chat/send', {
       chatId: isNaN(Number(chatId)) ? chatId : Number(chatId),
       content,
       messageType,
     });
-    return mapMessage(response.data);
+    return mapMessage(response.data?.data || response.data);
   },
 
   sendZoomLink: async (
