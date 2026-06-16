@@ -18,6 +18,18 @@ const mapMessage = (m: any): ChatMessage => ({
 
 export const chatServiceAPI = {
   startChat: async (contactId: string): Promise<ChatConversation> => {
+    let myId = '';
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        myId = String(JSON.parse(userStr).id);
+      }
+    } catch { /* ignore */ }
+
+    if (myId && String(contactId) === myId) {
+      throw new Error("Cannot start a chat with yourself.");
+    }
+
     const parsedId = isNaN(Number(contactId)) ? contactId : Number(contactId);
     // Send standard IDs. If backend is updated, it will read what it needs.
     const payload: Record<string, string | number> = {
@@ -43,6 +55,14 @@ export const chatServiceAPI = {
   },
 
   getMyChats: async (): Promise<ChatConversation[]> => {
+    let myId = '';
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        myId = String(JSON.parse(userStr).id);
+      }
+    } catch { /* ignore */ }
+
     const response = await apiClient.get<Record<string, unknown> | unknown[]>('/chat/my-chats');
     const data = response.data as Record<string, unknown>;
     const raw: unknown[] = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : (Array.isArray(data?.chats) ? data.chats : []));
@@ -52,15 +72,15 @@ export const chatServiceAPI = {
       const pIds: string[] = [];
       const pNames: Record<string, string> = {};
 
-      if (r.specialistId) {
+      if (r.specialistId && String(r.specialistId) !== myId) {
         pIds.push(String(r.specialistId));
         if (r.specialistName) pNames[String(r.specialistId)] = String(r.specialistName);
       }
-      if (r.parentId) {
+      if (r.parentId && String(r.parentId) !== myId) {
         pIds.push(String(r.parentId));
         if (r.parentName || r.patientName) pNames[String(r.parentId)] = String(r.parentName || r.patientName);
       }
-      if (r.contactId) {
+      if (r.contactId && String(r.contactId) !== myId) {
         pIds.push(String(r.contactId));
         if (r.contactName) pNames[String(r.contactId)] = String(r.contactName);
       }
@@ -74,6 +94,9 @@ export const chatServiceAPI = {
         createdAt: new Date().toISOString(),
         ...(r as Record<string, unknown>)
       } as ChatConversation;
+    }).filter(chat => {
+      // STRICT FILTER: Discard any chat that has no valid other participant ids
+      return chat.participantIds.length > 0;
     });
   },
 

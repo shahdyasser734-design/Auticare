@@ -91,8 +91,20 @@ export const treatmentPlansService = {
   },
 
   getPlan: async (id: string): Promise<TreatmentPlan> => {
-    const response = await apiClient.get<TreatmentPlan>(`/treatment-plans/${id}`);
-    return normalizeTreatmentPlan(response.data);
+    try {
+      const response = await apiClient.get<TreatmentPlan>(`/treatment-plans/${id}`);
+      return normalizeTreatmentPlan(response.data);
+    } catch (err) {
+      // Fallback for therapist or permissions issue
+      try {
+        const myPlans = await treatmentPlansService.getMyPlans();
+        const found = myPlans.find((p: any) => String(p.id) === String(id) || String(p.treatmentId) === String(id));
+        if (found) return found;
+      } catch (e) {
+        // Ignored
+      }
+      throw err;
+    }
   },
 
   updatePlan: async (id: string, data: Partial<CreateTreatmentPlanRequest>): Promise<TreatmentPlan> => {
@@ -131,8 +143,21 @@ export const treatmentPlansService = {
   },
 
   getChildPlans: async (childId: string): Promise<TreatmentPlan[]> => {
-    const response = await apiClient.get<TreatmentPlan[]>(`/treatment-plans/child/${childId}`);
-    return (response.data || []).map(normalizeTreatmentPlan);
+    try {
+      const response = await apiClient.get<TreatmentPlan[]>(`/treatment-plans/child/${childId}`);
+      const plans = (response.data || []).map(normalizeTreatmentPlan);
+      if (plans.length > 0) return plans;
+    } catch (err) {
+      // Ignore error, proceed to fallback
+    }
+
+    // Fallback: Try fetching via my-plans to see if it's a role-based visibility issue
+    try {
+      const myPlans = await treatmentPlansService.getMyPlans();
+      return myPlans.filter((p: any) => String(p.childId) === String(childId));
+    } catch (e) {
+      return [];
+    }
   },
 
   getMyPlans: async (): Promise<TreatmentPlan[]> => {
