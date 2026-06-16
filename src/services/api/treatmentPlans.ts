@@ -1,5 +1,6 @@
 import apiClient from '../apiClient';
 import type { TreatmentPlan } from '../../types';
+import { authService } from '../authService';
 import { localNotificationManager } from './localNotificationManager';
 import { childrenService } from './childrenService';
 export type { TreatmentPlan };
@@ -51,12 +52,18 @@ export const normalizeTreatmentPlan = (p: any): any => {
     goal: p.goal || goalsArray.join('\n') || '',
     progress: p.progress || p.status || 'active',
     createdAt: p.createdAt || '',
-    updatedAt: p.updatedAt || p.createdAt || ''
+    updatedAt: p.updatedAt || p.createdAt || '',
+    visibleTo: Array.isArray(p.visibleTo) ? p.visibleTo : (p.visibleTo || []),
   };
 };
 
 export const treatmentPlansService = {
   createPlan: async (data: CreateTreatmentPlanRequest): Promise<TreatmentPlan> => {
+    const user = await authService.getCurrentUser();
+    if (user.role !== 'doctor') {
+      throw new Error('Access Denied: Only Doctor can modify Treatment Plans');
+    }
+
     const response = await apiClient.post<TreatmentPlan>('/treatment-plans', data);
     const normalized = normalizeTreatmentPlan(response.data);
 
@@ -107,6 +114,11 @@ export const treatmentPlansService = {
   },
 
   updatePlan: async (id: string, data: Partial<CreateTreatmentPlanRequest>): Promise<TreatmentPlan> => {
+    const user = await authService.getCurrentUser();
+    if (user.role !== 'doctor') {
+      throw new Error('Access Denied: Only Doctor can modify Treatment Plans');
+    }
+
     const response = await apiClient.put<TreatmentPlan>(`/treatment-plans/${id}`, data);
     const normalized = normalizeTreatmentPlan(response.data);
 
@@ -144,7 +156,9 @@ export const treatmentPlansService = {
   getChildPlans: async (childId: string): Promise<TreatmentPlan[]> => {
     try {
       const response = await apiClient.get<TreatmentPlan[]>(`/treatment-plans/child/${childId}`);
-      const plans = (response.data || []).map(normalizeTreatmentPlan);
+      const user = await authService.getCurrentUser();
+      let plans = (response.data || []).map(normalizeTreatmentPlan);
+      plans = plans.filter(p => p.visibleTo?.includes(String(user.id)) || p.doctorId === String(user.id));
       if (plans.length > 0) return plans;
     } catch {
       // Ignore error, proceed to fallback
@@ -185,13 +199,25 @@ export const treatmentPlansService = {
         const childPlans = plansArrays.flat().map(normalizeTreatmentPlan);
         
         const allPlans = [...myPlans, ...childPlans];
-        return Array.from(new Map(allPlans.map(p => [String(p.id), p])).values());
+        const deduplicated = Array.from(new Map(allPlans.map(p => [String(p.id), p])).values());
+        
+        try {
+          const user = await authService.getCurrentUser();
+          return deduplicated.filter(p => p.visibleTo?.includes(String(user.id)) || p.doctorId === String(user.id));
+        } catch {
+          return deduplicated;
+        }
       }
     } catch (bookingErr) {
       console.warn('Bookings fallback failed:', bookingErr);
     }
     
-    return myPlans;
+    try {
+      const user = await authService.getCurrentUser();
+      return myPlans.filter(p => p.visibleTo?.includes(String(user.id)) || p.doctorId === String(user.id));
+    } catch {
+      return myPlans;
+    }
   },
 };
 

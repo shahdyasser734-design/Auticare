@@ -236,6 +236,7 @@ export interface TreatmentPlan {
   updatedAt: string;
   goal?: string;
   progress?: string;
+  visibleTo?: string[];
 }
 
 export interface ProgressItem {

@@ -159,12 +159,28 @@ export const TreatmentPlan = () => {
       const finalNotes = JSON.stringify({ clinicalAssessment, diagnosisSummary, progressTracking, generalNotes });
       const finalEndDate = endDate ? new Date(endDate).toISOString() : null;
 
+      let parentIds: string[] = [];
+      let therapistIds: string[] = [];
+      if (child) {
+        parentIds = child.parentId ? [String(child.parentId)] : [];
+      }
+      try {
+        const bookings = await bookingsService.getMyBookings();
+        const childBookings = bookings.filter(b => String(b.childId) === childId);
+        therapistIds = childBookings.filter(b => b.specialistType === 'therapist').map(b => String(b.specialistId)).filter(Boolean);
+      } catch (err) {
+        console.warn('Could not load therapist bookings for visibility check', err);
+      }
+      const doctorId = String(user?.id);
+      const visibleTo = Array.from(new Set([...parentIds, ...therapistIds, doctorId]));
+
       if (plan?.id) {
         const updatePayload = {
           goal: finalGoal,
           notes: finalNotes,
           progress: progress,
-          endDate: finalEndDate
+          endDate: finalEndDate,
+          visibleTo
         };
         
         console.log('[DEBUG] PUT Payload:', { planId: plan.id, payload: updatePayload });
@@ -193,7 +209,8 @@ export const TreatmentPlan = () => {
           startDate: new Date().toISOString(),
           endDate: finalEndDate,
           goal: finalGoal,
-          notes: finalNotes
+          notes: finalNotes,
+          visibleTo
         };
         
         console.log('[DEBUG] POST Payload:', { childId, specialistId: finalSpecialistId, payload: createPayload });
