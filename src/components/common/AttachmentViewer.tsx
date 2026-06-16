@@ -3,6 +3,7 @@ import { FileIcon, FileDown, ExternalLink, Maximize2, X } from 'lucide-react';
 import { Button } from './Button';
 
 // Utility for formatting URL
+// eslint-disable-next-line react-refresh/only-export-components
 export const getFullFileUrl = (path: string) => {
   if (!path) return '';
   if (path.startsWith('http')) return path;
@@ -29,6 +30,7 @@ const getMimeType = (filename: string): string => {
   }
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const forceDownload = async (url: string, filename: string) => {
   try {
     // Attempt to bypass CORS locally by stripping the backend host if present,

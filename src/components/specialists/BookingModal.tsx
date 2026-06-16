@@ -88,7 +88,7 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
         try {
           const uploadRes = await fileUploadService.uploadFile(selectedFile, 'booking-document');
           attachedFileUrl = uploadRes.url;
-        } catch (_err) {
+        } catch {
           setError('File upload failed. Please try again.');
           setSubmitting(false);
           return;

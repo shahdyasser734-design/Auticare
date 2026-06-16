@@ -206,7 +206,7 @@ const OurSpecialists = () => {
           try {
             const uploadRes = await fileUploadService.uploadFile(selectedFile, 'booking-document');
             attachedFileUrl = uploadRes.url;
-          } catch (_err) {
+          } catch {
             setApiError('File upload failed. Please try again.');
             setSubmitting(false);
             return;
