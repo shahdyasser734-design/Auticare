@@ -64,9 +64,6 @@ export const ChatPage = () => {
     } catch (err: unknown) {
       const error = err as { response?: { status?: number, data?: { message?: string } }; message?: string };
       let msg = error?.response?.data?.message || error?.message || 'Failed to send. Please try again.';
-      if (error?.response?.status === 403) {
-        msg = "You are not authorized to send messages in this chat";
-      }
       console.error('Error sending message:', err);
       setSendError(msg);
     }
