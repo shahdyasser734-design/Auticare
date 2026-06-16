@@ -13,7 +13,8 @@ import { specialistsService } from '../../services/api/specialistsService';
 import { FileUpload } from '../../components/common/FileUpload';
 import { fileUploadService } from '../../services/api/fileUploadService';
 import { childrenService } from '../../services/api/children';
-import { User, FileText, BarChart3, ArrowLeft, Loader2, Sparkles, Save } from 'lucide-react';
+import { User, FileText, BarChart3, ArrowLeft, Loader2, Sparkles, Save, Download } from 'lucide-react';
+import jsPDF from 'jspdf';
 import type { Child, TreatmentPlan as TreatmentPlanType, Specialist } from '../../types';
 import apiClient from '../../services/apiClient';
 
@@ -151,6 +152,69 @@ export const TreatmentPlan = () => {
     void loadPlanData();
   }, [childId]);
   /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
+
+  const handleExportPdf = () => {
+    if (!plan) return;
+    const doc = new jsPDF();
+    const margin = 20;
+    let y = margin;
+
+    doc.setFontSize(22);
+    doc.setTextColor(30, 64, 175); // Primary color
+    doc.text('Treatment Plan', margin, y);
+    y += 15;
+
+    doc.setFontSize(12);
+    doc.setTextColor(100, 116, 139); // Slate-500
+    doc.text(`Status: ${plan.status}`, margin, y);
+    y += 10;
+    
+    if (child) {
+      doc.setTextColor(15, 23, 42); // Slate-900
+      doc.text(`Patient: ${child.name}`, margin, y);
+      y += 10;
+    }
+
+    doc.setDrawColor(226, 232, 240); // Slate-200
+    doc.line(margin, y, 210 - margin, y);
+    y += 15;
+
+    const addSection = (title: string, content: string) => {
+      if (y > 270) {
+        doc.addPage();
+        y = margin;
+      }
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(15, 23, 42);
+      doc.text(title, margin, y);
+      y += 8;
+
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(71, 85, 105);
+      
+      const textLines = doc.splitTextToSize(content || 'Not provided', 170);
+      doc.text(textLines, margin, y);
+      y += (textLines.length * 6) + 10;
+    };
+
+    let parsedGoals: any = {};
+    let parsedNotes: any = {};
+    try { parsedGoals = JSON.parse(plan.goal || '{}'); } catch {}
+    try { parsedNotes = JSON.parse(plan.notes || '{}'); } catch {}
+
+    addSection('Clinical Assessment', parsedNotes.clinicalAssessment);
+    addSection('Diagnosis Summary', parsedNotes.diagnosisSummary);
+    addSection('Smart Goals', parsedGoals.smartGoals);
+    addSection('Intervention Plan', parsedGoals.interventionPlan);
+    addSection('Progress Tracking', parsedNotes.progressTracking);
+    addSection('General Notes', parsedNotes.generalNotes || plan.notes);
+
+    const dateStr = new Date().toISOString().split('T')[0];
+    const filename = `TreatmentPlan_${child?.name?.replace(/\s+/g, '_') || 'Patient'}_${dateStr}.pdf`;
+    doc.save(filename);
+  };
 
   const handleSavePlan = async (targetStatus: 'DRAFT' | 'PUBLISHED') => {
     if (!childId) return;
@@ -621,6 +685,12 @@ export const TreatmentPlan = () => {
                         <Button onClick={() => setIsEditingMode(true)} className="gap-2">
                           <Sparkles className="h-4 w-4" />
                           Edit Treatment Plan
+                        </Button>
+                      )}
+                      {isParent && plan?.status === 'PUBLISHED' && (
+                        <Button onClick={handleExportPdf} variant="outline" className="gap-2 border-primary-500 text-primary-600 hover:bg-primary-50">
+                          <Download className="h-4 w-4" />
+                          Export as PDF
                         </Button>
                       )}
                     </div>
