@@ -67,9 +67,14 @@ const formatDateTime = (dateStr?: string, timeStr?: string) => {
 };
 
 // Treatment plan visibility:
-// Backend /treatment-plans/child/:id is the authoritative gate.
-// If the backend returns a plan, it is visible to the requesting user.
-// Frontend NEVER filters plans by role — only UI actions differ by role.
+// Doctor sees all plans.
+// Therapist and Parent only see plans that are published.
+// Backend might return published=true or status='published'|'active'|'completed'.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const isPlanPublished = (plan: any) => {
+  const s = (plan.status || '').toLowerCase();
+  return plan.published === true || s === 'published' || s === 'active' || s === 'completed';
+};
 
 // ─── component ───────────────────────────────────────────────────────────────
 
@@ -141,7 +146,19 @@ export const PatientDetails = () => {
         );
 
         // ── 4. Fetch therapy sessions for each treatment plan ─────────────────
-        const normalizedPlans = (plansRaw as TreatmentPlan[]);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const inlinePlan = (childData as any).treatmentPlan || (childData as any).TreatmentPlan;
+        const allPlans = Array.isArray(plansRaw) ? [...plansRaw] : [];
+        if (inlinePlan && !allPlans.find(p => p.id === inlinePlan.id)) {
+          allPlans.push(inlinePlan);
+        }
+        
+        let normalizedPlans = (allPlans as TreatmentPlan[]);
+        
+        // Therapist & Parent read-only access after publication
+        if (!isDoctor) {
+          normalizedPlans = normalizedPlans.filter(isPlanPublished);
+        }
 
         // Fetch therapy sessions from all visible plans (linked by treatmentPlanId)
         const therapySessionArrays = await Promise.all(
@@ -162,9 +179,6 @@ export const PatientDetails = () => {
         setPatient(childData);
         setScreeningResults(Array.isArray(resultsRaw) ? resultsRaw : [resultsRaw]);
         setNotes(filteredNotes);
-        // All plans returned by backend are visible — no frontend role-filter.
-        // Backend /treatment-plans/child/:id controls visibility.
-        // Therapist gets read-only UI; Doctor gets edit/create UI.
         setPlans(normalizedPlans);
         setBookings(childBookings);
         setTherapySessions(allTherapySessions);

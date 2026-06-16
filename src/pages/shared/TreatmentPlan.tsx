@@ -91,15 +91,15 @@ export const TreatmentPlan = () => {
       if (!isNewAction) {
         const plans = await treatmentPlansService.getChildPlans(childId);
         if (plans && plans.length > 0) {
-          if (isParent) {
-            // Parent sees active or completed plans only
+          if (isParent || isTherapist) {
+            // Therapist and Parent see published plans only
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            activePlan = plans.find((p: any) => p.status === 'active' || p.status === 'completed') as unknown as TreatmentPlanType;
-          } else if (isTherapist) {
-            // Therapist sees any plan the backend returns (backend is the gate)
-            activePlan = plans[0] as unknown as TreatmentPlanType;
+            activePlan = plans.find((p: any) => {
+              const s = (p.status || '').toLowerCase();
+              return p.published === true || s === 'published' || s === 'active' || s === 'completed';
+            }) as unknown as TreatmentPlanType;
           } else {
-            // Doctor sees any plan (all plans)
+            // Doctor sees any plan (all plans, including drafts)
             activePlan = plans[0] as unknown as TreatmentPlanType;
           }
         }
