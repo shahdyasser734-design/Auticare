@@ -8,8 +8,8 @@ import { bookingService } from '../../services/api/bookings';
 import { useAuth } from '../../context/useAuth';
 import { MessageSquare, Send, Loader2, RefreshCw, ChevronLeft, Phone, Video, Paperclip, Mic, Smile, X, Download, Reply, Image as ImageIcon, File as FileIcon } from 'lucide-react';
 import { useNotification } from '../../context/NotificationContext';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
+import { localMediaManager, blobToBase64 } from '../../services/api/localMediaManager';
+import { localNotificationManager } from '../../services/api/localNotificationManager';// ─── Types ────────────────────────────────────────────────────────────────────
 
 /** Participant info derived from a chat object */
 interface ParticipantInfo {
@@ -337,16 +337,55 @@ export const Chat = () => {
       }
 
       if (fileToUpload) {
-        // Handle file/image upload
+        // Handle file/image upload via LOCAL MEDIA MANAGER (Frontend Only)
         const type = fileToUpload.type.startsWith('image/') ? 'image' : 'file';
-        const result = await chatServiceAPI.sendMediaMessage(activeChatId, type, fileToUpload, fileToUpload.name);
-        console.log('[Chat] Send media success:', result);
+        const base64Data = await blobToBase64(fileToUpload);
+        
+        const localMsg: ChatMessage = {
+          id: `local-media-${Date.now()}`,
+          chatId: activeChatId,
+          senderId: myId,
+          senderName: user?.name || 'Me',
+          senderRole: (user?.role?.toLowerCase() as any) || 'parent',
+          content: '',
+          messageType: type,
+          timestamp: new Date().toISOString(),
+          isRead: true,
+          fileName: fileToUpload.name,
+          fileSize: fileToUpload.size,
+          fileUrl: type === 'file' ? base64Data : undefined,
+          imageUrl: type === 'image' ? base64Data : undefined,
+          replyToMessageId: replyingTo?.id,
+          replyTo: replyingTo ? replyingTo : undefined
+        };
+        
+        localMediaManager.saveMediaMessage(localMsg);
+        
+        // Notify other participants (mock trigger)
+        const others = getOtherParticipants(selected, myId);
+        others.forEach(other => {
+          localNotificationManager.emitNotification(
+            other.id,
+            'message',
+            `New Message from ${user?.name || 'Someone'}`,
+            type === 'image' ? 'Sent an image' : 'Sent a file',
+            `chat-${activeChatId}`
+          );
+        });
+        
         setFileToUpload(null);
         setImagePreview(null);
+        setReplyingTo(null);
       } else if (content) {
         // Handle text message
         const result = await chatServiceAPI.sendMessage(activeChatId, content, 'text', replyingTo?.id);
-        console.log('[Chat] Send text success:', result);
+        
+        // Ensure replyTo is populated locally if the backend drops it
+        if (replyingTo && !result.replyTo) {
+          result.replyToMessageId = replyingTo.id;
+          result.replyTo = replyingTo;
+        }
+        
         setReplyingTo(null);
       }
 
@@ -416,7 +455,41 @@ export const Chat = () => {
           const activeChatId = selected?.id;
           if (activeChatId) {
             setSending(true);
-            await chatServiceAPI.sendMediaMessage(activeChatId, 'voice', wavBlob, 'voice-message.wav', recordingDuration);
+            const base64Data = await blobToBase64(wavBlob);
+            
+            const localMsg: ChatMessage = {
+              id: `local-media-${Date.now()}`,
+              chatId: activeChatId,
+              senderId: myId,
+              senderName: user?.name || 'Me',
+              senderRole: (user?.role?.toLowerCase() as any) || 'parent',
+              content: '',
+              messageType: 'voice',
+              timestamp: new Date().toISOString(),
+              isRead: true,
+              fileName: 'voice-message.wav',
+              fileSize: wavBlob.size,
+              audioUrl: base64Data,
+              duration: recordingDuration,
+              replyToMessageId: replyingTo?.id,
+              replyTo: replyingTo ? replyingTo : undefined
+            };
+            
+            localMediaManager.saveMediaMessage(localMsg);
+            
+            // Notify other participants
+            const others = getOtherParticipants(selected, myId);
+            others.forEach(other => {
+              localNotificationManager.emitNotification(
+                other.id,
+                'message',
+                `New Message from ${user?.name || 'Someone'}`,
+                'Sent a voice message',
+                `chat-${activeChatId}`
+              );
+            });
+
+            setReplyingTo(null);
             await fetchMessages(selected);
           }
         } catch (err) {

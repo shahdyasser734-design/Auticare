@@ -1,5 +1,6 @@
 import apiClient from '../apiClient';
 import type { ChatMessage, ChatConversation } from '../../types';
+import { localMediaManager } from './localMediaManager';
 
 export type { ChatMessage, ChatConversation };
 
@@ -78,10 +79,25 @@ export const chatServiceAPI = {
 
   getMessages: async (chatId: string, limit?: number): Promise<ChatMessage[]> => {
     const params = limit ? { limit } : {};
-    const response = await apiClient.get<Record<string, unknown> | unknown[]>(`/chat/${chatId}/messages`, { params });
-    const data = response.data as Record<string, unknown>;
-    const raw: unknown[] = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : (Array.isArray(data?.messages) ? data.messages : []));
-    return raw.map(mapMessage);
+    let apiMessages: ChatMessage[] = [];
+    try {
+      const response = await apiClient.get<Record<string, unknown> | unknown[]>(`/chat/${chatId}/messages`, { params });
+      const data = response.data as Record<string, unknown>;
+      const raw: unknown[] = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : (Array.isArray(data?.messages) ? data.messages : []));
+      apiMessages = raw.map(mapMessage);
+    } catch {
+      // Allow fallback to local media if API fails
+    }
+
+    const localMessages = localMediaManager.getMediaMessagesForChat(chatId);
+    
+    // Merge API and local messages
+    const merged = [...apiMessages, ...localMessages];
+    
+    // Sort by timestamp ascending (oldest first, which is standard for chat UI rendering)
+    merged.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    
+    return merged;
   },
 
   sendMessage: async (
