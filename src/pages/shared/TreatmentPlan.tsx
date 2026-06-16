@@ -25,7 +25,6 @@ export const TreatmentPlan = () => {
 
   const isDoctor    = user?.role === 'doctor';
   const isParent    = user?.role === 'parent';
-  const isTherapist = user?.role === 'therapist';
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -91,17 +90,8 @@ export const TreatmentPlan = () => {
       if (!isNewAction) {
         const plans = await treatmentPlansService.getChildPlans(childId);
         if (plans && plans.length > 0) {
-          if (isParent || isTherapist) {
-            // Therapist and Parent see published plans only
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            activePlan = plans.find((p: any) => {
-              const s = (p.status || '').toLowerCase();
-              return p.published === true || s === 'published' || s === 'active' || s === 'completed';
-            }) as unknown as TreatmentPlanType;
-          } else {
-            // Doctor sees any plan (all plans, including drafts)
-            activePlan = plans[0] as unknown as TreatmentPlanType;
-          }
+          // Backend is the authoritative gate. Whatever plan is returned is the one to show.
+          activePlan = plans[0] as unknown as TreatmentPlanType;
         }
       }
 

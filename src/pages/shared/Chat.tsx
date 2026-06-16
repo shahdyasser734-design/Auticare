@@ -118,23 +118,21 @@ export const Chat = () => {
         const contactMap = new Map<string, ParticipantInfo>();
 
         bookings.forEach(b => {
-          if (user?.role === 'parent') {
-            if (b.specialistId && b.specialistName) {
-              contactMap.set(String(b.specialistId), {
-                id: String(b.specialistId),
-                name: b.specialistName,
-                role: String(b.specialistType || 'Specialist').replace(/^./, c => c.toUpperCase())
-              });
-            }
-          } else {
-            // For doctor/therapist, show the parent
-            if (b.parentId && b.parentName) {
-              contactMap.set(String(b.parentId), {
-                id: String(b.parentId),
-                name: b.parentName,
-                role: 'Parent'
-              });
-            }
+          // Add specialist if they are not the current user
+          if (b.specialistId && String(b.specialistId) !== myId && b.specialistName) {
+            contactMap.set(String(b.specialistId), {
+              id: String(b.specialistId),
+              name: b.specialistName,
+              role: String(b.specialistType || 'Specialist').replace(/^./, c => c.toUpperCase())
+            });
+          }
+          // Add parent if they are not the current user
+          if (b.parentId && String(b.parentId) !== myId && b.parentName) {
+            contactMap.set(String(b.parentId), {
+              id: String(b.parentId),
+              name: b.parentName,
+              role: 'Parent'
+            });
           }
         });
 

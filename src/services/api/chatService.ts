@@ -17,13 +17,14 @@ const mapMessage = (m: any): ChatMessage => ({
 
 export const chatServiceAPI = {
   startChat: async (contactId: string): Promise<ChatConversation> => {
-    const role = localStorage.getItem('role') || '';
-    const payload: Record<string, string | number> = {};
-    if (role === 'parent') {
-      payload.specialistId = isNaN(Number(contactId)) ? contactId : Number(contactId);
-    } else {
-      payload.parentId = isNaN(Number(contactId)) ? contactId : Number(contactId);
-    }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const parsedId = isNaN(Number(contactId)) ? contactId : Number(contactId);
+    const payload: Record<string, string | number> = {
+      contactId: parsedId,
+      participantId: parsedId,
+      specialistId: parsedId,
+      parentId: parsedId
+    };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response = await apiClient.post<any>('/chat/start', payload);
