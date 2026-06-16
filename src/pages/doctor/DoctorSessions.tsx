@@ -176,7 +176,11 @@ export const DoctorSessions = () => {
                       
                       {session.childId && (
                         <button
-                          onClick={() => navigate(`/${user?.role}/patients/${session.childId}`)}
+                          onClick={() => {
+                            if (session.childId) {
+                              navigate(`/patients/${session.childId}`);
+                            }
+                          }}
                           className="mt-2 text-sm font-semibold text-primary-600 hover:text-primary-700 underline cursor-pointer block text-left"
                         >
                           🔎 Review Child Profile & Screening Records
