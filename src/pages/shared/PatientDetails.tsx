@@ -234,21 +234,37 @@ export const PatientDetails = () => {
   };
 
   const handleDeletePlan = async () => {
-    if (!planToDelete?.id) return;
+    if (!planToDelete) return;
+    
+    // Attempt to find any valid ID on the object
+    const targetId = planToDelete.id || (planToDelete as any).treatmentPlanId || (planToDelete as any).treatmentId;
+    
+    console.log(`[PatientDetails] Executing delete for targetId:`, targetId, 'Full plan:', planToDelete);
+
+    if (!targetId) {
+      console.error('[PatientDetails] Cannot delete: No valid ID found on the treatment plan.');
+      return;
+    }
+
     setDeleteSaving(true);
     try {
-      // Connect to the correct delete endpoint
-      try {
-        await apiClient.delete(`/TreatmentPlan/DeleteTreatmentPlan?treatmentPlanId=${planToDelete.id}`);
-      } catch {
-        await treatmentPlansService.deletePlan(planToDelete.id);
-      }
+      // Connect to the correct delete endpoint and wait for it
+      await treatmentPlansService.deletePlan(targetId);
       
       // Remove it from Parent and Doctor immediately by refetching/updating local state
-      setPlans(prev => prev.filter(p => p.id !== planToDelete.id));
       setPlanToDelete(null);
-    } catch (err) {
-      console.error('Failed to delete plan:', err);
+      
+      // Refetch the plans from backend to ensure pure sync and no phantom cache
+      if (id) {
+        const freshPlans = await treatmentPlansService.getChildPlans(id);
+        setPlans(freshPlans);
+      } else {
+        setPlans(prev => prev.filter(p => p.id !== planToDelete.id));
+      }
+    } catch (err: any) {
+      console.error('[PatientDetails] Failed to delete plan:', err.response?.data || err);
+      // We purposefully DO NOT close the modal here so the user can see the button state revert 
+      // and we log the explicit server error for debugging.
     } finally {
       setDeleteSaving(false);
     }

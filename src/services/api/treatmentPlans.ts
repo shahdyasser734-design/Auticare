@@ -18,7 +18,8 @@ export interface CreateTreatmentPlanRequest {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const normalizeTreatmentPlan = (p: any): any => {
   if (!p) return p;
-  const idStr = String(p.treatmentId || p.id || '');
+  const idVal = p.treatmentPlanId || p.treatmentId || (p.id !== p.childId && p.id !== p.specialistId ? p.id : undefined) || p.id || '';
+  const idStr = String(idVal);
   
   let goalsArray: string[] = [];
   if (Array.isArray(p.goals)) {
@@ -158,12 +159,7 @@ export const treatmentPlansService = {
     if (user.role?.toLowerCase() !== 'doctor') {
       throw new Error('Access Denied: Only Doctor can delete Treatment Plans');
     }
-    // Also fallback to standard REST if needed, but per instructions we pass treatmentPlanId
-    try {
-      await apiClient.delete(`/TreatmentPlan/DeleteTreatmentPlan?treatmentPlanId=${id}`);
-    } catch {
-      await apiClient.delete(`/treatment-plans/${id}`);
-    }
+    await apiClient.delete(`/treatment-plans/${id}`);
   },
 
   getChildPlans: async (childId: string): Promise<TreatmentPlan[]> => {
