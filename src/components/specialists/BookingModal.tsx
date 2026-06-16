@@ -5,6 +5,8 @@ import { bookingService, type BookingRequest } from '../../services/api/bookings
 import type { Specialist } from '../../types';
 import { useAuth } from '../../context/useAuth';
 import { childrenService, dedupeChildren, type Child } from '../../services/api/children';
+import { FileUpload } from '../common/FileUpload';
+import { fileUploadService } from '../../services/api/fileUploadService';
 
 interface BookingModalProps {
   open: boolean;
@@ -22,6 +24,7 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [childrenList, setChildrenList] = useState<Child[]>(parentChildren);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -31,6 +34,7 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
       setTime('');
       setReason('');
       setError('');
+      setSelectedFile(null);
       // Fetch the most up-to-date children list so newly added children are visible
       childrenService.getMyChildren()
         .then((kids) => {
@@ -49,8 +53,8 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
       setError('Please select a date and time for the booking.');
       return;
     }
-    if (!reason.trim()) {
-      setError('Please enter a reason for the appointment.');
+    if (!reason.trim() && !selectedFile) {
+      setError('Please enter a reason for the appointment or attach a file.');
       return;
     }
     
@@ -79,6 +83,23 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
         return;
       }
 
+      let attachedFileUrl = '';
+      if (selectedFile) {
+        try {
+          const uploadRes = await fileUploadService.uploadFile(selectedFile, 'booking-document');
+          attachedFileUrl = uploadRes.url;
+        } catch (uploadErr) {
+          setError('File upload failed. Please try again.');
+          setSubmitting(false);
+          return;
+        }
+      }
+
+      let finalReason = reason.trim();
+      if (attachedFileUrl) {
+        finalReason = finalReason ? `${finalReason}\n\nAttached File: ${attachedFileUrl}` : `Attached File: ${attachedFileUrl}`;
+      }
+
       const payload: BookingRequest = {
         specialistId: typeof specialistIdValue === 'number' ? specialistIdValue : Number(specialistIdValue),
         childId: childId ? Number(childId) : undefined,
@@ -86,7 +107,7 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
         bookingTime: formattedTime,
         preferredDate: formattedDate,
         preferredTime: formattedTime,
-        reason: reason.trim() || undefined,
+        reason: finalReason || undefined,
       };
       console.log('BOOKING PAYLOAD', payload);
       await bookingService.createBooking(payload);
@@ -113,7 +134,7 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={submitting || !date || !time || !reason.trim() || !childId}>
+          <Button onClick={handleSubmit} disabled={submitting || !date || !time || (!reason.trim() && !selectedFile) || !childId}>
             {submitting ? 'Booking...' : 'Confirm Booking'}
           </Button>
         </div>
@@ -174,6 +195,19 @@ export const BookingModal = ({ open, specialist, onClose, onBooked }: BookingMod
             />
           </div>
         </div>
+
+        {specialist.type === 'therapist' && (
+          <div className="mt-4">
+            <FileUpload
+              label="Attach Document (Optional)"
+              description="Upload relevant documents such as previous assessments or progress reports."
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+              allowedFormats={['PDF', 'DOC', 'DOCX', 'JPG', 'JPEG', 'PNG']}
+              maxSize={10}
+              onFileSelect={setSelectedFile}
+            />
+          </div>
+        )}
 
         {!parentChildren.length && !childId && (
           <div className="rounded-2xl border border-red-300 bg-red-50 p-4 text-sm text-red-700 dark:border-red-700 dark:bg-red-900/20 dark:text-red-200">

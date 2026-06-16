@@ -1,4 +1,5 @@
 // UI-only modal; relies on the project's JSX runtime (no React symbol needed)
+import { FileUpload } from '../common/FileUpload';
 
 export const BookingModalUI = ({
   open,
@@ -12,6 +13,9 @@ export const BookingModalUI = ({
   onClose,
   onConfirm,
   submitting = false,
+  isTherapist = false,
+  selectedFile = null,
+  setSelectedFile,
 }: {
   open: boolean;
   specialistName?: string;
@@ -24,6 +28,9 @@ export const BookingModalUI = ({
   onClose: () => void;
   onConfirm: () => void;
   submitting?: boolean;
+  isTherapist?: boolean;
+  selectedFile?: File | null;
+  setSelectedFile?: (file: File | null) => void;
 }) => {
   if (!open) return null;
 
@@ -53,6 +60,19 @@ export const BookingModalUI = ({
             <label className="block text-sm text-slate-600">Reason</label>
             <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={4} className="mt-1 w-full p-2 border rounded-md" />
           </div>
+
+          {isTherapist && setSelectedFile && (
+            <div className="mt-2">
+              <FileUpload
+                label="Attach Document (Optional)"
+                description="Upload relevant documents such as previous assessments or progress reports."
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                allowedFormats={['PDF', 'DOC', 'DOCX', 'JPG', 'JPEG', 'PNG']}
+                maxSize={10}
+                onFileSelect={setSelectedFile}
+              />
+            </div>
+          )}
         </div>
 
         <div className="mt-6 flex justify-end gap-3">

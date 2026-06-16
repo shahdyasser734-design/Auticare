@@ -188,7 +188,7 @@ export const PatientCarousel: React.FC<PatientCarouselProps> = ({ patients, isDo
               )}
 
               {/* Treatment Plan Status */}
-              {patient.treatmentPlan && (
+              {isDoctor && patient.treatmentPlan && (
                 <div className="space-y-2">
                   <p className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Treatment Plan</p>
                   <div className="space-y-2">

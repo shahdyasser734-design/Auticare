@@ -52,7 +52,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       if (user.role === 'doctor') {
         list = rawList.filter(n => ['treatment-plan', 'message', 'notes', 'system', 'session'].includes(n.type));
       } else if (user.role === 'therapist') {
-        list = rawList.filter(n => ['session', 'treatment-plan', 'message', 'notes', 'system'].includes(n.type));
+        list = rawList.filter(n => ['session', 'message', 'notes', 'system'].includes(n.type));
       } else if (user.role === 'parent') {
         list = rawList.filter(n => ['booking', 'treatment-plan', 'message', 'notes', 'system', 'screening', 'session', 'reminder'].includes(n.type));
       }

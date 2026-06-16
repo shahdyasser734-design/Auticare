@@ -141,7 +141,7 @@ export const PatientDetails = () => {
         const [resultsRaw, notesRaw, plansRaw] = await Promise.all([
           screeningService.getResults(id).catch(() => []),
           notesService.getChildNotes(id).catch(() => []),
-          treatmentPlansService.getChildPlans(id).catch(() => [] as TreatmentPlan[]),
+          isTherapist ? Promise.resolve([]) : treatmentPlansService.getChildPlans(id).catch(() => [] as TreatmentPlan[]),
         ]);
 
         // ── 4. Filter bookings to this specific child (sessions) ───────────────
@@ -412,6 +412,7 @@ export const PatientDetails = () => {
           </div>
 
           {/* Treatment Plan */}
+          {!isTherapist && (
           <div className="standard-card p-5 rounded-2xl space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -492,6 +493,7 @@ export const PatientDetails = () => {
               </div>
             )}
           </div>
+          )}
 
           {/* Session Notes */}
           <div className="standard-card p-5 rounded-2xl space-y-4">

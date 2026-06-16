@@ -16,6 +16,8 @@ import { fileUploadService } from '../../services/api/fileUploadService';
 import { childrenService } from '../../services/api/children';
 import { User, FileText, BarChart3, ArrowLeft, Loader2, Sparkles, Save, Download, Trash2 } from 'lucide-react';
 import jsPDF from 'jspdf';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
 import type { Child, TreatmentPlan as TreatmentPlanType, Specialist } from '../../types';
 import apiClient from '../../services/apiClient';
 
@@ -160,103 +162,37 @@ export const TreatmentPlan = () => {
   }, [childId]);
   /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 
-  const handleExportPdf = () => {
-    if (!plan) return;
+  const handleExportPdf = async () => {
+    if (!plan || !pdfContentRef.current) return;
     setExporting(true);
     try {
-      const doc = new jsPDF();
-      const margin = 20;
-      let y = margin;
-
-      doc.setFontSize(22);
-      doc.setTextColor(30, 64, 175); // Primary color
-      doc.text('Treatment Plan Report', margin, y);
-      y += 12;
-
-      doc.setFontSize(11);
-      doc.setTextColor(100, 116, 139); // Slate-500
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, margin, y);
-      y += 15;
-
-      doc.setDrawColor(226, 232, 240); // Slate-200
-      doc.line(margin, y - 5, 210 - margin, y - 5);
-
-      doc.setFontSize(14);
-      doc.setTextColor(15, 23, 42); // Slate-900
-      doc.setFont('helvetica', 'bold');
-      doc.text('Patient & Provider Details', margin, y);
-      y += 8;
-
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(71, 85, 105);
+      const element = pdfContentRef.current;
       
-      const safeText = (val: any) => val || 'No data available';
+      const pdfHeader = document.getElementById('pdf-header');
+      const pdfTitle = document.getElementById('pdf-title');
+      const elementsToHide = document.querySelectorAll('[data-pdf-hide]');
+      
+      if (pdfHeader) pdfHeader.style.display = 'block';
+      if (pdfTitle) pdfTitle.style.display = 'flex';
+      elementsToHide.forEach(el => (el as HTMLElement).style.display = 'none');
 
-      doc.text(`Patient Name: ${safeText(child?.name)}`, margin, y);
-      y += 6;
-      doc.text(`Age: ${safeText(child?.age)} | Gender: ${safeText(child?.gender)}`, margin, y);
-      y += 6;
-      doc.text(`Status: ${safeText(plan.status?.toUpperCase())} | Progress: ${safeText(plan.progress)}`, margin, y);
-      y += 6;
-      doc.text(`Start Date: ${plan.startDate ? new Date(plan.startDate).toLocaleDateString() : 'No data available'} | End Date: ${plan.endDate ? new Date(plan.endDate).toLocaleDateString() : 'Continuous'}`, margin, y);
-      y += 6;
-      doc.text(`Authoring Doctor: ${safeText(specialist?.name)}`, margin, y);
-      y += 6;
-      const therapists = (child?.assignedTherapists && child.assignedTherapists.length > 0) ? child.assignedTherapists.join(', ') : 'No data available';
-      doc.text(`Assigned Therapist(s): ${therapists}`, margin, y);
-      y += 10;
+      const isDarkMode = document.documentElement.classList.contains('dark');
+      const bgColor = isDarkMode ? '#0f172a' : '#ffffff';
 
-      doc.setDrawColor(226, 232, 240);
-      doc.line(margin, y - 5, 210 - margin, y - 5);
-
-      const addSection = (title: string, content: string) => {
-        if (y > 270) {
-          doc.addPage();
-          y = margin;
-        }
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(15, 23, 42);
-        doc.text(title, margin, y);
-        y += 8;
-
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(71, 85, 105);
-        
-        const textLines = doc.splitTextToSize(safeText(content), 170);
-        
-        // check if text lines fit
-        if (y + (textLines.length * 6) > 280) {
-          doc.addPage();
-          y = margin;
-          doc.text(textLines, margin, y);
-        } else {
-          doc.text(textLines, margin, y);
-        }
-        
-        y += (textLines.length * 6) + 10;
+      const opt = {
+        margin:       [10, 10, 10, 10],
+        filename:     `treatment-plan-${child?.name?.toLowerCase().replace(/\s+/g, '-') || 'patient'}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, backgroundColor: bgColor },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
-      let parsedGoals: any = {};
-      let parsedNotes: any = {};
-      try { parsedGoals = JSON.parse(plan.goal || '{}'); } catch {}
-      try { parsedNotes = JSON.parse(plan.notes || '{}'); } catch {}
+      await html2pdf().set(opt).from(element).save();
 
-      addSection('Clinical Assessment', parsedNotes.clinicalAssessment);
-      addSection('Diagnosis Summary', parsedNotes.diagnosisSummary);
-      addSection('Progress Tracking', parsedNotes.progressTracking);
-      addSection('SMART Goals', parsedGoals.smartGoals);
-      addSection('Intervention Plan', parsedGoals.interventionPlan);
-      addSection('General Notes', parsedNotes.generalNotes || plan.notes);
+      if (pdfHeader) pdfHeader.style.display = 'none';
+      if (pdfTitle) pdfTitle.style.display = 'none';
+      elementsToHide.forEach(el => (el as HTMLElement).style.display = '');
 
-      const dateStr = new Date().toISOString().split('T')[0];
-      const childNameSlug = child?.name?.toLowerCase().replace(/\s+/g, '-') || 'patient';
-      const childIdSlug = child?.id || 'unknown';
-      const filename = `treatment-plan-${childNameSlug}-${childIdSlug}-${dateStr}.pdf`;
-      
-      doc.save(filename);
     } catch (err) {
       console.error('PDF export failed:', err);
     } finally {
@@ -815,7 +751,7 @@ export const TreatmentPlan = () => {
                     </h2>
                     <div className="space-y-6">
                       <TreatmentPlanDescription plan={plan} fallbackText="No data available" />
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4 border-t border-slate-200 dark:border-white/10">
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 pt-4 border-t border-slate-200 dark:border-white/10">
                         <div>
                           <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Progress</p>
                           <div className="capitalize inline-block">
@@ -829,6 +765,14 @@ export const TreatmentPlan = () => {
                         <div>
                           <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">End Date</p>
                           <p className="font-semibold text-slate-800 dark:text-slate-200">{plan.endDate ? new Date(plan.endDate).toLocaleDateString() : 'Continuous'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Created Date</p>
+                          <p className="font-semibold text-slate-800 dark:text-slate-200">{plan.createdAt ? new Date(plan.createdAt).toLocaleDateString() : 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Last Updated</p>
+                          <p className="font-semibold text-slate-800 dark:text-slate-200">{plan.updatedAt ? new Date(plan.updatedAt).toLocaleDateString() : 'N/A'}</p>
                         </div>
                       </div>
                     </div>

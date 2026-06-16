@@ -7,6 +7,7 @@ import { specialistsService } from '../../services/api/specialists';
 import type { Specialist as ApiSpecialist } from '../../services/api/specialists';
 import { bookingService, type BookingRequest } from '../../services/api/bookings';
 import { useBookings } from '../../context/BookingsContext';
+import { fileUploadService } from '../../services/api/fileUploadService';
 
 const mockSpecialists: Specialist[] = [
   // DOCTORS
@@ -110,6 +111,7 @@ const OurSpecialists = () => {
   const [bookingDate, setBookingDate] = useState('');
   const [bookingTime, setBookingTime] = useState('');
   const [bookingReason, setBookingReason] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const [specialists, setSpecialists] = useState<Specialist[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -198,12 +200,30 @@ const OurSpecialists = () => {
           ? (bookingTime.length === 5 ? `${bookingTime}:00` : bookingTime) 
           : '00:00:00';
 
+        // Handle file upload if present
+        let attachedFileUrl = '';
+        if (selectedFile) {
+          try {
+            const uploadRes = await fileUploadService.uploadFile(selectedFile, 'booking-document');
+            attachedFileUrl = uploadRes.url;
+          } catch (uploadErr) {
+            setApiError('File upload failed. Please try again.');
+            setSubmitting(false);
+            return;
+          }
+        }
+
+        let finalReason = bookingReason ? bookingReason.trim() : '';
+        if (attachedFileUrl) {
+          finalReason = finalReason ? `${finalReason}\n\nAttached File: ${attachedFileUrl}` : `Attached File: ${attachedFileUrl}`;
+        }
+
         const payload: BookingRequest = {
           specialistId: typeof selected.id === 'number' ? selected.id : Number(selected.id),
           childId: childId ? Number(childId) : undefined,
           bookingDate: formattedDate,
           bookingTime: formattedTime,
-          reason: bookingReason || undefined,
+          reason: finalReason || undefined,
         };
         
         console.log(`[BOOKING] Creating booking for specialist: ${selected.name} (ID: ${selected.id}, Type: ${selected.type})`);
@@ -222,6 +242,7 @@ const OurSpecialists = () => {
         setBookingDate('');
         setBookingTime('');
         setBookingReason('');
+        setSelectedFile(null);
         const specName = selected.name || 'Specialist';
         const isTherapist = selected.type === 'therapist';
         const formattedName = isTherapist
@@ -321,6 +342,9 @@ const OurSpecialists = () => {
         onClose={() => setOpen(false)}
         onConfirm={confirmBookingUI}
         submitting={submitting}
+        isTherapist={selected?.type === 'therapist'}
+        selectedFile={selectedFile}
+        setSelectedFile={setSelectedFile}
       />
     </div>
   );
