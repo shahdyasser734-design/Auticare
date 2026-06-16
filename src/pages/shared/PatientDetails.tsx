@@ -220,6 +220,7 @@ export const PatientDetails = () => {
         senderRole: user?.role,
         receiverRole,
         receiverId: actualReceiverId !== receiverRole ? actualReceiverId : undefined, // Only pass if we actually resolved an ID
+        senderName: user?.name
       });
       setNotes(prev => [added, ...prev]);
       setNewNote('');

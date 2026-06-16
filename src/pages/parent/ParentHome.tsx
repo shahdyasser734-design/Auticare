@@ -70,7 +70,16 @@ export const ParentHome = () => {
         finalPlanList = finalPlanList.filter(p => String(p.childId) === String(activeChildId));
         finalUpcoming = finalUpcoming.filter(s => String(s.childId) === String(activeChildId));
         fetchedNotes = await notesService.getChildNotes(activeChildId).catch(() => []);
+      } else if (childList.length > 0) {
+        // Fetch notes for all children if no active child is selected
+        const allNotesArrs = await Promise.all(childList.map(c => notesService.getChildNotes(c.id).catch(() => [])));
+        fetchedNotes = allNotesArrs.flat();
       }
+
+      // Deduplicate notes by ID and sort newest first
+      const uniqueNotesMap = new Map<string, Note>();
+      fetchedNotes.forEach(note => uniqueNotesMap.set(note.id, note));
+      fetchedNotes = Array.from(uniqueNotesMap.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
       const uniqueChildren = dedupeChildren(childList);
       setChildren(uniqueChildren);
@@ -582,24 +591,37 @@ export const ParentHome = () => {
               <div className="space-y-3">
                 {notes.length === 0 ? (
                   <div className="text-center py-6">
-                    <p className="text-stone-400 dark:text-slate-500 text-xs font-medium">No specialist notes yet.</p>
+                    <p className="text-stone-400 dark:text-slate-500 text-xs font-medium">No notes or guidelines yet.</p>
                   </div>
                 ) : (
-                  notes.slice(0, 3).map((note) => (
-                    <div
-                      key={note.id}
-                      className="p-3.5 bg-stone-50 dark:bg-slate-900/50 rounded-xl border border-stone-100 dark:border-white/5 text-xs"
-                    >
-                      <p className="font-bold text-stone-900 dark:text-white mb-1.5 flex items-center gap-1.5">
-                        <BookOpen size={11} className="text-violet-400" />
-                        {note.title || 'Session Note'}
-                      </p>
-                      <p className="text-stone-600 dark:text-slate-300 leading-relaxed line-clamp-2 italic">"{note.content}"</p>
-                      <p className="text-[10px] text-stone-400 dark:text-slate-500 text-right mt-2 font-medium">
-                        {new Date(note.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                      </p>
-                    </div>
-                  ))
+                  notes.slice(0, 3).map((note) => {
+                    const relativeTime = (() => {
+                      const diff = Date.now() - new Date(note.createdAt).getTime();
+                      const minutes = Math.floor(diff / 60000);
+                      const hours = Math.floor(minutes / 60);
+                      const days = Math.floor(hours / 24);
+                      if (minutes < 1) return 'Just now';
+                      if (minutes < 60) return `${minutes} minutes ago`;
+                      if (hours < 24) return `${hours} hours ago`;
+                      return `${days} days ago`;
+                    })();
+
+                    return (
+                      <div
+                        key={note.id}
+                        className="p-3.5 bg-stone-50 dark:bg-slate-900/50 rounded-xl border border-stone-100 dark:border-white/5 text-xs"
+                      >
+                        <p className="font-bold text-stone-900 dark:text-white mb-1.5 flex items-center gap-1.5">
+                          <BookOpen size={11} className="text-violet-400" />
+                          {note.senderName || 'Specialist'} {note.senderRole ? `— ${note.senderRole.charAt(0).toUpperCase() + note.senderRole.slice(1)}` : '— Specialist'}
+                        </p>
+                        <p className="text-stone-600 dark:text-slate-300 leading-relaxed italic">"{note.content}"</p>
+                        <p className="text-[10px] text-stone-400 dark:text-slate-500 text-right mt-2 font-medium">
+                          {relativeTime}
+                        </p>
+                      </div>
+                    );
+                  })
                 )}
               </div>
             </Card>

@@ -13,6 +13,7 @@ export interface Note {
   senderRole?: string;
   receiverRole?: string;
   receiverId?: string;
+  senderName?: string;
 }
 
 export interface CreateNoteRequest {
@@ -23,6 +24,7 @@ export interface CreateNoteRequest {
   senderRole?: string;
   receiverRole?: string;
   receiverId?: string;
+  senderName?: string;
 }
 
 export const notesService = {

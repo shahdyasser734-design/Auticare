@@ -99,7 +99,8 @@ export const PatientDetail = () => {
         content: newNote,
         childId: id,
         senderRole: user?.role,
-        receiverRole: selectedReceiverRole
+        receiverRole: selectedReceiverRole,
+        senderName: user?.name
       });
       setNotes([addedNote, ...notes]);
       setNewNote('');
