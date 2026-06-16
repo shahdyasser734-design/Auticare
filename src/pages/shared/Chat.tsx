@@ -136,21 +136,29 @@ export const Chat = () => {
           const status = (b.status || '').toLowerCase();
           if (status === 'pending' || status === 'rejected') return;
 
+          const currName = String(user?.name || '').toLowerCase().trim();
+
           // Add specialist if they are not the current user
           if (b.specialistId && String(b.specialistId) !== myId && b.specialistName) {
-            contactMap.set(String(b.specialistId), {
-              id: String(b.specialistId),
-              name: b.specialistName,
-              role: String(b.specialistType || 'Specialist').replace(/^./, c => c.toUpperCase())
-            });
+            const specName = String(b.specialistName).toLowerCase().trim();
+            if (!currName || !specName.includes(currName)) {
+              contactMap.set(String(b.specialistId), {
+                id: String(b.specialistId),
+                name: b.specialistName,
+                role: String(b.specialistType || 'Specialist').replace(/^./, c => c.toUpperCase())
+              });
+            }
           }
           // Add parent if they are not the current user
           if (b.parentId && String(b.parentId) !== myId && b.parentName) {
-            contactMap.set(String(b.parentId), {
-              id: String(b.parentId),
-              name: b.parentName,
-              role: 'Parent'
-            });
+            const parName = String(b.parentName).toLowerCase().trim();
+            if (!currName || !parName.includes(currName)) {
+              contactMap.set(String(b.parentId), {
+                id: String(b.parentId),
+                name: b.parentName,
+                role: 'Parent'
+              });
+            }
           }
         });
 
@@ -203,12 +211,21 @@ export const Chat = () => {
       const currentUserRole = user?.role?.toLowerCase() || '';
       data = data.filter(chat => {
         let others = getOtherParticipants(chat, myId);
+        const currName = String(user?.name || '').toLowerCase().trim();
         // Strictly filter out self-chat by id, name, and email matching the current logged-in user
-        others = others.filter(o => 
-          String(o.id) !== myId &&
-          (!user?.name || o.name?.toLowerCase() !== user.name.toLowerCase()) &&
-          (!user?.email || o.id?.toLowerCase() !== user.email.toLowerCase()) // Email is not in ParticipantInfo, but prevent any loose matching just in case
-        );
+        others = others.filter(o => {
+          if (String(o.id) === myId) return false;
+          if (user?.email && o.id?.toLowerCase() === user.email.toLowerCase()) return false;
+          
+          if (currName && o.name) {
+            const cleanName = o.name.toLowerCase()
+              .replace(/ \((therapist|parent)\)$/, '')
+              .replace(/^dr\. /, '')
+              .trim();
+            if (cleanName === currName || cleanName.includes(currName) || currName.includes(cleanName)) return false;
+          }
+          return true;
+        });
 
         // Prevent self-chat or empty chat
         if (others.length === 0) return false;

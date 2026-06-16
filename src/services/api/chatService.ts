@@ -56,10 +56,13 @@ export const chatServiceAPI = {
 
   getMyChats: async (): Promise<ChatConversation[]> => {
     let myId = '';
+    let myName = '';
     try {
       const userStr = localStorage.getItem('user');
       if (userStr) {
-        myId = String(JSON.parse(userStr).id);
+        const u = JSON.parse(userStr);
+        myId = String(u.id);
+        myName = String(u.name || '').toLowerCase().trim();
       }
     } catch { /* ignore */ }
 
@@ -73,16 +76,25 @@ export const chatServiceAPI = {
       const pNames: Record<string, string> = {};
 
       if (r.specialistId && String(r.specialistId) !== myId) {
-        pIds.push(String(r.specialistId));
-        if (r.specialistName) pNames[String(r.specialistId)] = String(r.specialistName);
+        const sName = String(r.specialistName || '').toLowerCase().trim();
+        if (!myName || (!sName.includes(myName) && !myName.includes(sName))) {
+          pIds.push(String(r.specialistId));
+          if (r.specialistName) pNames[String(r.specialistId)] = String(r.specialistName);
+        }
       }
       if (r.parentId && String(r.parentId) !== myId) {
-        pIds.push(String(r.parentId));
-        if (r.parentName || r.patientName) pNames[String(r.parentId)] = String(r.parentName || r.patientName);
+        const pName = String(r.parentName || r.patientName || '').toLowerCase().trim();
+        if (!myName || (!pName.includes(myName) && !myName.includes(pName))) {
+          pIds.push(String(r.parentId));
+          if (r.parentName || r.patientName) pNames[String(r.parentId)] = String(r.parentName || r.patientName);
+        }
       }
       if (r.contactId && String(r.contactId) !== myId) {
-        pIds.push(String(r.contactId));
-        if (r.contactName) pNames[String(r.contactId)] = String(r.contactName);
+        const cName = String(r.contactName || '').toLowerCase().trim();
+        if (!myName || (!cName.includes(myName) && !myName.includes(cName))) {
+          pIds.push(String(r.contactId));
+          if (r.contactName) pNames[String(r.contactId)] = String(r.contactName);
+        }
       }
 
       return {
