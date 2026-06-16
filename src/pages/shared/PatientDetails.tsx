@@ -78,8 +78,8 @@ export const PatientDetails = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const isDoctor    = user?.role === 'doctor';
-  const isTherapist = user?.role === 'therapist';
+  const isDoctor    = user?.role?.toLowerCase() === 'doctor';
+  const isTherapist = user?.role?.toLowerCase() === 'therapist';
 
   // ── state ──
   const [patient,          setPatient]          = useState<Child | null>(null);

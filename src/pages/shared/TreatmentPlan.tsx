@@ -24,8 +24,8 @@ export const TreatmentPlan = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const isDoctor    = user?.role === 'doctor';
-  const isParent    = user?.role === 'parent';
+  const isDoctor    = user?.role?.toLowerCase() === 'doctor';
+  const isParent    = user?.role?.toLowerCase() === 'parent';
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -245,8 +245,8 @@ export const TreatmentPlan = () => {
         setSpecialist({
           id: user.id,
           name: user.name,
-          type: user.role === 'doctor' ? 'doctor' : 'therapist',
-          specialization: user.role === 'doctor' ? 'Pediatric Neurologist' : 'Clinical Therapist',
+          type: user.role?.toLowerCase() === 'doctor' ? 'doctor' : 'therapist',
+          specialization: user.role?.toLowerCase() === 'doctor' ? 'Pediatric Neurologist' : 'Clinical Therapist',
           yearsOfExperience: 8,
           rating: 4.9,
           reviewCount: 150,

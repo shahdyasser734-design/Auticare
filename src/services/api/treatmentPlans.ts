@@ -60,7 +60,7 @@ export const normalizeTreatmentPlan = (p: any): any => {
 export const treatmentPlansService = {
   createPlan: async (data: CreateTreatmentPlanRequest): Promise<TreatmentPlan> => {
     const user = await authService.getCurrentUser();
-    if (user.role !== 'doctor') {
+    if (user.role?.toLowerCase() !== 'doctor') {
       throw new Error('Access Denied: Only Doctor can modify Treatment Plans');
     }
 
@@ -115,7 +115,7 @@ export const treatmentPlansService = {
 
   updatePlan: async (id: string, data: Partial<CreateTreatmentPlanRequest>): Promise<TreatmentPlan> => {
     const user = await authService.getCurrentUser();
-    if (user.role !== 'doctor') {
+    if (user.role?.toLowerCase() !== 'doctor') {
       throw new Error('Access Denied: Only Doctor can modify Treatment Plans');
     }
 
@@ -161,7 +161,7 @@ export const treatmentPlansService = {
       plans = plans.filter(p => {
         const hasAccess = p.visibleTo?.includes(String(user.id)) || p.doctorId === String(user.id);
         if (!hasAccess) return false;
-        if (user.role === 'doctor') return true;
+        if (user.role?.toLowerCase() === 'doctor') return true;
         return p.status === 'PUBLISHED';
       });
       if (plans.length > 0) return plans;
@@ -211,7 +211,7 @@ export const treatmentPlansService = {
           return deduplicated.filter(p => {
             const hasAccess = p.visibleTo?.includes(String(user.id)) || p.doctorId === String(user.id);
             if (!hasAccess) return false;
-            if (user.role === 'doctor') return true;
+            if (user.role?.toLowerCase() === 'doctor') return true;
             return p.status === 'PUBLISHED';
           });
         } catch {
@@ -227,7 +227,7 @@ export const treatmentPlansService = {
       return myPlans.filter(p => {
         const hasAccess = p.visibleTo?.includes(String(user.id)) || p.doctorId === String(user.id);
         if (!hasAccess) return false;
-        if (user.role === 'doctor') return true;
+        if (user.role?.toLowerCase() === 'doctor') return true;
         return p.status === 'PUBLISHED';
       });
     } catch {
