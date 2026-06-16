@@ -9,7 +9,10 @@ import { useAuth } from '../../context/useAuth';
 import { MessageSquare, Send, Loader2, RefreshCw, ChevronLeft, Phone, Video, Paperclip, Mic, Smile, X, Download, Reply, Image as ImageIcon, File as FileIcon } from 'lucide-react';
 import { useNotification } from '../../context/NotificationContext';
 import { localMediaManager, blobToBase64 } from '../../services/api/localMediaManager';
-import { localNotificationManager } from '../../services/api/localNotificationManager';// ─── Types ────────────────────────────────────────────────────────────────────
+import { localNotificationManager } from '../../services/api/localNotificationManager';
+import { AttachmentViewer } from '../../components/common/AttachmentViewer';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 /** Participant info derived from a chat object */
 interface ParticipantInfo {
@@ -799,10 +802,10 @@ export const Chat = () => {
                                   </a>
                                   {msg.content && <span>{msg.content}</span>}
                                 </div>
-                            ) : (
-                              <span>{msg.content}</span>
-                            )}
-                          </div>
+                              ) : (
+                                <AttachmentViewer content={msg.content} />
+                              )}
+                            </div>
                           
                           {msg.reactions && Object.keys(msg.reactions).length > 0 && (
                             <div className={`absolute -bottom-2 ${isOwn ? 'right-4' : 'left-4'} bg-white dark:bg-slate-700 rounded-full px-1.5 py-0.5 text-xs shadow border border-slate-100 dark:border-slate-600 flex gap-1 z-10`}>
