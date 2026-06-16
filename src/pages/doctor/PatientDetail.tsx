@@ -228,7 +228,7 @@ export const PatientDetail = () => {
                     <div>
                       <p className="font-bold text-slate-900 dark:text-white break-words">{p.title || 'Development and Clinical Treatment Plan'}</p>
                       <div className="mt-2">
-                        <TreatmentPlanDescription text={p.description} fallbackText="Comprehensive multi-disciplinary intervention plan." />
+                        <TreatmentPlanDescription plan={p} fallbackText="Comprehensive multi-disciplinary intervention plan." />
                       </div>
                     </div>
                     <div className="flex justify-between items-center mt-2 text-xs border-t border-primary-100/50 dark:border-white/5 pt-3">

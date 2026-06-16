@@ -500,7 +500,7 @@ export const ParentHome = () => {
                           <Badge variant="success">{p.status}</Badge>
                         </div>
                         <div className="mt-2">
-                          <TreatmentPlanDescription text={p.description} />
+                          <TreatmentPlanDescription plan={p} />
                         </div>
                       </div>
                       <Button

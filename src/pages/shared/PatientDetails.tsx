@@ -470,23 +470,9 @@ export const PatientDetails = () => {
                     </p>
                     <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                       <TreatmentPlanDescription
-                        text={p.description}
-                        fallbackText="Comprehensive multi-disciplinary intervention plan."
+                        plan={p}
                       />
                     </div>
-                    {/* Goals */}
-                    {p.goals && p.goals.length > 0 && (
-                      <ul className="mt-2 space-y-1">
-                        {p.goals.slice(0, 3).map((g, gi) => (
-                          <li key={gi} className="text-xs text-slate-600 dark:text-slate-400 flex items-start gap-1.5">
-                            <span className="text-emerald-500 mt-0.5">•</span>{g}
-                          </li>
-                        ))}
-                        {p.goals.length > 3 && (
-                          <li className="text-xs text-slate-400">+{p.goals.length - 3} more goals…</li>
-                        )}
-                      </ul>
-                    )}
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-emerald-100 dark:border-emerald-800/20 text-xs">
                       <span className="text-slate-500 dark:text-slate-400">
                         Status: <span className="font-bold capitalize text-emerald-700 dark:text-emerald-300">{p.status || 'active'}</span>

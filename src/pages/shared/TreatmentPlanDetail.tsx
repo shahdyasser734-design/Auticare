@@ -128,7 +128,7 @@ export const TreatmentPlanDetail = () => {
         <div className="space-y-1">
           <h1 className="text-3xl font-black text-stone-900 dark:text-white tracking-tight">{plan.title}</h1>
           <div className="mt-4">
-            <TreatmentPlanDescription text={plan.description} />
+            <TreatmentPlanDescription plan={plan} />
           </div>
         </div>
 
@@ -215,7 +215,7 @@ export const TreatmentPlanDetail = () => {
                 <p className="text-stone-400 text-sm">No goals defined yet.</p>
               ) : (
                 <ul className="space-y-2.5">
-                  {plan.goals?.map((goal, idx) => (
+                  {plan.goals?.filter(g => !g.trim().startsWith('{')).map((goal, idx) => (
                     <li key={idx} className="flex items-start gap-2.5 text-sm">
                       <CheckCircle className="h-4 w-4 text-emerald-500 mt-0.5 flex-shrink-0" />
                       <span className="text-stone-700 dark:text-slate-300 font-medium">{goal}</span>
