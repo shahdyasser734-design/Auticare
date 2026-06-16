@@ -25,6 +25,11 @@ export default defineConfig({
         secure: false,
         rewrite: (path) => path,
       },
+      '/uploads': {
+        target: 'https://auticare-production-828c.up.railway.app',
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 })

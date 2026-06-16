@@ -11,13 +11,41 @@ export const getFullFileUrl = (path: string) => {
   return `${baseUrl.replace(/\/$/, '')}${path.startsWith('/') ? '' : '/'}${path}`;
 };
 
-export const forceDownload = (url: string, filename: string) => {
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename || 'download';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+export const forceDownload = async (url: string, filename: string) => {
+  try {
+    // Attempt to bypass CORS locally by stripping the backend host if present,
+    // so the request goes through the local Vite proxy.
+    let fetchUrl = url;
+    if (url.startsWith('https://auticare-production-828c.up.railway.app/uploads')) {
+      fetchUrl = url.replace('https://auticare-production-828c.up.railway.app', '');
+    }
+
+    const response = await fetch(fetchUrl);
+    if (!response.ok) throw new Error('Network response was not ok');
+    
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename || 'download';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
+  } catch (error) {
+    console.error('Blob download failed, attempting native anchor download', error);
+    // Fallback: Use standard anchor tag download
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename || 'download';
+    // We intentionally do NOT use target="_blank" here, as the user strictly 
+    // requested we do not open a new tab/preview for downloads.
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 };
 
 interface AttachmentViewerProps {
