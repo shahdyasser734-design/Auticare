@@ -710,7 +710,7 @@ export const DoctorHome = () => {
                           {!isDoctor && !!(c as Record<string, unknown>).assignedDoctor && (c as Record<string, unknown>).assignedDoctor !== 'No Doctor Assigned' && (c as Record<string, unknown>).assignedDoctor !== 'Unknown' && (
                             <p className="text-blue-500 text-[11px] mt-0.5 font-medium">👨‍⚕️ {(c as Record<string, unknown>).assignedDoctor as string}</p>
                           )}
-                          {(c as Record<string, unknown>).status && (c as Record<string, unknown>).status !== 'Unknown' && (
+                          {!!(c as Record<string, unknown>).status && (c as Record<string, unknown>).status !== 'Unknown' && (
                             <span className={`inline-block mt-1.5 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
                               (c as Record<string, unknown>).status === 'active'
                                 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
