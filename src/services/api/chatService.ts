@@ -87,12 +87,42 @@ export const chatServiceAPI = {
   sendMessage: async (
     chatId: string,
     content: string,
-    messageType: 'text' | 'file' | 'audio' | 'call' = 'text'
+    messageType: 'text' | 'file' | 'audio' | 'call' | 'image' | 'voice' = 'text',
+    replyToMessageId?: string
   ): Promise<ChatMessage> => {
     const response = await apiClient.post<Record<string, unknown>>('/chat/send', {
       chatId: isNaN(Number(chatId)) ? chatId : Number(chatId),
       content,
       messageType,
+      replyToMessageId,
+    });
+    return mapMessage(response.data?.data || response.data);
+  },
+
+  sendMediaMessage: async (
+    chatId: string,
+    type: 'file' | 'image' | 'voice',
+    blob: Blob,
+    fileName?: string,
+    duration?: number
+  ): Promise<ChatMessage> => {
+    const formData = new FormData();
+    formData.append('chatId', String(isNaN(Number(chatId)) ? chatId : Number(chatId)));
+    formData.append('type', type);
+    
+    if (type === 'voice') {
+      formData.append('audio', blob, fileName || 'voice-message.wav');
+      if (duration) formData.append('duration', String(duration));
+    } else if (type === 'image') {
+      formData.append('image', blob, fileName || 'image.png');
+    } else {
+      formData.append('file', blob, fileName || 'attachment.bin');
+    }
+
+    const response = await apiClient.post<Record<string, unknown>>('/chat/send', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
     return mapMessage(response.data?.data || response.data);
   },

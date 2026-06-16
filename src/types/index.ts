@@ -293,10 +293,17 @@ export interface ChatMessage {
   senderName: string;
   senderRole: 'parent' | 'doctor' | 'therapist';
   content: string;
-  messageType: 'text' | 'zoom-link' | 'file' | 'audio' | 'call';
+  messageType: 'text' | 'zoom-link' | 'file' | 'audio' | 'call' | 'image' | 'voice';
   zoomLink?: string;
   fileAttachment?: Attachment;
   audioUrl?: string;
+  imageUrl?: string;
+  fileUrl?: string;
+  fileName?: string;
+  fileSize?: number;
+  duration?: number;
+  replyToMessageId?: string;
+  replyTo?: ChatMessage;
   reactions?: Record<string, string>; // e.g. { 'userId': '👍' }
   timestamp: string;
   isRead: boolean;

@@ -6,7 +6,7 @@ import { Avatar } from '../../components/common/Avatar';
 import { chatServiceAPI, type ChatConversation, type ChatMessage } from '../../services/api/chatService';
 import { bookingService } from '../../services/api/bookings';
 import { useAuth } from '../../context/useAuth';
-import { MessageSquare, Send, Loader2, RefreshCw, ChevronLeft, Phone, Video, Paperclip, Mic, Smile } from 'lucide-react';
+import { MessageSquare, Send, Loader2, RefreshCw, ChevronLeft, Phone, Video, Paperclip, Mic, Smile, X, Download, Reply, Image as ImageIcon, File as FileIcon } from 'lucide-react';
 import { useNotification } from '../../context/NotificationContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -103,6 +103,20 @@ export const Chat = () => {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef       = useRef<HTMLInputElement>(null);
+  const fileInputRef   = useRef<HTMLInputElement>(null);
+  const imageInputRef  = useRef<HTMLInputElement>(null);
+
+  // Feature states
+  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
+  const [imagePreview, setImagePreview] = useState<{ blob: Blob, url: string } | null>(null);
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+
+  // Voice recording states
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<BlobPart[]>([]);
+  const recordingTimerRef = useRef<number | null>(null);
 
   // ─── Fetch conversations ─────────────────────────────────────────────────
 
@@ -300,7 +314,7 @@ export const Chat = () => {
     const content = newMessage.trim();
 
     // Guard: need content AND a selected chat
-    if (!content) { setSendError('Please type a message first.'); return; }
+    if (!content && !fileToUpload && !imagePreview) { setSendError('Please type a message or attach a file first.'); return; }
     if (!selected?.id) { setSendError('No conversation selected.'); return; }
 
     console.log('[Chat] Sending message:', { chatId: selected.id, content });
@@ -322,8 +336,19 @@ export const Chat = () => {
         void fetchConversations();
       }
 
-      const result = await chatServiceAPI.sendMessage(activeChatId, content, 'text');
-      console.log('[Chat] Send success:', result);
+      if (fileToUpload) {
+        // Handle file/image upload
+        const type = fileToUpload.type.startsWith('image/') ? 'image' : 'file';
+        const result = await chatServiceAPI.sendMediaMessage(activeChatId, type, fileToUpload, fileToUpload.name);
+        console.log('[Chat] Send media success:', result);
+        setFileToUpload(null);
+        setImagePreview(null);
+      } else if (content) {
+        // Handle text message
+        const result = await chatServiceAPI.sendMessage(activeChatId, content, 'text', replyingTo?.id);
+        console.log('[Chat] Send text success:', result);
+        setReplyingTo(null);
+      }
 
       // Immediately re-fetch so the sent message appears without waiting for next poll
       await fetchMessages({ ...selected, id: activeChatId });
@@ -339,7 +364,93 @@ export const Chat = () => {
       inputRef.current?.focus();
     }
 // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [newMessage, selected, fetchMessages]);
+  }, [newMessage, selected, fetchMessages, fileToUpload, imagePreview, replyingTo]);
+
+  // ─── Media Handlers ──────────────────────────────────────────────────────
+
+  const cancelReply = () => setReplyingTo(null);
+  const cancelMedia = () => {
+    setFileToUpload(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (imageInputRef.current) imageInputRef.current.value = '';
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, isImage: boolean) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      setSendError('File exceeds 10MB limit.');
+      return;
+    }
+
+    setFileToUpload(file);
+    if (isImage) {
+      const url = URL.createObjectURL(file);
+      setImagePreview({ blob: file, url });
+    } else {
+      setImagePreview(null);
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = e => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        // Clean up tracks
+        stream.getTracks().forEach(t => t.stop());
+        
+        // Convert to wav and send
+        try {
+          const { convertAudioToWav } = await import('../../utils/audioUtils');
+          const wavBlob = await convertAudioToWav(audioBlob);
+          const activeChatId = selected?.id;
+          if (activeChatId) {
+            setSending(true);
+            await chatServiceAPI.sendMediaMessage(activeChatId, 'voice', wavBlob, 'voice-message.wav', recordingDuration);
+            await fetchMessages(selected);
+          }
+        } catch (err) {
+          console.error('[Chat] Voice send error', err);
+          setSendError('Failed to send voice message.');
+        } finally {
+          setSending(false);
+          setRecordingDuration(0);
+        }
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setIsRecording(true);
+      setRecordingDuration(0);
+      
+      recordingTimerRef.current = window.setInterval(() => {
+        setRecordingDuration(prev => prev + 1);
+      }, 1000);
+      
+    } catch (err) {
+      console.error('[Chat] Mic error:', err);
+      setSendError('Microphone access denied or unavailable.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+    }
+  };
+
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -556,18 +667,44 @@ export const Chat = () => {
                               ? 'bg-indigo-600 text-white rounded-tr-sm shadow-md shadow-indigo-500/10'
                               : 'bg-stone-100 dark:bg-slate-800/70 text-stone-800 dark:text-slate-200 rounded-tl-sm'
                           }`}>
-                            {msg.messageType === 'audio' ? (
-                                <div className="flex items-center gap-2">
-                                  <button className="p-1.5 rounded-full bg-black/10 hover:bg-black/20 dark:bg-white/20 dark:hover:bg-white/30 transition-colors"><Mic size={16}/></button>
-                                  <div className="h-1 w-24 bg-black/10 dark:bg-white/30 rounded-full overflow-hidden"><div className="h-full bg-current w-1/3"></div></div>
-                                  <span className="text-xs font-bold">0:05</span>
+                            {/* Reply Quote Block */}
+                            {msg.replyTo && (
+                              <div className={`mb-2 p-2 rounded-lg text-xs border-l-2 ${
+                                isOwn 
+                                  ? 'bg-white/20 border-white/50 text-indigo-50' 
+                                  : 'bg-stone-200/50 dark:bg-slate-900/50 border-indigo-500/50 text-stone-600 dark:text-slate-400'
+                              }`}>
+                                <div className="font-bold mb-0.5">{msg.replyTo.senderName}</div>
+                                <div className="truncate max-w-[200px] opacity-80">{msg.replyTo.content || msg.replyTo.messageType}</div>
+                              </div>
+                            )}
+
+                            {/* Message Content depending on type */}
+                            {(msg.messageType === 'audio' || msg.messageType === 'voice') ? (
+                                <div className="flex items-center gap-3 w-48">
+                                  <audio controls src={msg.audioUrl || msg.fileUrl} className="h-8 w-full max-w-full [&::-webkit-media-controls-panel]:bg-white/90" />
                                 </div>
                             ) : msg.messageType === 'file' ? (
-                                <div className="flex items-center gap-2">
-                                  <Paperclip size={16} />
-                                  <span className="underline cursor-pointer">{msg.content || 'Attached File'}</span>
+                                <a href={msg.fileUrl || msg.fileAttachment?.url || '#'} target="_blank" rel="noreferrer" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                                  <div className={`p-2 rounded-xl ${isOwn ? 'bg-white/20' : 'bg-white dark:bg-slate-700'}`}>
+                                    <FileIcon size={24} />
+                                  </div>
+                                  <div className="flex flex-col truncate">
+                                    <span className="font-semibold text-sm truncate max-w-[150px]">{msg.fileName || msg.fileAttachment?.name || 'Attached File'}</span>
+                                    {msg.fileSize && <span className="text-xs opacity-70">{(msg.fileSize / 1024 / 1024).toFixed(2)} MB</span>}
+                                  </div>
+                                  <Download size={16} className="ml-auto opacity-70" />
+                                </a>
+                            ) : msg.messageType === 'image' ? (
+                                <div className="flex flex-col gap-2">
+                                  <a href={msg.imageUrl || msg.fileUrl || '#'} target="_blank" rel="noreferrer">
+                                    <img src={msg.imageUrl || msg.fileUrl} alt="Sent attachment" className="rounded-xl max-w-[220px] max-h-[220px] object-cover cursor-pointer hover:opacity-90 transition-opacity border border-black/10 dark:border-white/10" />
+                                  </a>
+                                  {msg.content && <span>{msg.content}</span>}
                                 </div>
-                            ) : msg.content}
+                            ) : (
+                              <span>{msg.content}</span>
+                            )}
                           </div>
                           
                           {msg.reactions && Object.keys(msg.reactions).length > 0 && (
@@ -576,9 +713,14 @@ export const Chat = () => {
                             </div>
                           )}
 
-                          <button className={`absolute top-1/2 -translate-y-1/2 ${isOwn ? '-left-8' : '-right-8'} opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-slate-400 hover:text-indigo-500 bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700 z-10`} title="React">
-                            <Smile size={14} />
-                          </button>
+                          <div className={`absolute top-1/2 -translate-y-1/2 ${isOwn ? '-left-16' : '-right-16'} opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 z-10`}>
+                            <button onClick={() => setReplyingTo(msg)} className="p-1.5 text-slate-400 hover:text-indigo-500 bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700" title="Reply">
+                              <Reply size={14} />
+                            </button>
+                            <button className="p-1.5 text-slate-400 hover:text-indigo-500 bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700" title="React">
+                              <Smile size={14} />
+                            </button>
+                          </div>
 
                           <p className={`text-[10px] text-stone-400 mt-1 ${isOwn ? 'text-right' : 'text-left'}`}>
                             {formatTime(msg.timestamp)}
@@ -599,30 +741,88 @@ export const Chat = () => {
                 </div>
               )}
 
+              {/* Media & Reply Previews */}
+              {(replyingTo || imagePreview || fileToUpload) && !isRecording && (
+                <div className="mb-3 p-3 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col gap-2 relative">
+                  {replyingTo && (
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                        <Reply size={16} className="text-indigo-500" />
+                        <span className="font-semibold text-indigo-600 dark:text-indigo-400">Replying to {replyingTo.senderName}</span>
+                        <span className="text-slate-500 truncate max-w-[200px]">{replyingTo.content || replyingTo.messageType}</span>
+                      </div>
+                      <button type="button" onClick={cancelReply} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><X size={16}/></button>
+                    </div>
+                  )}
+                  {imagePreview && (
+                    <div className="flex flex-col gap-1 items-start">
+                      <div className="flex items-center justify-between w-full">
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1"><ImageIcon size={14}/> Image attached</span>
+                        <button type="button" onClick={cancelMedia} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><X size={16}/></button>
+                      </div>
+                      <img src={imagePreview.url} alt="Preview" className="h-16 w-auto rounded-lg border border-slate-200 dark:border-slate-700 object-cover" />
+                    </div>
+                  )}
+                  {fileToUpload && !imagePreview && (
+                    <div className="flex items-center justify-between bg-white dark:bg-slate-700 p-2 rounded-lg border border-slate-200 dark:border-slate-600">
+                      <div className="flex items-center gap-2">
+                        <FileIcon size={20} className="text-indigo-500" />
+                        <div className="flex flex-col">
+                          <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 max-w-[200px] truncate">{fileToUpload.name}</span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400">{(fileToUpload.size / 1024 / 1024).toFixed(2)} MB</span>
+                        </div>
+                      </div>
+                      <button type="button" onClick={cancelMedia} className="text-slate-400 hover:text-rose-500"><X size={16}/></button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Input bar */}
               <form
                 onSubmit={handleFormSubmit}
                 className="flex items-center gap-2 pt-4 border-t border-stone-200/60 dark:border-white/8 shrink-0 relative"
               >
-                <button type="button" className="p-2 text-stone-400 hover:text-indigo-600 transition-colors" title="Attach file">
-                  <Paperclip size={20} />
-                </button>
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={newMessage}
-                  onChange={e => setNewMessage(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={`Message ${selectedOther.name}…`}
-                  disabled={sending}
-                  className="flex-1 rounded-2xl border border-stone-200 dark:border-white/10 bg-white dark:bg-slate-800 text-stone-900 dark:text-white text-sm px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 font-medium placeholder:text-stone-400 disabled:opacity-50 transition-shadow"
-                />
-                <button type="button" className="p-2 text-stone-400 hover:text-indigo-600 transition-colors" title="Record Voice Note">
-                  <Mic size={20} />
-                </button>
+                <input type="file" ref={fileInputRef} hidden accept=".pdf,.docx,.txt,.zip" onChange={e => handleFileChange(e, false)} />
+                <input type="file" ref={imageInputRef} hidden accept="image/jpeg,image/png,image/webp" onChange={e => handleFileChange(e, true)} />
+                
+                {!isRecording && (
+                  <>
+                    <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-stone-400 hover:text-indigo-600 transition-colors" title="Attach file">
+                      <Paperclip size={20} />
+                    </button>
+                    <button type="button" onClick={() => imageInputRef.current?.click()} className="p-2 text-stone-400 hover:text-indigo-600 transition-colors" title="Attach image">
+                      <ImageIcon size={20} />
+                    </button>
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      value={newMessage}
+                      onChange={e => setNewMessage(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder={`Message ${selectedOther.name}…`}
+                      disabled={sending || !!fileToUpload || !!imagePreview}
+                      className="flex-1 rounded-2xl border border-stone-200 dark:border-white/10 bg-white dark:bg-slate-800 text-stone-900 dark:text-white text-sm px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 font-medium placeholder:text-stone-400 disabled:opacity-50 transition-shadow"
+                    />
+                    <button type="button" onMouseDown={startRecording} onMouseUp={stopRecording} onMouseLeave={stopRecording} className="p-2 text-stone-400 hover:text-rose-500 transition-colors" title="Hold to Record Voice Note">
+                      <Mic size={20} />
+                    </button>
+                  </>
+                )}
+
+                {isRecording && (
+                  <div className="flex-1 flex items-center justify-between px-4 py-3 rounded-2xl border border-rose-200 dark:border-rose-900/30 bg-rose-50 dark:bg-rose-900/10">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
+                      <span className="text-sm font-semibold text-rose-600 dark:text-rose-400">Recording... {recordingDuration}s</span>
+                    </div>
+                    <button type="button" onClick={stopRecording} className="text-slate-500 hover:text-rose-500 text-sm font-semibold">Stop & Send</button>
+                  </div>
+                )}
+
                 <button
                   type="submit"
-                  disabled={!newMessage.trim() || sending}
+                  disabled={(!newMessage.trim() && !fileToUpload && !imagePreview) || sending || isRecording}
                   className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white font-bold rounded-2xl px-5 py-3 transition-colors shrink-0 cursor-pointer"
                 >
                   {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
