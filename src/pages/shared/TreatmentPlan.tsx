@@ -186,13 +186,16 @@ export const TreatmentPlan = () => {
           console.warn('[TREATMENT PLAN] Failed to get specialist from bookings:', err);
         }
         
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const therapistId = (child as any)?.assignedTherapistId;
         const createPayload = {
           childId: childId,
           specialistId: finalSpecialistId,
           startDate: new Date().toISOString(),
           endDate: finalEndDate,
           goal: finalGoal,
-          notes: finalNotes
+          notes: finalNotes,
+          assignedTherapists: therapistId ? [therapistId] : []
         };
         
         console.log('[DEBUG] POST Payload:', { childId, specialistId: finalSpecialistId, payload: createPayload });
