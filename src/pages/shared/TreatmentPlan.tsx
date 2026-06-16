@@ -174,6 +174,14 @@ export const TreatmentPlan = () => {
       } catch (err) {
         console.warn('Could not load therapist bookings for visibility check', err);
       }
+      
+      // Also include therapist IDs attached directly to the child profile
+      if (child?.therapistId) therapistIds.push(String(child.therapistId));
+      if (child?.specialistId) therapistIds.push(String(child.specialistId));
+      if (child?.assignedTherapists) {
+        therapistIds = [...therapistIds, ...child.assignedTherapists];
+      }
+
       const doctorId = String(user?.id);
       const visibleTo = Array.from(new Set([...parentIds, ...therapistIds, doctorId]));
 

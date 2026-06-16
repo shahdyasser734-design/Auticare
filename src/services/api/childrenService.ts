@@ -32,6 +32,9 @@ const normalizeChild = (raw: any): Child => {
     jaundiceHistory: (raw.jaundiceHistory ?? raw.jaundice_history ?? false) as boolean,
     notes: (raw.notes ?? '') as string,
     createdAt: (raw.createdAt ?? raw.created_at ?? new Date().toISOString()) as string,
+    therapistId: String(raw.therapistId ?? raw.therapist_id ?? raw.specialistId ?? raw.specialist_id ?? ''),
+    specialistId: String(raw.specialistId ?? raw.specialist_id ?? ''),
+    assignedTherapists: Array.isArray(raw.assignedTherapists) ? raw.assignedTherapists.map(String) : [],
   };
 };
 

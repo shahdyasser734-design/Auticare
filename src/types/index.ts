@@ -189,6 +189,9 @@ export interface Child {
   notes?: string;
   createdAt: string;
   riskLevel?: string;
+  therapistId?: string;
+  specialistId?: string;
+  assignedTherapists?: string[];
 }
 
 export interface Booking {
