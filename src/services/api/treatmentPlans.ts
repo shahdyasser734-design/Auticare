@@ -154,14 +154,6 @@ export const treatmentPlansService = {
     return normalized;
   },
 
-  deletePlan: async (id: string): Promise<void> => {
-    const user = await authService.getCurrentUser();
-    if (user.role?.toLowerCase() !== 'doctor') {
-      throw new Error('Access Denied: Only Doctor can delete Treatment Plans');
-    }
-    await apiClient.delete(`/treatment-plans/${id}`);
-  },
-
   getChildPlans: async (childId: string): Promise<TreatmentPlan[]> => {
     const response = await apiClient.get<TreatmentPlan[]>(`/treatment-plans/child/${childId}`);
     return (response.data || []).map(normalizeTreatmentPlan);

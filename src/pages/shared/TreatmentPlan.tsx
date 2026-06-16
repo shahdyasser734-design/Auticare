@@ -4,7 +4,6 @@ import { MainLayout } from '../../layouts/MainLayout';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
-import { Modal } from '../../components/common/Modal';
 import { Input } from '../../components/common/Input';
 import { useAuth } from '../../context/useAuth';
 import { bookingsService } from '../../services/api/bookingsService';
@@ -14,7 +13,7 @@ import { specialistsService } from '../../services/api/specialistsService';
 import { FileUpload } from '../../components/common/FileUpload';
 import { fileUploadService } from '../../services/api/fileUploadService';
 import { childrenService } from '../../services/api/children';
-import { User, FileText, BarChart3, ArrowLeft, Loader2, Sparkles, Save, Download, Trash2 } from 'lucide-react';
+import { User, FileText, BarChart3, ArrowLeft, Loader2, Sparkles, Save, Download } from 'lucide-react';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const html2pdf: any = (await import('html2pdf.js')).default;
 import type { Child, TreatmentPlan as TreatmentPlanType, Specialist } from '../../types';
@@ -36,8 +35,6 @@ export const TreatmentPlan = () => {
   const [specialist, setSpecialist] = useState<Specialist | null>(null);
   const [publishSuccess, setPublishSuccess] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
-
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   // Ref for PDF export — targets only the treatment plan content card
@@ -327,27 +324,6 @@ export const TreatmentPlan = () => {
 
 
 
-  const handleDeletePlan = async () => {
-    if (!plan?.id) return;
-    
-    setSaving(true);
-    try {
-      await treatmentPlansService.deletePlan(plan.id);
-      setPlan(null);
-      setIsDeleteModalOpen(false);
-      
-      // Navigate back to Patient Details so Doctor immediately leaves the plan view
-      navigate(`/patients/${childId}`);
-    } catch (err) {
-      console.error('Error deleting treatment plan:', err);
-      const errMsg = err instanceof Error ? err.message : 'Failed to delete treatment plan.';
-      setPublishError(errMsg);
-      setTimeout(() => setPublishError(null), 6000);
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handleFileUpload = async (file: File | null) => {
     if (!file) return;
     setUploading(true);
@@ -571,17 +547,6 @@ export const TreatmentPlan = () => {
                   </Button>
                   {isDoctor && (
                     <div className="flex gap-2">
-                      {plan?.id && (
-                        <Button 
-                          onClick={(e) => { e.preventDefault(); setIsDeleteModalOpen(true); }} 
-                          disabled={saving}
-                          variant="outline" 
-                          className="gap-2 border-red-200 text-red-600 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Delete
-                        </Button>
-                      )}
                       <Button onClick={(e) => { e.preventDefault(); void handleSavePlan('DRAFT'); }} disabled={saving} variant="outline" className="gap-2">
                         <Save className="h-4 w-4" />
                         {saving ? 'Saving...' : 'Save Draft'}
@@ -716,15 +681,6 @@ export const TreatmentPlan = () => {
                             <Sparkles className="h-4 w-4" />
                             Edit Treatment Plan
                           </Button>
-                          <Button 
-                            onClick={() => setIsDeleteModalOpen(true)} 
-                            disabled={saving}
-                            variant="outline" 
-                            className="gap-2 border-red-200 text-red-600 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Delete
-                          </Button>
                         </div>
                       )}
 
@@ -784,35 +740,6 @@ export const TreatmentPlan = () => {
           </div>
         )}
       </div>
-
-      <Modal
-        isOpen={isDeleteModalOpen}
-        onClose={() => !saving && setIsDeleteModalOpen(false)}
-        title="Delete Treatment Plan"
-        footer={
-          <div className="flex justify-end gap-3 w-full">
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteModalOpen(false)}
-              disabled={saving}
-            >
-              Cancel
-            </Button>
-            <Button
-              className="bg-red-600 hover:bg-red-700 text-white border-red-600"
-              onClick={() => void handleDeletePlan()}
-              disabled={saving}
-            >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Confirm Delete
-            </Button>
-          </div>
-        }
-      >
-        <p className="text-slate-600 dark:text-slate-300">
-          Are you sure you want to delete this treatment plan?
-        </p>
-      </Modal>
     </MainLayout>
   );
 };

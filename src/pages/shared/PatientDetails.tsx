@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   User, FileText, Calendar, ChevronLeft, ClipboardList,
   AlertCircle, Loader2, Send, Eye, Edit3, Plus, Video,
-  Clock, CheckCircle2, XCircle, CalendarDays, Trash2
+  Clock, CheckCircle2, XCircle, CalendarDays
 } from 'lucide-react';
 import { MainLayout } from '../../layouts/MainLayout';
 import { useAuth } from '../../context/useAuth';
@@ -22,7 +22,6 @@ import type { TherapySession } from '../../types';
 import type { ScreeningResult } from '../../types';
 import { NoteCard } from '../../components/notes/NoteCard';
 import { TreatmentPlanDescription } from '../../components/treatmentPlans/TreatmentPlanDescription';
-import { Modal } from '../../components/common/Modal';
 import apiClient from '../../services/apiClient';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -95,8 +94,6 @@ export const PatientDetails = () => {
   const [receiverRole,     setReceiverRole]     = useState(
     isTherapist ? 'doctor' : 'parent'
   );
-  const [planToDelete,     setPlanToDelete]     = useState<TreatmentPlan | null>(null);
-  const [deleteSaving,     setDeleteSaving]     = useState(false);
 
   // ── fetch ──
   useEffect(() => {
@@ -230,43 +227,6 @@ export const PatientDetails = () => {
       console.error('[PatientDetails] Error saving note:', err);
     } finally {
       setSavingNote(false);
-    }
-  };
-
-  const handleDeletePlan = async () => {
-    if (!planToDelete) return;
-    
-    // Attempt to find any valid ID on the object
-    const targetId = planToDelete.id || (planToDelete as any).treatmentPlanId || (planToDelete as any).treatmentId;
-    
-    console.log(`[PatientDetails] Executing delete for targetId:`, targetId, 'Full plan:', planToDelete);
-
-    if (!targetId) {
-      console.error('[PatientDetails] Cannot delete: No valid ID found on the treatment plan.');
-      return;
-    }
-
-    setDeleteSaving(true);
-    try {
-      // Connect to the correct delete endpoint and wait for it
-      await treatmentPlansService.deletePlan(targetId);
-      
-      // Remove it from Parent and Doctor immediately by refetching/updating local state
-      setPlanToDelete(null);
-      
-      // Refetch the plans from backend to ensure pure sync and no phantom cache
-      if (id) {
-        const freshPlans = await treatmentPlansService.getChildPlans(id);
-        setPlans(freshPlans);
-      } else {
-        setPlans(prev => prev.filter(p => p.id !== planToDelete.id));
-      }
-    } catch (err: any) {
-      console.error('[PatientDetails] Failed to delete plan:', err.response?.data || err);
-      // We purposefully DO NOT close the modal here so the user can see the button state revert 
-      // and we log the explicit server error for debugging.
-    } finally {
-      setDeleteSaving(false);
     }
   };
 
@@ -517,12 +477,6 @@ export const PatientDetails = () => {
                             >
                               <Plus size={11} /> Update
                             </button>
-                            <button
-                              onClick={(e) => { e.preventDefault(); setPlanToDelete(p); }}
-                              className="flex items-center gap-1 px-2 py-1 bg-white dark:bg-slate-900 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 font-semibold hover:shadow-md transition-all cursor-pointer"
-                            >
-                              <Trash2 size={11} /> Delete
-                            </button>
                           </>
                         ) : (
                           <button
@@ -729,39 +683,6 @@ export const PatientDetails = () => {
         )}
 
       </div>
-
-      <Modal
-        isOpen={!!planToDelete}
-        onClose={() => !deleteSaving && setPlanToDelete(null)}
-        title="Delete Treatment Plan"
-      >
-        <div className="space-y-4">
-          <p className="text-slate-600 dark:text-slate-300">
-            Are you sure you want to delete this treatment plan?
-          </p>
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              onClick={() => setPlanToDelete(null)}
-              className="px-4 py-2 rounded-lg font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-colors"
-              disabled={deleteSaving}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => void handleDeletePlan()}
-              disabled={deleteSaving}
-              className="px-4 py-2 rounded-lg font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 transition-colors flex items-center gap-2"
-            >
-              {deleteSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Deleting...
-                </>
-              ) : 'Confirm Delete'}
-            </button>
-          </div>
-        </div>
-      </Modal>
     </MainLayout>
   );
 };
