@@ -152,34 +152,41 @@ export const SignupForm = () => {
       }
 
       // Sign up
-      await signup(payload);
+      const signupData = await signup(payload);
 
-      // Try to auto-login
-      setAlert({ type: 'success', message: 'Account created successfully. Logging in...' });
-      
-      try {
-        const data = await login(formData.email, formData.password);
-        
+      const handleRedirect = (roleStr: string) => {
+        const normalizedRole = roleStr.toLowerCase();
+        let targetRoute = ROUTES.ROOT;
+        if (normalizedRole === 'parent') {
+          targetRoute = ROUTES.PARENT_ADD_CHILD;
+        } else if (normalizedRole === 'doctor' || normalizedRole === 'specialist') {
+          targetRoute = ROUTES.DOCTOR_HOME;
+        } else if (normalizedRole === 'therapist') {
+          targetRoute = ROUTES.THERAPIST_HOME;
+        }
+        navigate(targetRoute, { replace: true });
+      };
+
+      if (signupData && signupData.token) {
+        setAlert({ type: 'success', message: 'Account created successfully. Redirecting...' });
         setTimeout(() => {
-          const role = data.user?.role || localStorage.getItem('role') || '';
-          const normalizedRole = role.toLowerCase();
-          
-          let targetRoute = ROUTES.ROOT;
-          if (normalizedRole === 'parent') {
-            targetRoute = ROUTES.PARENT_ADD_CHILD;
-          } else if (normalizedRole === 'doctor' || normalizedRole === 'specialist') {
-            targetRoute = ROUTES.DOCTOR_HOME;
-          } else if (normalizedRole === 'therapist') {
-            targetRoute = ROUTES.THERAPIST_HOME;
-          }
-          
-          console.log("AVAILABLE ROUTES:", ROUTES);
-          console.log("NAVIGATING TO:", targetRoute);
-          navigate(targetRoute, { replace: true });
-        }, 1000);
-      } catch {
-        setAlert({ type: 'error', message: 'Auto-login failed. Please sign in manually.' });
-        setTimeout(() => navigate(ROUTES.LOGIN), 1500);
+          const role = signupData.user?.role || localStorage.getItem('role') || '';
+          handleRedirect(role);
+        }, 500);
+      } else {
+        // Try to auto-login if no token was returned
+        setAlert({ type: 'success', message: 'Account created successfully. Logging in...' });
+        
+        try {
+          const data = await login(formData.email, formData.password);
+          setTimeout(() => {
+            const role = data.user?.role || localStorage.getItem('role') || '';
+            handleRedirect(role);
+          }, 500);
+        } catch {
+          setAlert({ type: 'error', message: 'Auto-login failed. Please sign in manually.' });
+          setTimeout(() => navigate(ROUTES.LOGIN), 1500);
+        }
       }
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : 'Signup failed. Please try again.';
