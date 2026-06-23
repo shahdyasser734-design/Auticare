@@ -12,7 +12,7 @@ import { useAuth } from '../../context/useAuth';
 export const AddChild = () => {
   const navigate = useNavigate();
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { user, setActiveChildId } = useAuth() as any;
+  const { user, setActiveChildId, addChild } = useAuth() as any;
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -98,6 +98,7 @@ export const AddChild = () => {
       localStorage.setItem('latestChildId', child.id);
       localStorage.setItem('latestChildName', child.name);
       if (setActiveChildId) setActiveChildId(child.id);
+      if (addChild) addChild(child);
       navigate(`${ROUTES.PARENT_SCREENING}?childId=${child.id}`, { replace: true });
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : 'Failed to add child';

@@ -415,6 +415,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const refreshChildren = async () => {
+    try {
+      if (user?.role === 'parent') {
+        const kids = await childrenService.getMyChildren();
+        setParentChildren(kids);
+      }
+    } catch (e) {
+      console.warn('[AuthContext] Failed to refresh children:', e);
+    }
+  };
+
+  const addChild = (child: any) => {
+    setParentChildren((prev: any[]) => {
+      const exists = prev.find(c => c.id === child.id);
+      if (exists) return prev;
+      return [...prev, child];
+    });
+  };
+
   const value: AuthContextType = {
     authInitialized,
     user,
@@ -442,6 +461,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     verifyEmail,
     clearError,
     updateUserFields,
+    refreshChildren,
+    addChild,
   };
 
   return (

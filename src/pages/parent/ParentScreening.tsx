@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ScreeningLayout } from '../../layouts/ScreeningLayout';
 import { Button } from '../../components/common/Button';
 import { ScreeningProgress, ScreeningQuestion } from '../../components/screening/ScreeningComponents';
@@ -119,7 +119,9 @@ const LOCAL_QUESTIONS: IScreeningQuestion[] = [
 
 export const ParentScreening = () => {
   const navigate = useNavigate();
-  const { user, activeChildId, parentChildren, authInitialized } = useAuth();
+  const location = useLocation();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { user, parentChildren, authInitialized, setActiveChildId } = useAuth() as any;
   const { showPrompt } = useModal();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -130,6 +132,7 @@ export const ParentScreening = () => {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [childId, setChildId] = useState<string | null>(null);
   const [childName, setChildName] = useState<string>('');
+  const [selectingChild, setSelectingChild] = useState(false);
 
   const confirmExit = async () => {
     return await showPrompt(
@@ -144,23 +147,36 @@ export const ParentScreening = () => {
   useEffect(() => {
     const initializeScreening = async () => {
       try {
-        const params = new URLSearchParams(window.location.search);
+        const params = new URLSearchParams(location.search);
         const queryChildId = params.get('childId');
-        const activeId = queryChildId || activeChildId;
+        
+        let targetChildId = queryChildId;
 
-        if (!activeId) {
-          navigate(ROUTES.PARENT_ADD_CHILD, { replace: true });
-          return;
+        if (!targetChildId) {
+          if (!parentChildren || parentChildren.length === 0) {
+            navigate(ROUTES.PARENT_ADD_CHILD, { replace: true });
+            return;
+          } else if (parentChildren.length === 1) {
+            targetChildId = parentChildren[0].id;
+            if (setActiveChildId) setActiveChildId(targetChildId);
+          } else {
+            setSelectingChild(true);
+            setLoading(false);
+            return;
+          }
         }
+        
+        setSelectingChild(false);
 
-        const currentChild = parentChildren?.find(c => String(c.id) === String(activeId));
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const currentChild = parentChildren?.find((c: any) => String(c.id) === String(targetChildId));
         if (!currentChild) {
           console.error("Unauthorized access to child profile for screening.");
           navigate(ROUTES.PARENT_HOME, { replace: true });
           return;
         }
 
-        setChildId(activeId);
+        setChildId(targetChildId);
         const storedChildName = currentChild.name || localStorage.getItem('latestChildName');
         if (storedChildName) {
           setChildName(storedChildName);
@@ -168,7 +184,7 @@ export const ParentScreening = () => {
 
         // Try backend first, but only use it when it provides valid questions.
         try {
-          const startRes = await screeningService.startScreening(activeId);
+          const startRes = await screeningService.startScreening(targetChildId);
           if (startRes?.sessionId) setSessionId(startRes.sessionId);
           const q = startRes?.questions ?? (await screeningService.getQuestions());
           const hasValidQuestions =
@@ -195,7 +211,7 @@ export const ParentScreening = () => {
     if (!authInitialized) return;
     initializeScreening();
 // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate, authInitialized, parentChildren]);
+  }, [navigate, authInitialized, parentChildren, location.search]);
 
   if (loading) {
     return (
@@ -203,6 +219,41 @@ export const ParentScreening = () => {
         <div className="flex flex-col items-center gap-4">
           <LoadingSpinner />
           <p className="text-slate-400 text-sm animate-pulse">Preparing your screening session...</p>
+        </div>
+      </ScreeningLayout>
+    );
+  }
+
+  if (selectingChild) {
+    return (
+      <ScreeningLayout confirmExit={confirmExit}>
+        <div className="w-full max-w-2xl bg-white dark:bg-navy-800 p-8 rounded-2xl shadow-xl dark:shadow-none border border-slate-100 dark:border-white/5">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Select Child</h2>
+          <p className="text-slate-500 mb-6">Which child would you like to perform the screening for?</p>
+          <div className="grid gap-3">
+{/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {parentChildren?.map((child: any) => (
+              <Button
+                key={child.id}
+                onClick={() => {
+                  if (setActiveChildId) setActiveChildId(child.id);
+                  navigate(`${ROUTES.PARENT_SCREENING}?childId=${child.id}`, { replace: true });
+                }}
+                className="w-full justify-start text-left bg-slate-50 hover:bg-slate-100 text-slate-900 dark:bg-navy-700 dark:hover:bg-navy-600 dark:text-white border border-slate-200 dark:border-slate-600"
+                variant="outline"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 flex items-center justify-center font-bold">
+                    {child.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="font-semibold">{child.name}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">{child.gender} • {child.age} years old</div>
+                  </div>
+                </div>
+              </Button>
+            ))}
+          </div>
         </div>
       </ScreeningLayout>
     );

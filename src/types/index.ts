@@ -73,6 +73,9 @@ export interface AuthContextType {
   verifyEmail: (code: string) => Promise<void>;
   clearError: () => void;
   updateUserFields: (fields: Partial<User>) => void;
+  refreshChildren?: () => Promise<void>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  addChild?: (child: any) => void;
 }
 
 export interface ScreeningQuestion {
