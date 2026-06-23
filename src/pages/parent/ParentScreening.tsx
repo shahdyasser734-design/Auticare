@@ -184,7 +184,7 @@ export const ParentScreening = () => {
 
         // Try backend first, but only use it when it provides valid questions.
         try {
-          const startRes = await screeningService.startScreening(targetChildId);
+          const startRes = await screeningService.startScreening(targetChildId as string);
           if (startRes?.sessionId) setSessionId(startRes.sessionId);
           const q = startRes?.questions ?? (await screeningService.getQuestions());
           const hasValidQuestions =
