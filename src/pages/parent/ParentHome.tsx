@@ -17,7 +17,7 @@ import { TreatmentPlanDescription } from '../../components/treatmentPlans/Treatm
 import { bookingService } from '../../services/api/bookings';
 import { formatDateTime } from '../../utils/dateUtils';
 import { notesService, type Note } from '../../services/api/notes';
-import { MessageSquare, Calendar, ChevronRight, Video, FileText, Bell, Star, Activity, Trash2, Heart, Plus, ClipboardCheck, ShieldCheck, User, BookOpen, Loader2 } from 'lucide-react';
+import { MessageSquare, Calendar, ChevronRight, Video, FileText, Bell, Star, Activity, Trash2, Heart, Plus, ClipboardCheck, ShieldCheck, User, BookOpen, Loader2, Sparkles, Users } from 'lucide-react';
 
 export const ParentHome = () => {
   const navigate = useNavigate();
@@ -551,13 +551,13 @@ export const ParentHome = () => {
                         <div className="flex-1">
                           <p className="font-bold text-stone-900 dark:text-white text-sm">{s.title || 'Therapy Session'}</p>
                           <p className="text-xs text-stone-500 mt-1">
-                            {new Date(s.scheduledAt || s.date).toLocaleDateString('en-US', {
-                              weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
-                            })}
+                            {new Date(s.scheduledDate).toLocaleDateString('en-US', {
+                              weekday: 'short', month: 'short', day: 'numeric'
+                            })} at {s.scheduledTime}
                           </p>
-                          {s.sessionNotes && (
+                          {s.notes && (
                             <p className="text-xs text-stone-600 dark:text-slate-400 mt-2 line-clamp-2">
-                              {s.sessionNotes}
+                              {s.notes}
                             </p>
                           )}
                         </div>
