@@ -638,39 +638,17 @@ export const TreatmentPlan = () => {
                   <div className="bg-slate-50 dark:bg-slate-950/40 rounded-2xl p-4 space-y-2">
                     <p className="font-bold text-slate-800 dark:text-slate-200">{specialist.name}</p>
                     <p className="text-xs text-primary-600 dark:text-primary-400 font-semibold">{specialist.specialization}</p>
-                    <p className="text-xs text-slate-500">Experience: {specialist.yearsOfExperience} yrs · Rating: ★{specialist.rating}</p>
+                    {(specialist.yearsOfExperience > 0 || specialist.rating > 0) && (
+                      <p className="text-xs text-slate-500">
+                        {specialist.yearsOfExperience > 0 && `Experience: ${specialist.yearsOfExperience} yrs`}
+                        {specialist.yearsOfExperience > 0 && specialist.rating > 0 && ' · '}
+                        {specialist.rating > 0 && `Rating: ★${specialist.rating}`}
+                      </p>
+                    )}
                   </div>
                 </Card>
               )}
 
-              {/* Progress Overview Section */}
-              {plan && (
-                <Card className="border border-slate-200 dark:border-white/10 shadow-md rounded-3xl p-6 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <BarChart3 size={20} className="text-green-500" />
-                    <h4 className="font-bold text-lg text-slate-900 dark:text-white">Progress Overview</h4>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <div className="flex justify-between text-xs font-semibold mb-1 text-slate-600 dark:text-slate-400">
-                        <span>Goal Completion</span>
-                        <span>{plan.progress === 'completed' ? 100 : plan.progress === 'active' ? 50 : 0}%</span>
-                      </div>
-                      <div className="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
-                        <div className="bg-green-500 h-full rounded-full" style={{ width: `${plan.progress === 'completed' ? 100 : plan.progress === 'active' ? 50 : 0}%` }} />
-                      </div>
-                    </div>
-
-                    <div className="p-3 bg-green-50/50 dark:bg-green-950/20 rounded-2xl border border-green-200/50 flex justify-between items-center text-xs">
-                      <span className="text-slate-600 dark:text-slate-300 font-semibold">Active Timeline</span>
-                      <Badge variant="success">
-                        <span className="capitalize">{plan.progress || plan.status || 'Active'}</span>
-                      </Badge>
-                    </div>
-                  </div>
-                </Card>
-              )}
             </div>
 
             {/* Right Column: Main Treatment details */}
@@ -712,12 +690,6 @@ export const TreatmentPlan = () => {
                             <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 4px 0', fontWeight: 'bold' }}>TREATMENT STATUS</p>
                             <p style={{ fontSize: '14px', color: '#0f172a', margin: '0', fontWeight: 'bold', textTransform: 'capitalize' }}>
                               {plan?.status || 'Active'}
-                            </p>
-                          </div>
-                          <div>
-                            <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 4px 0', fontWeight: 'bold' }}>PROGRESS OVERVIEW</p>
-                            <p style={{ fontSize: '14px', color: '#0f172a', margin: '0', fontWeight: 'bold', textTransform: 'capitalize' }}>
-                              {plan?.progress === 'completed' ? '100% (Completed)' : plan?.progress === 'active' ? '50% (Active)' : '0% (Paused)'}
                             </p>
                           </div>
                           <div style={{ textAlign: 'right' }}>
