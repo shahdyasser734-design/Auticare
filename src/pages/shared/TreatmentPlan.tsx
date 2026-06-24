@@ -181,18 +181,24 @@ export const TreatmentPlan = () => {
       if (pdfTitle) pdfTitle.style.display = 'flex';
       elementsToHide.forEach(el => (el as HTMLElement).style.display = 'none');
 
-      const isDarkMode = document.documentElement.classList.contains('dark');
-      const bgColor = isDarkMode ? '#0f172a' : '#ffffff';
+      const htmlEl = document.documentElement;
+      const wasDark = htmlEl.classList.contains('dark');
+      if (wasDark) htmlEl.classList.remove('dark');
+      
+      // Ensure the DOM has time to apply the light mode styles before screenshotting
+      await new Promise(resolve => setTimeout(resolve, 50));
 
       const opt = {
-        margin:       [10, 10, 10, 10] as [number, number, number, number],
+        margin:       [15, 15, 15, 15] as [number, number, number, number],
         filename:     `treatment-plan-${child?.name?.toLowerCase().replace(/\s+/g, '-') || 'patient'}.pdf`,
-        image:        { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, backgroundColor: bgColor },
+        image:        { type: 'jpeg' as const, quality: 1.0 },
+        html2canvas:  { scale: 3, useCORS: true, backgroundColor: '#ffffff', windowWidth: 1024 },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
       await html2pdf().set(opt).from(element).save();
+
+      if (wasDark) htmlEl.classList.add('dark');
 
       if (pdfHeader) pdfHeader.style.display = 'none';
       if (pdfTitle) pdfTitle.style.display = 'none';
@@ -371,7 +377,7 @@ export const TreatmentPlan = () => {
             Back to previous page
           </button>
           
-          {isParent && plan && (
+          {!isEditingMode && plan && (
             <Button
               onClick={() => void handleExportPdf()}
               disabled={exporting}
