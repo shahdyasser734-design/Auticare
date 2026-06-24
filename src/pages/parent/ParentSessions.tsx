@@ -87,11 +87,7 @@ export const ParentSessions = () => {
   const handleJoinZoom = (session: Booking) => {
     const url = session.zoomUrl || session.joinLink;
     const formattedUrl = formatZoomLink(url);
-    if (formattedUrl) {
-      window.open(formattedUrl, '_blank', 'noopener,noreferrer');
-    } else {
-      alert("No Zoom meeting link available.");
-    }
+    window.open(formattedUrl || "https://zoom.us/signin#/login", '_blank', 'noopener,noreferrer');
   };
 
   if (loading) {

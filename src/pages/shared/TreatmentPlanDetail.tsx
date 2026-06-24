@@ -287,8 +287,7 @@ export const TreatmentPlanDetail = () => {
                         <button
                           onClick={() => {
                             const url = formatZoomLink(session.joinLink);
-                            if (url) window.open(url, '_blank', 'noopener,noreferrer');
-                            else alert("No Zoom meeting link available.");
+                            window.open(url || "https://zoom.us/signin#/login", '_blank', 'noopener,noreferrer');
                           }}
                           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm flex items-center gap-1.5 cursor-pointer"
                         >

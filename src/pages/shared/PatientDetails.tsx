@@ -566,8 +566,7 @@ export const PatientDetails = () => {
                       <button
                         onClick={() => {
                           const url = formatZoomLink(bk.joinLink || bk.zoomUrl);
-                          if (url) window.open(url, '_blank', 'noopener,noreferrer');
-                          else alert("No Zoom meeting link available.");
+                          window.open(url || "https://zoom.us/signin#/login", '_blank', 'noopener,noreferrer');
                         }}
                         className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-colors whitespace-nowrap flex-shrink-0 mt-2 sm:mt-0 cursor-pointer"
                       >
@@ -609,8 +608,7 @@ export const PatientDetails = () => {
                     <button
                       onClick={() => {
                         const url = formatZoomLink(ts.joinLink);
-                        if (url) window.open(url, '_blank', 'noopener,noreferrer');
-                        else alert("No Zoom meeting link available.");
+                        window.open(url || "https://zoom.us/signin#/login", '_blank', 'noopener,noreferrer');
                       }}
                       className="flex items-center gap-2 px-3 py-2 bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold rounded-xl transition-colors whitespace-nowrap flex-shrink-0 cursor-pointer"
                     >

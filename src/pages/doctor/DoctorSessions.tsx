@@ -79,12 +79,7 @@ export const DoctorSessions = () => {
   const handleJoinZoom = async (session: Booking) => {
     const url = session.zoomUrl || session.joinLink;
     const formattedUrl = formatZoomLink(url);
-    if (formattedUrl) {
-      window.open(formattedUrl, '_blank', 'noopener,noreferrer');
-      return;
-    }
-
-    alert("No Zoom meeting link available.");
+    window.open(formattedUrl || "https://zoom.us/signin#/login", '_blank', 'noopener,noreferrer');
   };
 
   return (
