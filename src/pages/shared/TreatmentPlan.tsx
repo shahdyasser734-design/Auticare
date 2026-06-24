@@ -285,9 +285,6 @@ export const TreatmentPlan = () => {
       setPublishSuccess(true);
       setTimeout(() => setPublishSuccess(false), 5000);
       
-      // ALWAYS REFRESH DATA AFTER PUBLISH
-      await loadPlanData();
-      
       try {
         if (targetStatus === 'PUBLISHED') {
           setIsEditingMode(false);
