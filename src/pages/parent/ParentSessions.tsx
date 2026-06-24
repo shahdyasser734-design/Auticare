@@ -4,6 +4,7 @@ import { MainLayout } from '../../layouts/MainLayout';
 import { bookingService } from '../../services/api/bookings';
 import type { Booking } from '../../types';
 import { Calendar, User, Clock, CheckCircle2 } from 'lucide-react';
+import { formatZoomLink } from '../../utils/zoomHelper';
 
 // ─── Status helpers ──────────────────────────────────────────────────────────
 
@@ -83,8 +84,14 @@ export const ParentSessions = () => {
   const historySessions  = sorted.filter(b => isHistory(b.status));
   const display          = activeTab === 'upcoming' ? upcomingSessions : historySessions;
 
-  const handleJoinZoom = () => {
-    window.open('https://app.zoom.us/wc', '_blank', 'noopener,noreferrer');
+  const handleJoinZoom = (session: Booking) => {
+    const url = session.zoomUrl || session.joinLink;
+    const formattedUrl = formatZoomLink(url);
+    if (formattedUrl) {
+      window.open(formattedUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      alert("No Zoom meeting link available.");
+    }
   };
 
   if (loading) {
@@ -232,7 +239,7 @@ export const ParentSessions = () => {
                   {activeTab === 'upcoming' && (
                     <div className="px-5 py-3 bg-slate-50 dark:bg-slate-900/30 border-t border-slate-100 dark:border-white/5 flex items-center justify-end">
                       <button
-                        onClick={() => handleJoinZoom()}
+                        onClick={() => handleJoinZoom(session)}
                         className="flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2 text-sm font-bold text-white transition-colors shadow-sm"
                       >
                         🎥 Start Session

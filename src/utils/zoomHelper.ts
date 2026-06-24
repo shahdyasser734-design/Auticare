@@ -95,3 +95,14 @@ export const getOrCreateSessionMeetingLink = async (
   throw new Error('No Zoom meeting link available.');
 };
 
+export const formatZoomLink = (link?: string | null): string => {
+  if (!link) return '';
+  const clean = link.trim();
+  if (!clean) return '';
+  if (/^[\d\-\s]+$/.test(clean)) return 'https://zoom.us/j/' + clean.replace(/[\-\s]/g, '');
+  if (!clean.startsWith('http://') && !clean.startsWith('https://')) {
+    if (clean.includes('zoom.us')) return 'https://' + clean;
+    return 'https://zoom.us/j/' + clean;
+  }
+  return clean;
+};

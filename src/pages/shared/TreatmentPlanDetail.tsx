@@ -12,6 +12,7 @@ import { TreatmentPlanDescription } from '../../components/treatmentPlans/Treatm
 import type { TreatmentPlan, TherapySession } from '../../types';
 import type { Child } from '../../services/api/children';
 import { Calendar, Target, CheckCircle, MessageSquare, User, Activity, Heart, FileText } from 'lucide-react';
+import { formatZoomLink } from '../../utils/zoomHelper';
 
 // Calculate age from DOB if age field is missing
 const calcAge = (child: Child): number | null => {
@@ -283,14 +284,16 @@ export const TreatmentPlanDetail = () => {
                         </p>
                       </div>
                       {session.joinLink && (
-                        <a
-                          href={session.joinLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm flex items-center gap-1.5"
+                        <button
+                          onClick={() => {
+                            const url = formatZoomLink(session.joinLink);
+                            if (url) window.open(url, '_blank', 'noopener,noreferrer');
+                            else alert("No Zoom meeting link available.");
+                          }}
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm flex items-center gap-1.5 cursor-pointer"
                         >
                           🎥 Join
-                        </a>
+                        </button>
                       )}
                     </div>
                   ))}

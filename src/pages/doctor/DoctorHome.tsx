@@ -10,7 +10,6 @@ import { useAuth } from '../../context/useAuth';
 import { dashboardService, type DashboardSpecialistData, type PatientCard } from '../../services/api/dashboard';
 import { bookingService, type Booking } from '../../services/api/bookings';
 import { useNotification } from '../../context/NotificationContext';
-import { chatServiceAPI } from '../../services/api/chatService';
 import { notesService, type Note } from '../../services/api/notes';
 import { NoteCard } from '../../components/notes/NoteCard';
 
@@ -20,6 +19,7 @@ import {
   Activity, MessageSquare, Video, CheckCircle2, Clock3, Stethoscope,
   Sparkles, ChevronRight, Heart
 } from 'lucide-react';
+import { formatZoomLink } from '../../utils/zoomHelper';
 
 const isToday = (dateStr?: string): boolean => {
   if (!dateStr) return false;
@@ -242,24 +242,13 @@ export const DoctorHome = () => {
 
   const handleJoinZoom = async (session: Booking) => {
     const url = session.zoomUrl || session.joinLink;
-    if (url) {
-      window.open(url, '_blank', 'noopener,noreferrer');
+    const formattedUrl = formatZoomLink(url);
+    if (formattedUrl) {
+      window.open(formattedUrl, '_blank', 'noopener,noreferrer');
       return;
     }
 
-    try {
-      const chat = await chatServiceAPI.startChat(session.parentId || session.childId);
-      const newZoomUrl = `https://zoom.us/j/${session.id}?pwd=${Math.random().toString(36).substring(7)}`;
-      
-      // Simulate sending via chat logic as requested
-      console.log('[ZOOM] Generated meeting link:', newZoomUrl, 'for chat:', chat.id);
-      
-      // Open immediately to avoid popup blockers
-      window.open(newZoomUrl, '_blank', 'noopener,noreferrer');
-    } catch (err) {
-      console.error('[ZOOM] Failed to generate zoom via chat:', err);
-      window.open(`https://zoom.us/j/${session.id}`, '_blank', 'noopener,noreferrer');
-    }
+    alert("No Zoom meeting link available.");
   };
 
   const getGreeting = () => {
