@@ -246,7 +246,7 @@ export const AppRoutes = () => {
         <Route
           path={ROUTES.TREATMENT_PLAN}
           element={
-            <ProtectedRoute requiredRole={[ROLES.DOCTOR, ROLES.PARENT]}>
+            <ProtectedRoute requiredRole={[ROLES.DOCTOR, ROLES.PARENT, ROLES.THERAPIST]}>
               <TreatmentPlan />
             </ProtectedRoute>
           }

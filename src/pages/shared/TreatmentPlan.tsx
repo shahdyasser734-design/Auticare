@@ -28,6 +28,7 @@ export const TreatmentPlan = () => {
 
   const isDoctor    = user?.role?.toLowerCase() === 'doctor';
   const isParent    = user?.role?.toLowerCase() === 'parent';
+  const isTherapist = user?.role?.toLowerCase() === 'therapist';
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -190,7 +191,7 @@ export const TreatmentPlan = () => {
 
       const opt = {
         margin:       [15, 15, 15, 15] as [number, number, number, number],
-        filename:     `treatment-plan-${child?.name?.toLowerCase().replace(/\s+/g, '-') || 'patient'}.pdf`,
+        filename:     `${child?.name ? child.name.toLowerCase().replace(/\s+/g, '-') : 'patient'}-treatment-plan.pdf`,
         image:        { type: 'jpeg' as const, quality: 1.0 },
         html2canvas:  { scale: 3, useCORS: true, backgroundColor: '#ffffff', windowWidth: 1024 },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -371,13 +372,13 @@ export const TreatmentPlan = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <button
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900 transition-colors"
+            className="flex items-center gap-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors"
           >
-            <ArrowLeft size={16} />
-            Back to previous page
+            <ArrowLeft className="h-4 w-4" />
+            <span className="font-semibold">Back to previous page</span>
           </button>
           
-          {isParent && plan && (
+          {(isParent || isTherapist) && plan && (
             <Button
               onClick={() => void handleExportPdf()}
               disabled={exporting}
@@ -667,14 +668,18 @@ export const TreatmentPlan = () => {
                     <div id="treatment-plan" ref={pdfContentRef}>
                     {/* PDF header visible only inside PDF — hidden from screen */}
                     <div className="hidden" style={{ display: 'none' }} aria-hidden="true" id="pdf-header">
-                      <div style={{ padding: '20px', backgroundColor: '#f8fafc', borderRadius: '12px', marginBottom: '24px', border: '1px solid #e2e8f0' }}>
-                        <h1 style={{ fontSize: '24px', color: '#0f172a', marginBottom: '16px', fontWeight: 'bold' }}>Treatment Plan Report</h1>
+                      <div style={{ padding: '20px', backgroundColor: '#ffffff', borderRadius: '12px', marginBottom: '24px', border: '1px solid #e2e8f0' }}>
+                        <h1 style={{ fontSize: '24px', color: '#0f172a', marginBottom: '16px', fontWeight: 'bold' }}>
+                          {child?.name ? `${child.name} Treatment Plan` : (plan?.title || 'Treatment Plan')}
+                        </h1>
                         
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
                           <div>
                             <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 4px 0', fontWeight: 'bold' }}>PATIENT INFORMATION</p>
                             <p style={{ fontSize: '16px', color: '#0f172a', margin: '0', fontWeight: 'bold' }}>{child?.name || 'N/A'}</p>
                             <p style={{ fontSize: '14px', color: '#475569', margin: '4px 0 0 0' }}>Age: {child?.age ?? 'N/A'} yrs | Gender: <span style={{textTransform: 'capitalize'}}>{child?.gender || 'N/A'}</span></p>
+                            {/* @ts-ignore parentName is dynamically added */}
+                            {child?.parentName && <p style={{ fontSize: '14px', color: '#475569', margin: '4px 0 0 0' }}>Parent: {child.parentName}</p>}
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 4px 0', fontWeight: 'bold' }}>AUTHORING SPECIALIST</p>
