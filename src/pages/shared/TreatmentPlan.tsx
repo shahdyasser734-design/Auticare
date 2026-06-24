@@ -214,8 +214,9 @@ export const TreatmentPlan = () => {
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
-      await html2pdf().set(opt).from(element).toPdf().get('pdf').then((pdf: any) => {
-        const pdfBlob = pdf.output('blob');
+      await html2pdf().set(opt).from(element).toPdf().get('pdf').then((pdf: unknown) => {
+        // We know pdf is a jsPDF instance with an output method
+        const pdfBlob = (pdf as { output: (type: string) => Blob }).output('blob');
         const url = URL.createObjectURL(pdfBlob);
         const link = document.createElement('a');
         link.href = url;
@@ -708,7 +709,7 @@ export const TreatmentPlan = () => {
                             <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 4px 0', fontWeight: 'bold' }}>PATIENT INFORMATION</p>
                             <p style={{ fontSize: '16px', color: '#0f172a', margin: '0', fontWeight: 'bold' }}>{child?.name || 'N/A'}</p>
                             <p style={{ fontSize: '14px', color: '#475569', margin: '4px 0 0 0' }}>Age: {child?.age ?? 'N/A'} yrs | Gender: <span style={{textTransform: 'capitalize'}}>{child?.gender || 'N/A'}</span></p>
-                            {/* @ts-ignore parentName is dynamically added */}
+                            {/* @ts-expect-error parentName is dynamically added */}
                             {child?.parentName && <p style={{ fontSize: '14px', color: '#475569', margin: '4px 0 0 0' }}>Parent: {child.parentName}</p>}
                           </div>
                           <div style={{ textAlign: 'right' }}>

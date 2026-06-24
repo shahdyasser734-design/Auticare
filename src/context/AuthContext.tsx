@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import type { AuthContextType, User, AuthResponse, UserRole } from '../types';
+import type { AuthContextType, User, AuthResponse, UserRole, Child } from '../types';
 import { authService } from '../services/authService';
 import { childrenService } from '../services/api/childrenService';
 
@@ -38,8 +38,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [authInitialized, setAuthInitialized] = useState(false);
   const [loading, setLoading] = useState(true);
   const [childrenLoaded, setChildrenLoaded] = useState(false);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [parentChildren, setParentChildren] = useState<any[]>([]);
+  const [parentChildren, setParentChildren] = useState<Child[]>([]);
   const [activeChildId, setActiveChildId] = useState<string | null>(() => localStorage.getItem('latestChildId') || null);
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -426,8 +425,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const addChild = (child: any) => {
-    setParentChildren((prev: any[]) => {
+  const addChild = (child: Child) => {
+    setParentChildren((prev: Child[]) => {
       const exists = prev.find(c => c.id === child.id);
       if (exists) return prev;
       return [...prev, child];

@@ -60,8 +60,7 @@ export interface AuthContextType {
   user: User | null;
   loading: boolean;
   childrenLoaded: boolean;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  parentChildren: any[];
+  parentChildren: Child[];
   activeChildId: string | null;
   setActiveChildId: (id: string | null) => void;
   error: string | null;
@@ -74,8 +73,7 @@ export interface AuthContextType {
   clearError: () => void;
   updateUserFields: (fields: Partial<User>) => void;
   refreshChildren?: () => Promise<void>;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  addChild?: (child: any) => void;
+  addChild?: (child: Child) => void;
 }
 
 export interface ScreeningQuestion {
