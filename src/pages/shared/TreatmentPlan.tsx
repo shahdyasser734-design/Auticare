@@ -186,8 +186,23 @@ export const TreatmentPlan = () => {
       const wasDark = htmlEl.classList.contains('dark');
       if (wasDark) htmlEl.classList.remove('dark');
       
-      // Ensure the DOM has time to apply the light mode styles before screenshotting
-      await new Promise(resolve => setTimeout(resolve, 50));
+      // Inject PDF-specific styles to force black text and remove opacity
+      const exportStyle = document.createElement('style');
+      exportStyle.id = 'pdf-export-style';
+      exportStyle.innerHTML = `
+        #treatment-plan * {
+          color: #000000 !important;
+          opacity: 1 !important;
+          text-shadow: none !important;
+        }
+        #treatment-plan {
+          background-color: #ffffff !important;
+        }
+      `;
+      document.head.appendChild(exportStyle);
+      
+      // Ensure the DOM has time to apply the styles before screenshotting
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       const opt = {
         margin:       [15, 15, 15, 15] as [number, number, number, number],
@@ -197,9 +212,22 @@ export const TreatmentPlan = () => {
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
-      await html2pdf().set(opt).from(element).save();
+      await html2pdf().set(opt).from(element).toPdf().get('pdf').then((pdf: any) => {
+        const pdfBlob = pdf.output('blob');
+        const url = URL.createObjectURL(pdfBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = opt.filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      });
 
       if (wasDark) htmlEl.classList.add('dark');
+      
+      const injectedStyle = document.getElementById('pdf-export-style');
+      if (injectedStyle) injectedStyle.remove();
 
       if (pdfHeader) pdfHeader.style.display = 'none';
       if (pdfTitle) pdfTitle.style.display = 'none';
