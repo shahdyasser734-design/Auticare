@@ -377,7 +377,7 @@ export const TreatmentPlan = () => {
             Back to previous page
           </button>
           
-          {!isEditingMode && plan && (
+          {isParent && plan && (
             <Button
               onClick={() => void handleExportPdf()}
               disabled={exporting}
