@@ -10,15 +10,14 @@ import { useAuth } from '../../context/useAuth';
 import { useNotification } from '../../context/NotificationContext';
 import { childrenService, dedupeChildren, type Child } from '../../services/api/children';
 import { treatmentPlansService, type TreatmentPlan } from '../../services/api/treatmentPlans';
+import { sessionsService } from '../../services/api/sessionsService';
+import type { TherapySession } from '../../types';
+import { formatZoomLink } from '../../utils/zoomHelper';
 import { TreatmentPlanDescription } from '../../components/treatmentPlans/TreatmentPlanDescription';
 import { bookingService } from '../../services/api/bookings';
 import { formatDateTime } from '../../utils/dateUtils';
 import { notesService, type Note } from '../../services/api/notes';
-import {
-  Loader2, Plus, FileText, Activity, MessageSquare, Calendar,
-  ClipboardCheck, Bell, ChevronRight, Sparkles, Heart, Star,
-  BookOpen, Users, ShieldCheck, User, Trash2
-} from 'lucide-react';
+import { MessageSquare, Calendar, ChevronRight, Video, FileText, Bell, Star, Activity, Trash2, Heart, Plus, ClipboardCheck, ShieldCheck, User, BookOpen, Loader2 } from 'lucide-react';
 
 export const ParentHome = () => {
   const navigate = useNavigate();
@@ -27,6 +26,7 @@ export const ParentHome = () => {
   const notifications = allNotifications.slice(0, 4);
   const [children, setChildren] = useState<Child[]>([]);
   const [plans, setPlans] = useState<TreatmentPlan[]>([]);
+  const [treatmentSessions, setTreatmentSessions] = useState<TherapySession[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [upcomingSessions, setUpcomingSessions] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -62,7 +62,7 @@ export const ParentHome = () => {
         bookingService.getUpcomingBookings().catch(() => []),
       ]);
 
-      let finalPlanList = plansArrays.flat().filter(p => p.status === 'active');
+      let finalPlanList = plansArrays.flat().filter(p => p.status === 'active' || p.status === 'PUBLISHED');
       let finalUpcoming = upcoming;
       let fetchedNotes: Note[] = [];
 
@@ -88,6 +88,16 @@ export const ParentHome = () => {
       const uniqueChildren = dedupeChildren(childList);
       setChildren(uniqueChildren);
       setPlans(finalPlanList);
+
+      if (finalPlanList.length > 0) {
+        try {
+          const planSessions = await sessionsService.getTreatmentSessions(finalPlanList[0].id);
+          setTreatmentSessions(planSessions);
+        } catch (err) {
+          console.warn('Could not load treatment sessions', err);
+        }
+      }
+
       setNotes(sortedNotes);
       setUpcomingSessions(finalUpcoming.length);
     } catch (err) {
@@ -515,6 +525,57 @@ export const ParentHome = () => {
                 </div>
               )}
             </Card>
+
+            {/* Treatment Sessions Section */}
+            {plans.length > 0 && (
+              <Card className="border border-stone-200/60 dark:border-white/8 shadow-md rounded-3xl p-6 bg-[var(--surface-strong)] dark:bg-slate-800/80 mt-5">
+                <h3 className="font-black text-lg text-stone-800 dark:text-white mb-5 flex items-center gap-2 tracking-tight">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center">
+                    <Calendar className="text-indigo-600" size={17} />
+                  </div>
+                  Therapy Sessions
+                  {treatmentSessions.length > 0 && <Badge variant="primary">{treatmentSessions.length}</Badge>}
+                </h3>
+
+                {treatmentSessions.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-stone-500 text-sm font-medium">No sessions scheduled for this plan yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {treatmentSessions.map((s) => (
+                      <div
+                        key={s.id}
+                        className="p-4 bg-stone-50 dark:bg-slate-900/50 border border-stone-100 dark:border-white/5 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-indigo-200 dark:hover:border-indigo-800/40 transition-colors"
+                      >
+                        <div className="flex-1">
+                          <p className="font-bold text-stone-900 dark:text-white text-sm">{s.title || 'Therapy Session'}</p>
+                          <p className="text-xs text-stone-500 mt-1">
+                            {new Date(s.scheduledAt || s.date).toLocaleDateString('en-US', {
+                              weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+                            })}
+                          </p>
+                          {s.sessionNotes && (
+                            <p className="text-xs text-stone-600 dark:text-slate-400 mt-2 line-clamp-2">
+                              {s.sessionNotes}
+                            </p>
+                          )}
+                        </div>
+                        {s.joinLink && (
+                          <Button
+                            size="sm"
+                            onClick={() => window.open(formatZoomLink(s.joinLink), '_blank')}
+                            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shrink-0 cursor-pointer font-bold shadow-sm"
+                          >
+                            <Video size={13} className="mr-1.5" /> Join Zoom
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            )}
           </div>
 
           {/* Column 2 (Narrow): Notifications + Notes */}
