@@ -13,7 +13,7 @@ import { specialistsService } from '../../services/api/specialistsService';
 import { FileUpload } from '../../components/common/FileUpload';
 import { fileUploadService } from '../../services/api/fileUploadService';
 import { childrenService } from '../../services/api/children';
-import { User, FileText, BarChart3, ArrowLeft, Loader2, Sparkles, Save, Download } from 'lucide-react';
+import { User, FileText, ArrowLeft, Loader2, Sparkles, Save, Download } from 'lucide-react';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const html2pdf: any = (await import('html2pdf.js')).default;
 import type { Child, TreatmentPlan as TreatmentPlanType, Specialist } from '../../types';
