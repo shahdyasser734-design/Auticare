@@ -181,12 +181,11 @@ export const TreatmentPlan = () => {
       if (pdfHeader) pdfHeader.style.display = 'block';
       if (pdfTitle) pdfTitle.style.display = 'flex';
       elementsToHide.forEach(el => (el as HTMLElement).style.display = 'none');
-
       const htmlEl = document.documentElement;
       const wasDark = htmlEl.classList.contains('dark');
       if (wasDark) htmlEl.classList.remove('dark');
       
-      // Inject PDF-specific styles to force black text and remove opacity
+      // Inject PDF-specific styles to force black text and solid background
       const exportStyle = document.createElement('style');
       exportStyle.id = 'pdf-export-style';
       exportStyle.innerHTML = `
@@ -204,9 +203,12 @@ export const TreatmentPlan = () => {
       // Ensure the DOM has time to apply the styles before screenshotting
       await new Promise(resolve => setTimeout(resolve, 100));
 
+      const rawName = child?.name || 'Patient';
+      const formattedName = rawName.split(/\\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-');
+
       const opt = {
         margin:       [15, 15, 15, 15] as [number, number, number, number],
-        filename:     `${child?.name ? child.name.toLowerCase().replace(/\s+/g, '-') : 'patient'}-treatment-plan.pdf`,
+        filename:     `${formattedName}-Treatment-Plan.pdf`,
         image:        { type: 'jpeg' as const, quality: 1.0 },
         html2canvas:  { scale: 3, useCORS: true, backgroundColor: '#ffffff', windowWidth: 1024 },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }

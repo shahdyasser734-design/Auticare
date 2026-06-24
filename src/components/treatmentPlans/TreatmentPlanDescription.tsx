@@ -60,14 +60,14 @@ export const TreatmentPlanDescription = ({ plan, text }: Props) => {
   ];
 
   return (
-    <div className="space-y-4 mt-3 bg-white/40 dark:bg-slate-900/40 p-4 rounded-xl border border-slate-100 dark:border-white/5">
+    <div className="space-y-4 mt-4">
       {fields.map(({ key, label }) => {
         const value = data[key];
         const displayValue = value && typeof value === 'string' && value.trim() ? value.trim() : '—';
         return (
-          <div key={key} className="text-sm">
-            <span className="font-semibold text-slate-800 dark:text-slate-200 block mb-0.5">{label}:</span>
-            <span className="text-slate-600 dark:text-slate-400 whitespace-pre-wrap leading-relaxed block">{displayValue}</span>
+          <div key={key} className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+            <h4 className="font-bold text-slate-900 dark:text-white mb-2 text-base border-b border-slate-100 dark:border-slate-800 pb-2">{label}</h4>
+            <p className="text-slate-900 dark:text-slate-200 whitespace-pre-wrap leading-relaxed text-sm font-medium">{displayValue}</p>
           </div>
         );
       })}
