@@ -103,7 +103,9 @@ apiClient.interceptors.response.use(
   (error: AxiosError) => {
     const isLogout401 = error.response?.status === 401 && error.config?.url?.includes('/auth/logout');
 
-    if (!isLogout401) {
+    const isQuietError = error.response?.status === 403 || error.response?.status === 404;
+
+    if (!isLogout401 && !isQuietError && error.code !== 'ECONNABORTED') {
       console.error('API Error Details:', {
         message: error.message,
         status: error.response?.status,
@@ -132,7 +134,7 @@ apiClient.interceptors.response.use(
           window.dispatchEvent(new CustomEvent('auth:unauthorized', { detail: { url } }));
         }
       } else if (status === 403) {
-        console.error('Forbidden action:', apiMessage);
+        console.warn('Forbidden action:', apiMessage);
         const token = localStorage.getItem('token');
         if (token && !isTokenValid(token)) {
           // Token is actually expired, treat 403 as 401
@@ -140,12 +142,12 @@ apiClient.interceptors.response.use(
           window.dispatchEvent(new CustomEvent('auth:unauthorized', { detail: { url: error.config?.url } }));
         }
       } else if (status === 404) {
-        console.error('Resource not found:', apiMessage);
+        console.warn('Resource not found:', apiMessage);
       } else if (status >= 500) {
         console.error('Server Error:', apiMessage);
       }
     } else if (error.code === 'ECONNABORTED') {
-      console.error('Timeout Error:', {
+      console.warn('Timeout Error:', {
         url: error.config?.url,
         message: error.message,
       });
