@@ -60,6 +60,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const init = async () => {
       const token = localStorage.getItem('token');
       
+      // Clear any stale navigation state on session resume
+      localStorage.removeItem('pendingRedirect');
+      sessionStorage.removeItem('pendingRedirect');
+      sessionStorage.removeItem('screeningChildId');
+      
       if (!token || !isTokenValid(token)) {
         if (token) {
           console.warn('[AuthContext] Token expired or invalid during init. Clearing session.');

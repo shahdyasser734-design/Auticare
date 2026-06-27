@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Heart, MessageSquare, ArrowUpRight, BookOpen, Users, Puzzle, Stethoscope, Brain, Sparkles, Activity, Menu, X } from 'lucide-react';
 import { Button } from '../components/common/Button';
@@ -120,11 +120,15 @@ const GetStartedNavButton = () => {
 
   const handle = () => {
     if (user?.role === ROLES.PARENT) {
-      navigate(ROUTES.PARENT_SCREENING);
+      navigate(ROUTES.PARENT_HOME);
       return;
     }
     if (user?.role === ROLES.DOCTOR) {
       navigate(ROUTES.DOCTOR_HOME);
+      return;
+    }
+    if (user?.role === ROLES.THERAPIST) {
+      navigate(ROUTES.THERAPIST_HOME);
       return;
     }
     // default: go to signup to capture role and start onboarding
@@ -144,11 +148,15 @@ const PrimaryHeroCta = () => {
 
   const handle = () => {
     if (user?.role === ROLES.PARENT) {
-      navigate(ROUTES.PARENT_SCREENING);
+      navigate(ROUTES.PARENT_HOME);
       return;
     }
     if (user?.role === ROLES.DOCTOR) {
       navigate(ROUTES.DOCTOR_HOME);
+      return;
+    }
+    if (user?.role === ROLES.THERAPIST) {
+      navigate(ROUTES.THERAPIST_HOME);
       return;
     }
     navigate(ROUTES.SIGNUP);
@@ -166,6 +174,21 @@ const PrimaryHeroCta = () => {
 
 export const HomeLanding = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  // Auto-redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      if (user.role === ROLES.PARENT) {
+        navigate(ROUTES.PARENT_HOME, { replace: true });
+      } else if (user.role === ROLES.DOCTOR) {
+        navigate(ROUTES.DOCTOR_HOME, { replace: true });
+      } else if (user.role === ROLES.THERAPIST) {
+        navigate(ROUTES.THERAPIST_HOME, { replace: true });
+      }
+    }
+  }, [isAuthenticated, user, navigate]);
 
   // Close menu when clicking links
   const handleNavClick = () => {
