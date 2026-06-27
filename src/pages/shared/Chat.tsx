@@ -320,7 +320,8 @@ export const Chat = () => {
 
       if (activeChatId.startsWith('new-')) {
         const contactId = activeChatId.replace('new-', '');
-        const newChat = await chatServiceAPI.startChat(contactId);
+        const fallbackName = selected.participantNames?.[contactId] || '';
+        const newChat = await chatServiceAPI.startChat(contactId, fallbackName);
         activeChatId = newChat.id;
         setSelected(newChat);
         void fetchConversations();
@@ -356,7 +357,8 @@ export const Chat = () => {
       // If it's a new uninitialized chat, start it first
       if (activeChatId.startsWith('new-')) {
         const contactId = activeChatId.replace('new-', '');
-        const newChat = await chatServiceAPI.startChat(contactId);
+        const fallbackName = selected.participantNames?.[contactId] || '';
+        const newChat = await chatServiceAPI.startChat(contactId, fallbackName);
         activeChatId = newChat.id;
         setSelected(newChat); // update active chat
         // We also need to refresh the conversation list to get the real chat ID

@@ -17,7 +17,7 @@ const mapMessage = (m: any): ChatMessage => ({
 });
 
 export const chatServiceAPI = {
-  startChat: async (contactId: string): Promise<ChatConversation> => {
+  startChat: async (contactId: string, fallbackName?: string): Promise<ChatConversation> => {
     let myId = '';
     try {
       const userStr = localStorage.getItem('user');
@@ -45,7 +45,7 @@ export const chatServiceAPI = {
       id: String(r.chatId || r.id),
       participantIds: [String(contactId)],
       participantNames: {
-        [String(contactId)]: r.specialistName || r.parentName || r.patientName || 'Unknown',
+        [String(contactId)]: r.specialistName || r.parentName || r.patientName || r.receiver?.name || fallbackName || 'Unknown',
       },
       lastUpdated: r.lastMessageAt || new Date().toISOString(),
       unreadCount: r.unreadCount || 0,
