@@ -18,6 +18,14 @@ const normaliseResult = (raw: Record<string, unknown>, childName: string): Scree
   let confidenceScore = Number(raw.confidenceScore ?? raw.confidence_score ?? 0);
   const aqScore = Number(raw.aqScore ?? raw.aq_score ?? 0);
   
+  // If confidence is missing but probability is provided as a number, use it
+  if (confidenceScore === 0 && raw.probability !== undefined) {
+    const p = Number(raw.probability);
+    if (!isNaN(p)) {
+      confidenceScore = p;
+    }
+  }
+
   // If backend returns a fraction, convert to percentage
   if (confidenceScore > 0 && confidenceScore <= 1) {
     confidenceScore = confidenceScore * 100;
@@ -35,7 +43,19 @@ const normaliseResult = (raw: Record<string, unknown>, childName: string): Scree
   }
 
   const rawRisk = String(raw.riskLevel ?? (aqScore >= 4 ? 'high' : 'low'));
-  const rawProb = String(raw.probability ?? (aqScore >= 4 ? 'High' : 'Low'));
+  
+  // Probability field could be numeric or string, map appropriately
+  let rawProb: string;
+  if (raw.probability !== undefined) {
+    const p = Number(raw.probability);
+    if (!isNaN(p)) {
+      rawProb = p >= 0.5 ? 'High' : 'Low';
+    } else {
+      rawProb = String(raw.probability);
+    }
+  } else {
+    rawProb = aqScore >= 4 ? 'High' : 'Low';
+  }
 
   // Infer autism status from riskLevel, probability, and aqScore rather than relying on predictionClass
   const isPositive = rawProb.toLowerCase() === 'high' || 
